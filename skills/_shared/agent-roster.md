@@ -8,17 +8,19 @@
 
 Model is chosen by the **kind of work**, not by taste — judgment gets the strongest model, execution gets a balanced one, search/scan gets the cheapest. Effort is the reasoning depth that role needs.
 
-| Agent | Kind of work | `model` | `effort` | Tools |
+The `model` column uses **portable tier-labels** (`cheap` / `balanced` / `judgment`) so the policy is host-agnostic. On Anthropic hosts the mapping is: `cheap` → `haiku`, `balanced` → `sonnet`, `judgment` → `opus` (or `fable` for the Mythos tier). On non-Anthropic hosts (Kimi / GLM / ChatGPT / Codex / Cursor) the host's own model settings resolve each tier — the agent frontmatter is `model: inherit` (the session model) and the tier is picked via `judgment_model` / `model_<role>` (see below) or the host config.
+
+| Agent | Kind of work | `model` (tier) | `effort` | Tools |
 |---|---|---|---|---|
-| `explorer` | brownfield scan / search (read-only) | `haiku` | `low` | Read, Grep, Glob, Bash |
-| `test-author` | write the failing test (execution) | `sonnet` | `medium` → `high` on escalation | + Write, Edit |
-| `implementer` | green + refactor + gate (execution) | `sonnet` | `medium` → `high` on escalation | + Write, Edit |
-| `reviewer` | independent review (judgment) | `opus` | `high` | Read, Grep, Glob, Bash |
-| `critic` | coherence critique (judgment) | `opus` | `high` | Read, Grep, Glob |
-| `devils-advocate` | ambiguity hunt (judgment) | `opus` | `high` | Read, Grep, Glob |
-| `researcher` | competitive / adjacent-solution research (ideation) | `sonnet` | `medium` | Read, Grep, Glob, WebSearch, WebFetch |
-| `strategist` | generate the 3 strategic approaches (judgment) | `opus` | `high` | Read, Grep, Glob |
-| `analyst` | multi-perspective review of approaches (judgment) | `opus` | `high` | Read, Grep, Glob |
+| `explorer` | brownfield scan / search (read-only) | `cheap` | `low` | Read, Grep, Glob, Bash |
+| `test-author` | write the failing test (execution) | `balanced` | `medium` → `high` on escalation | + Write, Edit |
+| `implementer` | green + refactor + gate (execution) | `balanced` | `medium` → `high` on escalation | + Write, Edit |
+| `reviewer` | independent review (judgment) | `judgment` | `high` | Read, Grep, Glob, Bash |
+| `critic` | coherence critique (judgment) | `judgment` | `high` | Read, Grep, Glob |
+| `devils-advocate` | ambiguity hunt (judgment) | `judgment` | `high` | Read, Grep, Glob |
+| `researcher` | competitive / adjacent-solution research (ideation) | `balanced` | `medium` | Read, Grep, Glob, WebSearch, WebFetch |
+| `strategist` | generate the 3 strategic approaches (judgment) | `judgment` | `high` | Read, Grep, Glob |
+| `analyst` | multi-perspective review of approaches (judgment) | `judgment` | `high` | Read, Grep, Glob |
 
 Rationale: judgment quality (review, critique, ambiguity, strategy, multi-perspective synthesis) is where a stronger model pays off; execution (write code/tests to a clear spec) is well served by a balanced model and escalates only when it gets stuck; a read-only scan is cheap. The **ideation trio** (`specify` step 3, gated by the depth dial) follows the same logic: `researcher` is gathering-and-citing work (balanced model + web tools), while `strategist` and `analyst` are judgment (generating real alternatives, synthesizing across lenses) and get the strongest model. (Treat model-by-role as a sound principle — the headline "stronger orchestrator + cheaper workers wins by X%" claim from the multi-agent literature did not survive verification, so we lean on role-fit, not a magic ratio.)
 
@@ -44,18 +46,20 @@ degrade-don't-block rule and the full mapping table: [`tool-adapters.md`](./tool
 env var  >  per-invocation (the Agent call)  >  model_<role>  >  judgment_model  >  frontmatter  >  session
 ```
 
-**`judgment_model`** (`.claude/sdd.local.md`; `opus | fable`, default `opus`) is the one-switch
+**`judgment_model`** (`.claude/sdd.local.md`; default `opus`) is the one-switch
 tier for the **judgment agents** — `reviewer` / `critic` / `devils-advocate` / `strategist` /
-`analyst`. Setting it to `fable` raises all five to the Mythos-tier model without touching
-`agents/*.md` (their frontmatter stays the tier-alias default); a per-role `model_<role>` key
-still wins for its role. It never applies to execution (`test-author` / `implementer`) or
+`analyst`. Accepts: an Anthropic alias (`opus` — the default; `fable` for the Mythos tier) **or a
+full model ID** (`claude-opus-5`, `kimi-k2`, `glm-4`, `gpt-4o`, …) — on a non-Anthropic host, set
+it to that host's judgment-tier model. Setting it raises all five without touching `agents/*.md`
+(their frontmatter is `model: inherit` — the session model); a per-role `model_<role>` key still
+wins for its role. It never applies to execution (`test-author` / `implementer`) or
 gathering (`explorer` / `researcher`) roles. See the settings doc:
 [`../implement/references/settings.md`](../implement/references/settings.md).
 
-- **`model`** env: `CLAUDE_CODE_SUBAGENT_MODEL`. Values: `haiku|sonnet|opus|inherit|<full-model-id>`.
+- **`model`** env: `CLAUDE_CODE_SUBAGENT_MODEL`. Values: `haiku|sonnet|opus|fable|inherit|<full-model-id>` (the env already accepts a full model ID — this is the portable lever on any host).
 - **`effort`** env: `CLAUDE_CODE_EFFORT_LEVEL`. Values: `low|medium|high|xhigh|max|<number>` (`xhigh`/`max` only on Opus 4.8 / 4.7).
 - The `CLAUDE_CODE_*` env vars are **Claude Code-only** levers — Codex CLI / Cursor ignore them; pick the model in the host's own settings there.
-- Per-project overrides live in `.claude/sdd.local.md` as `model_<role>` / `effort_<role>` keys (see the implement settings).
+- Per-project overrides live in `.claude/sdd.local.md` as `model_<role>` / `effort_<role>` keys (see the implement settings). On a non-Anthropic host, set `model_<role>` or `judgment_model` to a **full model ID** (e.g. `kimi-k2`, `glm-4`, `gpt-4o`) — the Anthropic aliases (`haiku`/`sonnet`/`opus`/`fable`) are Anthropic-only.
 
 > **Caveat (verify on your build).** Some Claude Code builds have reported the `effort:` *frontmatter*
 > having no observable runtime effect (GitHub claude-code#43083). The field is documented and we set
