@@ -18,7 +18,17 @@ What runs is governed by the **interview-depth dial** ([`../../_shared/interview
 
 The dispatching prompt is the **only channel** to a clean-context agent (per the shared agent contract). For every agent below, the prompt inlines: the **captured idea (verbatim baseline)** + the **step-2 deep-dive answers** + (if it exists) the **`CONTEXT.md` path** for canonical terms. The spec is not written yet — there is no `spec.md` to read, so the material is inlined.
 
-1. **`researcher`** (`sdd:researcher`) — *medium + hard.* Competitive + adjacent-solution research with web access. Returns a cited table (Product · URL · Features · Value 1–5 · Gap), each row footnoted with date + query, plus a one-line synthesis of the biggest gap. **Fallback:** a `general-purpose` Agent given the same prompt and `WebSearch`/`WebFetch`. **If web access is unavailable** in this run, accept its `RESEARCH_LIMITED` output and carry the gap as a noted gap (like the `mmdc` fallback elsewhere) — never invent competitors to fill the table.
+1. **`researcher`** (`sdd:researcher`) — *medium + hard.* Competitive + adjacent-solution research with web access. Returns a cited table across the **8-axis competitor grid** (lifted from `vibe-competitor-market-research`): **Positioning · Offer · Funnel · Messaging · SEO · Ads · Product · Trust** — not just Features/Gap. Each row carries the product + URL + the axis finding + a `Value 1–5` signal + the `Gap`, and is footnoted with date + query.
+
+   **The table schema (one row per product×axis finding, not per product):**
+   ```
+   | Product | URL | Axis (of the 8) | Finding | Value 1–5 | Gap | Evidence |
+   ```
+   **`Evidence`** is one of the **5 provenance labels** (from `kanrun-artifact-contracts.md`): `USER_CONFIRMED` · `RESEARCH_CONFIRMED` · `PRIOR_ARTIFACT` · `ASSUMPTION` · `NEEDS_PROOF`. Default new web-sourced rows to `RESEARCH_CONFIRMED`; a row the user dictated in the interview → `USER_CONFIRMED`; an inference the researcher draws without a source → `ASSUMPTION` (and it migrates to §10 Assumptions). Rows tagged `NEEDS_PROOF` are draft-only — they must not seed a §1 ¶3 claim without a follow-up.
+
+   **Plus a closing `## Do Not Copy` block** (lifted from `vibe-competitor-market-research`): 1–4 sharp competitor patterns the feature should deliberately avoid — each becomes a candidate §3 Non-goal. And a one-line synthesis of the biggest gap.
+
+   **Fallback:** a `general-purpose` Agent given the same prompt and `WebSearch`/`WebFetch`. **If web access is unavailable** in this run, accept its `RESEARCH_LIMITED` output and carry the gap as a noted gap (like the `mmdc` fallback elsewhere) — never invent competitors or `RESEARCH_CONFIRMED` rows to fill the table; unsourced findings stay `ASSUMPTION`.
 2. **`strategist`** (`sdd:strategist`) — *hard only.* Generates the three strategic approaches — A Simplicity / B Differentiation / C Balanced — each with Name · Thesis · For-whom · Outcome-metric · Key-trade-off · Effort-signal. Dispatch it **together with `researcher`** in one message (they're independent).
 3. **`analyst`** (`sdd:analyst`) — *hard only.* Multi-perspective review (Engineer / Executive / UX lenses) **of `strategist`'s three approaches** → a 3×3 synthesis matrix (+/0/−, ≤6-word justifications) + one synthesis line per approach. Dispatch it **after** `strategist` returns (it needs the three approaches inlined). The Engineer lens stays abstract — no product/library names.
 4. **`devils-advocate`** (`sdd:devils-advocate`) — *medium + hard.* Run it in its **failure-mode mode** (not the clarify ambiguity mode): the prompt asks «there is no spec yet — here is the idea (+ approaches, at hard); find how this fails — 5–10 attack vectors with production signals: what breaks, how it shows up in monitoring / churn / an incident». Returns the cited vectors. It runs in parallel with the others (at hard, pass it the approaches so it attacks the leading one). **Fallback:** `general-purpose` with the same prompt.
@@ -40,13 +50,24 @@ Claude picks one approach and writes a 3–5 sentence rationale, then confirms i
 - **medium** — cite the `researcher` gap + `devils-advocate`'s sharpest vector + the deep-dive's success criterion (no RICE/matrix exist to cite). Still a real, confirmed recommendation — just lighter.
 - **easy** — §1 ¶3 states the approach Claude inferred from the deep-dive, surfaced in the assumptions ledger; the user's veto/accept on the ledger *is* the confirm.
 
+### Evidence labeling on §1 ¶3 (medium/hard only — easy skips, over-production)
+
+At medium and hard depth, every claim in the §1 ¶3 rationale carries a tag (lifted from `vibe-market-radar`'s evidence discipline, combined with the `researcher` provenance labels above):
+
+- **`Fact`** — a verifiable statement with a cited source (a `RESEARCH_CONFIRMED` row, an `USER_CONFIRMED` interview answer, a `PRIOR_ARTIFACT` from a memory file). Inline as: `<claim> [Fact: <source>]`.
+- **`Interpretation`** — the skill's reasoned read of the facts (e.g. the recommendation itself, the RICE-weighted pick). Inline as: `<claim> [Interpretation]`.
+- **`Hypothesis`** — an unverified bet that would change the pick if false. Inline as: `<claim> [Hypothesis]` AND mirror it to §10 Assumptions with `source: assumption`.
+
+A §1 ¶3 with no `[Fact: ...]` tag at medium/hard depth is a critic F7 smell — the recommendation floats free of evidence. At easy depth, skip tagging (the ledger is the evidence trail).
+
 ## How the outputs feed the spec
 
-- **`researcher` gap** → cited in the §1 ¶3 recommendation; a competitor's deliberate omission may seed a §3 Non-goal.
-- **`strategist` approaches** → the option set the recommendation chooses from (and the runners-up seed §8 if the user wants them tracked).
-- **`analyst` matrix** → cited in §1 ¶3; a consistently `−` lens flags a §6 NFR or §11 risk to watch.
-- **`devils-advocate` vectors** → the sharpest one is reserved for §6.1 Security/privacy + abuse cases (or §11 Risks); the rest seed §8 Open questions.
+- **`researcher` gap** → cited in the §1 ¶3 recommendation as a `[Fact: <row>]`; a competitor's deliberate omission may seed a §3 Non-goal; a `## Do Not Copy` finding seeds §3 directly. Rows tagged `ASSUMPTION`/`NEEDS_PROOF` migrate to §10 Assumptions (with matching `source`/`confidence`).
+- **`strategist` approaches** → the option set the recommendation chooses from (and the runners-up seed §8 Open questions if the user wants them tracked).
+- **`analyst` matrix** → cited in §1 ¶3; a consistently `−` lens flags a §6 NFR or **§9 Risk** to watch.
+- **`devils-advocate` vectors** → the sharpest one is reserved for §6.1 Security/privacy + abuse cases (the *security* angle) AND mirrored as a **§9 Risk** row (the *product* angle — same vector, two audiences); the rest seed §8 Open questions.
 - **RICE / feasibility** → cited in §1 ¶3; the RICE score also feeds the roadmap's Next-ordering when `specify` registers the feature.
+- **Easy-depth assumptions ledger** → persists as **§10 Assumptions** rows (no longer a transient runtime artifact).
 
 ## Discipline
 
@@ -54,5 +75,6 @@ Claude picks one approach and writes a 3–5 sentence rationale, then confirms i
 - **Three approaches, not one** (at hard depth). One approach means the decision is already taken — nothing to evaluate. **All three perspectives** (at hard depth) — Engineer-only is blind to business/UX; Executive-only is blind to cost.
 - **The adversary runs from clean context** — otherwise it inherits the upstream optimism.
 - **Product-level only** — no concrete stack in any analysis or in §1 ¶3. Tech belongs to `design`.
-- **Never invent** competitors or RICE numbers to fill the pass — better an honest `N/A — internal tool` row or a `Mark TBD` than fabricated research.
+- **Never invent** competitors or RICE numbers to fill the pass — better an honest `N/A — internal tool` row or a `Mark TBD` than fabricated research. An unsourced finding is `ASSUMPTION`, never `RESEARCH_CONFIRMED`.
+- **Evidence labels are honest, not decorative.** `RESEARCH_CONFIRMED` requires a URL+date; `USER_CONFIRMED` requires a verbatim interview quote; `PRIOR_ARTIFACT` requires a named file path. A label without its evidence is `ASSUMPTION` (and lands in §10).
 - **Planning-mode-friendly:** the whole pass is read-only. If the skill started in plan mode, keep everything in session memory and let the spec write happen after `ExitPlanMode`.

@@ -11,16 +11,29 @@ feature_size: "<from classify-size: XS/S/M/L/XL>"
 <!-- instruction: one-line links to inputs used.
 > **Glossary:** [CONTEXT](./CONTEXT.md) (if present)
 > **Reference module / docs / channels used:** name the specific paths/queries read in step 5, or «None — only the interview + CONTEXT».
+> **Product memory read (optional):** if `.vibe/marketing/{STRATEGIC_DNA,OFFER_MATRIX,JOURNEY_ARCH}.md` (or a `.vibe/clients/*/marketing/` variant) was read in step 1, list the files here. Every §1/§2/§3/§4 claim seeded from them carries a `[Fact: PRIOR_ARTIFACT — <file>]` tag inline (the evidence label from [`../references/ideation.md`](../references/ideation.md)).
 Do not mention competitive-research or ideation scratch work here — those inform §1, they are not inputs to cite. -->
 
 ## 1. Context
 
-<!-- instruction: 3–4 paragraphs.
-¶1 What we're solving — the concrete problem from the interview, for whom (cite a user segment).
+<!-- instruction: 3–4 paragraphs + a persona card.
+¶1 What we're solving — the concrete problem from the interview, for whom (the named persona from the persona card below; cite the segment by its card name, not a bare «user»).
 ¶2 Why now — the trigger (incident, contract, deadline, strategic shift).
-¶3 The committed approach — 1–2 sentences. For M+/L this is the recommendation from the ideation pass; for XS/S it's the obvious direction from the deep-dive.
+¶3 The committed approach — 1–2 sentences. For M+/L this is the recommendation from the ideation pass; for XS/S it's the obvious direction from the deep-dive. Every claim in ¶3 carries an evidence tag at medium/hard depth (`USER_CONFIRMED` / `RESEARCH_CONFIRMED` / `PRIOR_ARTIFACT` / `ASSUMPTION` / `NEEDS_PROOF`) — see [`../references/ideation.md`](../references/ideation.md).
 ¶4 (optional) Traceability context — reference-module patterns or quoted sources, AND the slot where critic `Override` resolutions emit «Decision override: <headline> — rationale: <reason>» bullets.
-This section is WHAT + WHY, not HOW. Do NOT name a concrete datastore / broker / framework / library here — that belongs to design. -->
+This section is WHAT + WHY, not HOW. Do NOT name a concrete datastore / broker / framework / library here — that belongs to design.
+
+**Persona card** (attach after ¶4, one per distinct user segment the feature serves; at `easy` depth only `JTBD` + `Confidence` are required, the other fields stay empty unless they surfaced in the interview):
+
+### Persona — <segment name>
+- **JTBD:** <the job this segment hires the feature to do — a verb + outcome, not a role>
+- **Core fear:** <what going wrong would cost them — the failure they're trying to avoid>
+- **Hidden objection:** <the unspoken reason they wouldn't adopt this even if it works>
+- **Trust proof needed:** <what evidence would make them believe the claim — case, number, demo, social proof>
+- **Validation evidence:** <source backing the JTBD/fear/objection — interview quote, research row, analytics, or `none yet`>
+- **Confidence:** high | medium | low
+
+A persona with `Confidence: high` MUST carry non-empty `Validation evidence` (critic F9). Roles in the persona card match the CONTEXT glossary exactly — no invented `user`/`admin`. Source: trimmed from `vibe-customer-neuromodel`'s 13-field NeuroModel card. -->
 
 ## 2. Goals
 
@@ -130,7 +143,35 @@ Tag each AC with its US-NN. Concurrent edge → add as AC-NNb, still in business
 
 ## 8. Open questions
 
-<!-- instruction: 2–4 open questions. Format: `- [ ] <question>? Default now: <X>. — owner: <name/role>, due: <date or stage trigger like "before sdd:tasks">`. Every question has an owner + due — a lone «TBD» is an anti-pattern. -->
+<!-- instruction: 2–4 open questions. Format: `- [ ] <question>? Default now: <X>. — owner: <name/role>, due: <date or stage trigger like "before /sdd:tasks">`. Every question has an owner + due — a lone «TBD» is an anti-pattern. §8 is for genuine decision forks (need a call before X); accepted uncertainties with a mitigation live in §9; stated-but-unconfirmed inputs live in §10. -->
 
 - [ ] <question>? Default now: <...>. — owner: <name/role>, due: <date or stage>
 - [ ] <question>? — owner: <name/role>, due: <date or stage>
+
+## 9. Risks
+
+<!-- instruction: accepted uncertainties with a mitigation — NOT genuine open questions (those stay in §8), NOT unconfirmed inputs (those go to §10). Format, one row per risk:
+
+- [ ] **<risk headline>** — mitigation: <X>. — severity: critical | high | medium | low | info — owner: <name/role>, due: <date or stage trigger>
+
+Required fields per row: headline, mitigation, severity, owner, due (critic F5 floor). Severity taxonomy from `vibe-task-briefs` (critical/high/medium/low/info). The optional confidence tag (`Verified` / `Hypothesis` / `Weak`, from `vibe-toc-constraint-diagnosis`) may trail the row for high-stakes risks — omit when obvious.
+
+Seed sources: the `devils-advocate`'s sharpest vector (already mirrored in §6.1 abuse cases — duplicate the *product-level* risk here, the security angle lives in §6.1); analyst `−` matrix cells from the ideation pass; `researcher` gaps flagged `NEEDS_PROOF`. A risk with severity `critical`/`high` MUST have a concrete mitigation, not «monitor».
+
+Floor: 0 rows is valid when the ideation suite was skipped (easy depth) and the deep-dive surfaced nothing material — write `<!-- N/A: no material risks surfaced — easy depth, deep-dive only -->` rather than fabricate. At medium/hard, ≥1 risk row is expected. -->
+
+- [ ] **<risk>** — mitigation: <X>. — severity: high — owner: <name/role>, due: <date or stage>
+
+## 10. Assumptions
+
+<!-- instruction: stated-but-unconfirmed inputs that the spec depends on — NOT open questions (§8) and NOT risks with a mitigation (§9). This is where the easy-depth «assumptions ledger» and the medium/hard `ASSUMPTION`-tagged research claims land and persist (previously a transient runtime artifact). Format:
+
+- **<assumption>** — source: user | research | assumption | prior-artifact — confidence: high | medium | low
+
+Required fields per row: the assumption statement, source, confidence (critic F5 floor). Source taxonomy from `kanrun-artifact-contracts.md`: `user` = stated in the interview; `research` = `researcher`/web output; `assumption` = inferred by the skill from context (the easy-depth ledger); `prior-artifact` = read from a memory file or upstream doc. Confidence drives the critic F9 provenance check.
+
+Seed sources: the easy-depth assumptions ledger; `researcher` rows tagged `ASSUMPTION`/`NEEDS_PROOF` (from the evidence labels in [`../references/ideation.md`](../references/ideation.md)); any §1 ¶3 claim tagged `ASSUMPTION`. An assumption with `confidence: high` is a candidate for promotion to §1/§2 fact once its evidence arrives.
+
+Floor: 0 rows is valid when every spec input is `USER_CONFIRMED`. At `easy` depth ≥1 row is expected (the chosen-approach assumption if nothing else). -->
+
+- **<assumption>** — source: assumption — confidence: medium
