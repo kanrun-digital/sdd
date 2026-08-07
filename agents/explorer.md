@@ -6,7 +6,7 @@ description: >
   where similar features live, the migration/test conventions — or when fix needs a reported
   symptom localized to its code path. Returns a concise structured map (or file:line root-cause
   candidates); it locates and summarizes, it does not edit, review, or design.
-model: haiku
+model: inherit
 effort: low
 color: blue
 tools: Read, Grep, Glob, Bash

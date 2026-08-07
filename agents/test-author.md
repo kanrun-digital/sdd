@@ -6,7 +6,7 @@ description: >
   production code exists. Given a task (title, acceptance-criteria text, definition of done,
   files hint), it writes the test(s) where the repo keeps tests for that layer, runs them, and
   reports the first-run classification + the quoted failing line. It never writes production code.
-model: sonnet
+model: inherit
 effort: medium
 color: yellow
 tools: Read, Grep, Glob, Write, Edit, Bash

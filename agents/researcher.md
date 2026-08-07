@@ -7,7 +7,7 @@ description: >
   access (WebSearch/WebFetch) plus the project knowledge-base; returns one cited table (Product · URL ·
   Features · Value · Gap), each row footnoted with date + query. Stays product-level — never names a
   datastore/broker/framework, never invents a competitor to fill the table.
-model: sonnet
+model: inherit
 effort: medium
 color: orange
 tools: Read, Grep, Glob, WebSearch, WebFetch

@@ -5,7 +5,7 @@ description: >
   detect cross-section drift, coherence damage from user edits, structural gaps, and constraint/
   quality leaks the per-section walk could not see. Read-only; reads the upstream artifacts itself;
   emits cited findings only. It judges coherence, it does not propose new design.
-model: opus
+model: inherit
 effort: high
 color: magenta
 tools: Read, Grep, Glob

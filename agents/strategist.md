@@ -7,7 +7,7 @@ description: >
   picks an approach from real options, not the first one that came to mind. Read-only; returns three
   approaches, each with Name · Thesis · For-whom · Outcome-metric · Key-trade-off · Effort-signal.
   Stays product-level — no datastore/broker/framework names; that's design.
-model: opus
+model: inherit
 effort: high
 color: pink
 tools: Read, Grep, Glob

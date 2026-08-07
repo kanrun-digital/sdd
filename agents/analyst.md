@@ -7,7 +7,7 @@ description: >
   user. Read-only; returns one 3×3 synthesis matrix (lens × approach) scored +/0/− with ≤6-word
   justifications. The Engineer lens stays abstract (latency/complexity/integration surface), never
   product or library names.
-model: opus
+model: inherit
 effort: high
 color: purple
 tools: Read, Grep, Glob

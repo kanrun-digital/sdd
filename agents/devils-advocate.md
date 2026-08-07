@@ -7,7 +7,7 @@ description: >
   raw idea + candidate approaches — used by specify's ideation pass (medium/hard) to find how it fails
   in production (attack vectors with monitoring/churn/incident signals). Read-only; reads its inputs
   itself; emits cited findings. It surfaces problems, it does not resolve them.
-model: opus
+model: inherit
 effort: high
 color: red
 tools: Read, Grep, Glob
