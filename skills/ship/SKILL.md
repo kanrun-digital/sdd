@@ -33,18 +33,42 @@ The implementer (drives) + the reviewer who signed off in `review`.
 ## Protocol
 
 1. **Final verification — does it actually work.** Re-run the detected gate (unit + integration where available + lint + vet). Then **run the feature for real** against its acceptance criteria — not just "tests pass": start the app / hit the endpoint / exercise the flow and observe the spec's outcomes (e.g. the default-on read returns defaults; an invalid value is rejected). Concretely: **spot-check at least 3 of the most critical §5 AC outcomes** (fewer only if the spec has fewer; scale the count with the feature's breadth), and for each name the AC id + the behaviour actually observed — «AC-03: posted the same apply twice → one discount row» — so the verification is checkable, not a vibe. If the app can't be run here (no runtime, no Docker), say so explicitly and record what was verified vs deferred — never claim verified-working when only tests compiled.
-2. **Write the changelog / KB note.** From [`./templates/changelog.md`](./templates/changelog.md): what changed, why (link spec + the key ADRs), any migration/operational note (e.g. "adds migration 000023 — run it on deploy"), and how to use it. Partner-facing if the change is partner-facing.
-3. **Prepare the PR.** Ensure the work is on a feature branch (not the default branch). Draft the PR body from [`./templates/pr-body.md`](./templates/pr-body.md): summary, the AC it satisfies, links to spec/sad/ADRs, the `SDD-Task` commit list, the test + verification evidence, and any migration/rollback note.
-4. **Detect the forge + propose the PR command.** Inspect the remote: `github.com` → `gh pr create`; `gitlab.com`/self-hosted GitLab → `glab mr create`; otherwise print the branch + body for manual creation. **Propose** the command — do not run a push/PR to a shared remote without the user's go-ahead, and never merge to main.
-5. **Update the roadmap.** Move this feature's item to **Shipped** in `docs/roadmap.md` (via `roadmap`) — date + outcome + link to the feature folder + the PR/changelog — and remove it from **Now**. This is the anti-drift hook: delivery itself keeps the roadmap current. (No roadmap yet → skip; it's optional.)
-6. **Summary (terminal handoff).** **Emit the stage-handoff block** per [`../_shared/handoff.md`](../_shared/handoff.md) (terminal variant) — *What I did* (verification result: verified-working / what was deferred and why; the roadmap update) + *Review* (the changelog path + the PR) + *Run next* = **Done**: the PR command (or URL if the user ran it) — merging to main is your call; there is no `/sdd` successor.
+   - **G1 — Numeric-NFR gate (W1, the perf-incidents fix).** For each `spec.md §6` NFR row that carries a number (latency / throughput / availability / accuracy), require **either** (a) a passing load-test result from `test-plan.md`'s load tier (cite the run), **or** (b) an explicit deferral recorded in `spec.md §8` with owner + due + a measurement plan — **before** the PR command is proposed. An NFR that has never been measured cannot silently ship; the gate forces a conscious "defer with a plan" over "forget".
+   - **G2 — Deferred-findings resurface gate (W7).** Grep the latest review record (`docs/features/<slug>/_review/review-<date>.md`) for `Defer` verdicts. Each deferred finding is surfaced in **one** `AskUserQuestion` batch — for each: **Resolved since review** (cite the fix) / **Accept the risk and ship** (records a §1 ¶4 Override-style acceptance in the changelog) / **Block** (do not propose the PR; back to `implement`). A deferred finding that the user never sees again is the silent-debt-ship bug.
+   - **G3 — Release-gates checklist (W6, conditional).** If the feature carries a **migration**, **a breaking `contracts/openapi.yaml` change**, **a `sad.md` §11 High/Critical risk row**, or **a declared feature flag** → walk the 4-gate release checklist in [`./references/release-gates.md`](./references/release-gates.md) (feature-flag plan / rollback procedure / observability checklist / smoke-test-in-prod plan) in one `AskUserQuestion` batch. Each gate is either confirmed (plan named) or explicitly N/A'd with a reason — a blank is a blocker. If none of the risk signals hold, skip and state the skip in the handoff.
+   - **G5 — `tdd: false` / NON-red integration warning (W2-lite).** If `tasks/tracker.md` (or the implement record) shows any task committed with integration tier NON-red, **and** there is no evidence CI ran the integration tier (e.g. a CI status check in the PR body, a green CI run link) → emit a non-blocking warning in the handoff: *«⚠ integration tests were NON-red locally; verify CI ran the integration tier before merge»*. Does not block the PR — CI may be external/scheduled — but makes the gap visible.
+2. **Emit the `ship-gate-result` JSON (G4).** After the gates, emit a machine-readable verdict to the review record (and the handoff). Schema lifted verbatim from `vibe-saas-qa-security`'s `vibe-gate-result` so it composes with the broader tooling:
+   ```json
+   {
+     "schema_version": 1,
+     "gate": "ship",
+     "status": "passed",
+     "blocking": false,
+     "blockers": [],
+     "nfr_status": [{"nfr": "p95 ≤ 250ms", "state": "measured|deferred", "evidence": "<run-ref or §8-row>"}],
+     "release_gates": {"feature_flag": "confirmed|n/a", "rollback": "...", "observability": "...", "smoke_in_prod": "..."},
+     "deferred_findings": [{"finding": "<headline>", "verdict": "accepted-risk|resolved", "ref": "<review-row>"}],
+     "affected_files": [],
+     "suggested_next": {"action": "open-PR", "command": "<the proposed PR command>"}
+   }
+   ```
+   `status: "passed"` iff `blockers` is empty. A non-empty `blockers` array means the PR command is **not proposed** — list each blocker with its gate. The verdict is the machine-checkable companion to the prose handoff; downstream automation (and the user) can read either.
+3. **Write the changelog / KB note.** From [`./templates/changelog.md`](./templates/changelog.md): what changed, why (link spec + the key ADRs), any migration/operational note (e.g. "adds migration 000023 — run it on deploy"), and how to use it. Partner-facing if the change is partner-facing. **Populate the `Feature flag` / `Rollback` / `Operational note` fields from the release-gates output (G3) — they are no longer fill-ins when the gates ran.**
+4. **Prepare the PR.** Ensure the work is on a feature branch (not the default branch). Draft the PR body from [`./templates/pr-body.md`](./templates/pr-body.md): summary, the AC it satisfies, links to spec/sad/ADRs, the `SDD-Task` commit list, the test + verification evidence, and any migration/rollback note.
+5. **Detect the forge + propose the PR command.** Inspect the remote: `github.com` → `gh pr create`; `gitlab.com`/self-hosted GitLab → `glab mr create`; otherwise print the branch + body for manual creation. **Propose** the command — do not run a push/PR to a shared remote without the user's go-ahead, and never merge to main. **If `ship-gate-result.status ≠ "passed"`, do not propose the PR command** — surface the blockers instead and route back to `implement` / the user.
+6. **Update the roadmap.** Move this feature's item to **Shipped** in `docs/roadmap.md` (via `roadmap`) — date + outcome + link to the feature folder + the PR/changelog — and remove it from **Now**. This is the anti-drift hook: delivery itself keeps the roadmap current. (No roadmap yet → skip; it's optional.)
+7. **Summary (terminal handoff).** **Emit the stage-handoff block** per [`../_shared/handoff.md`](../_shared/handoff.md) (terminal variant) — *What I did* (verification result: verified-working / what was deferred and why; the roadmap update; **gate verdict: `passed`/`blocked (N blockers)`**) + *Review* (the changelog path + the PR + the `ship-gate-result` JSON) + *Run next* = **Done**: the PR command (or URL if the user ran it) — merging to main is your call; there is no `/sdd` successor.
 
 ## Definition of Done
 
 - The gate was re-run and the feature was exercised against its AC (or the deferral was stated explicitly with the reason).
-- A changelog / KB note exists, linking spec + ADRs.
+- **Every numeric `spec.md §6` NFR is either measured (cited run) or deferred with owner+due+plan (G1).**
+- **Every deferred review finding is either resolved, risk-accepted, or blocking (G2).**
+- **The release-gates checklist ran (or was explicitly skipped with a reason) when a risk signal held (G3).**
+- **A `ship-gate-result` JSON was emitted; `status: "passed"` before the PR command is proposed (G4).**
+- A changelog / KB note exists, linking spec + ADRs; the flag/rollback/operational fields are populated when the gates ran.
 - A PR body is prepared and the forge-appropriate PR command proposed (work on a feature branch; main untouched).
-- The run-the-feature verification (real run against the ACs, not just green tests) is this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)); its result is reported in the handoff.
+- The run-the-feature verification (real run against the ACs, not just green tests) + the gate-result JSON together are this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)); its result is reported in the handoff.
 
 ## Anti-patterns
 
@@ -53,8 +77,12 @@ The implementer (drives) + the reviewer who signed off in `review`.
 - **Auto-merging to main / pushing to a shared remote unasked.** Propose the PR; the merge is the team's call.
 - **A changelog that restates the diff.** Say what changed and why (link the spec + ADR), plus the operational note (migrations, flags) — not a file list.
 - **Forgetting the migration/rollback note** when the change includes one — the deployer needs it.
+- **Proposing the PR while `ship-gate-result.status = "blocked"`.** Blockers exist to block — surface them and route back, don't wave through with a "will-fix-later".
+- **Letting a numeric NFR ship unmeasured and undeferred.** "We'll check perf in prod" is not a deferral — a deferral has an owner, a due date, and a measurement plan in §8.
+- **Silently skipping the release-gates checklist** when a migration / breaking API change / High §11 risk is present. The skip is valid only with a stated reason for each gate.
 
 ## References & template
 
+- [`./references/release-gates.md`](./references/release-gates.md) — the conditional 4-gate release checklist (feature-flag / rollback / observability / smoke-in-prod) that fires when a migration, breaking API change, or High §11 risk is present.
 - [`./templates/changelog.md`](./templates/changelog.md) — changelog / KB-note scaffold.
 - [`./templates/pr-body.md`](./templates/pr-body.md) — PR description scaffold.
