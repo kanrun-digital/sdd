@@ -118,3 +118,17 @@ records "deviation by ADR-NNNN".
 - **URL** versioning (`/api/v1/...`) — never a `?v=2` query param.
 - **BearerAuth** global; a public endpoint declares explicit `security: []`.
 - `$ref` mandatory for shared schemas; placeholder data only in `example` blocks (no real PII).
+- **Rate-limiting (conditional — W4).** When `spec.md §6.1` abuse cases name a rate-limit-relevant signal (spam-create, resource-exhaustion, scraping, brute-force), the contract models it: every rate-limited operation carries a **`429 Too Many Requests`** response with a **`Retry-After`** header (seconds), and optionally `X-RateLimit-Limit` / `X-RateLimit-Remaining` / `X-RateLimit-Reset` headers. Lifted from `vibe-saas-security` security defaults + `vibe-api-backend-patterns`. Gate it like idempotency (gated by an async-actor signal) — a spec with no abuse-case signal skips this default. An operation that should be rate-limited but isn't modelled is a drift flag.
+- **Business-error → HTTP status matrix (W4).** Replaces the loose «map status by class (4xx/5xx)» rule with a documented convention. Soft — an ADR overrides per-operation:
+  | Business error | HTTP | Notes |
+  |---|---|---|
+  | conflict on a unique-violation / duplicate | 409 | not 422 — the input is valid, the state conflicts |
+  | validation failure (malformed/invalid field) | 422 | not 400 — the request body parsed; semantic validation failed |
+  | malformed request (won't parse, missing required param) | 400 | |
+  | resource not found (and caller is authorized to know it exists) | 404 | |
+  | resource not found but existence must be hidden (spec says hide-existence) | 404 | never 403 — 403 leaks existence |
+  | unauthenticated (no/invalid token) | 401 | |
+  | authenticated but lacking permission | 403 | only when existence is not secret |
+  | rate-limited | 429 | with `Retry-After` (see above) |
+  | upstream/timeout / unexpected server fault | 5xx | never leak the stack — `{code, message}` envelope only |
+  The drift check flags an operation whose responses list a status inconsistent with this table without a justifying ADR.
