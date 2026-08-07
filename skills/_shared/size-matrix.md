@@ -85,6 +85,7 @@ schema change still runs `data-model` — on every route.
 | `data-model` | **no schema change** — no new entity, column, index, or migration | `sequences`' handoff |
 | `api` | **no contract change** — no new/changed endpoint, event, CLI command, or public signature (the skill also self-skips on «no external interface»). `api` **accepts a legally-skipped `data-model`** (no schema change) — it derives from the existing schema; its hard gate fires only when a schema change exists | `data-model`'s handoff |
 | `plan-tests` | never fully skipped — it **collapses to the inline `## Test plan`** in `spec.md` (cheap; always inline on `quick`); skip entirely only when every task's DoD already names its test | `tasks`' handoff |
+| `refine` | **always optional** — it is the opt-in *second pass* over the task plan (clean-context re-analysis of the codebase, finding categories, optional `+check` validator). It is **never part of the mandatory backbone** and **never auto-runs**: `tasks`' handoff offers it as the `↳ or /sdd:refine <slug>` alternative (route-resolved: `quick` → mentioned-but-auto-skip; `standard` → offered; `full` for L/XL → recommended). The plan is already implement-ready after `tasks`' step-12 self-check; `refine` is the deeper second iteration for when first-pass wasn't enough. | `tasks`' handoff |
 
 **Never skippable — on any route:** `specify` (the spec is the trace anchor), `design` (declares
 `target_surfaces` + the ADR gate), `tasks` (`implement` consumes `tasks.json`), `implement`,
