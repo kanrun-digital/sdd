@@ -23,7 +23,7 @@
 
 set -euo pipefail
 
-REPO="genkovich/sdd"
+REPO="kanrun-digital/sdd"
 
 log()  { printf '%s\n' "$*"; }
 warn() { printf 'warning: %s\n' "$*" >&2; }
