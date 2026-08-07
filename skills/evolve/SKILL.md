@@ -1,6 +1,6 @@
 ---
 name: evolve
-model: opus
+model: inherit
 effort: high
 agents: []
 description: >

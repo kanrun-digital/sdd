@@ -1,6 +1,6 @@
 ---
 name: design
-model: opus
+model: inherit
 effort: high
 agents: [explorer, critic]
 description: >

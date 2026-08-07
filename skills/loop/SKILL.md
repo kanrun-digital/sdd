@@ -1,6 +1,6 @@
 ---
 name: loop
-model: opus
+model: inherit
 effort: high
 agents: [critic, reviewer]
 description: >

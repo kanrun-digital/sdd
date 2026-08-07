@@ -1,6 +1,6 @@
 ---
 name: classify-size
-model: haiku
+model: inherit
 effort: low
 agents: []
 description: >

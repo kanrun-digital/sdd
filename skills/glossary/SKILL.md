@@ -1,6 +1,6 @@
 ---
 name: glossary
-model: haiku
+model: inherit
 effort: low
 agents: []
 description: >

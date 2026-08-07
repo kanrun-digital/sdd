@@ -1,6 +1,6 @@
 ---
 name: clarify
-model: opus
+model: inherit
 effort: high
 agents: [devils-advocate]
 description: >

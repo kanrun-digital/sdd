@@ -1,6 +1,6 @@
 ---
 name: specify
-model: opus
+model: inherit
 effort: high
 agents: [critic, researcher, strategist, analyst, devils-advocate]
 description: >

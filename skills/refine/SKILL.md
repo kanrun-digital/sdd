@@ -1,6 +1,6 @@
 ---
 name: refine
-model: opus
+model: inherit
 effort: high
 agents: [explorer]
 description: >
