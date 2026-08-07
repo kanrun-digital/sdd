@@ -61,3 +61,17 @@ One `SDD-AC` trailer per AC the task satisfied; the `SDD-Task` trailer ties the 
 **Compile-coupled lane exception.** Tasks in one compile-coupled lane (a shared-contract change + its implementer(s), marked by `tasks` via the shared contract file in `files_hint`) cannot each be committed green alone — the contract change breaks every implementer at compile time. They run **one shared GATE and one commit**: the commit carries an `SDD-Task` trailer **per task** and all of their `SDD-AC` trailers together, and the body names the coupling (e.g. «compile-coupled: T3 interface change + T4 implementation»). This is a sanctioned exception to task-scoped commits, not a license to batch unrelated tasks.
 
 In parallel modes the **lead serializes commits in dependency order** even though the work happened concurrently — the history stays linear and bisectable.
+
+## WHOLE-FEATURE gate — before handing off to review (W2-adjacent)
+
+The per-task GATE proves each task green in isolation. It does **not** prove the tasks compose: task T2's change can break T1's test if they touch different files (T2 changed a shared helper's signature; T1's test imports it), and T2's own GATE wouldn't catch that because T2's test doesn't exercise T1's path.
+
+After **all** tasks are committed, run **one whole-feature gate** before emitting the handoff to `review`:
+
+1. Run the **full suite end-to-end** (unit + integration + lint + vet) on the final HEAD of the feature branch — not just the files the last task touched.
+2. If any test that was green at its task's GATE is now red, that's a cross-task regression — fix it (re-enter the TDD loop for the responsible task) before handing off. Do **not** defer it to `review` — `review` is read-only (it doesn't run tests), so a red suite at review means a loop-back to `implement` that could have been caught here for free.
+3. Record the whole-feature gate result in `tracker.md` (one line: `whole-feature gate: <unit/integration/lint/vet counts> at <commit>`).
+
+This is cheap insurance against the most common multi-task integration failure, and it keeps `review` focused on the diff's correctness rather than on «why is this green task now red».
+
+**Interaction with `require_integration: auto` + NON-red.** If the whole-feature gate runs with integration tier NON-red (Docker absent locally), surface that explicitly in the handoff — `ship`'s G5 warning depends on this signal being visible. The bet is still that CI runs the integration tier; the whole-feature gate makes that bet explicit rather than silent.
