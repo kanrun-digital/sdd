@@ -35,6 +35,7 @@ Decision author (usually the Architect or Tech Lead). A reviewer (Tech Lead, plu
 - `<title>` — kebab-case, describes the **decision**, not the problem (`time-sortable-ids`, not `id-strategy`).
 - The decision itself + its alternatives — pulled from `sad.md` §4 Solution strategy / §9 ADR index / §11 Risks, or supplied by the user.
 - **Input gate (soft).** Expects `docs/features/<slug>/` to exist, ideally with `sad.md` (decide-adr reads its §4/§9/§11 for context and drivers). If the decision is genuinely standalone — no feature folder yet — allow it, but **note the missing design context** in the ADR's Context section and warn the user, rather than refusing.
+- (Optional, project-level override) `docs/.skill-context/sdd-decide-adr/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

@@ -6,7 +6,7 @@ agents: []
 description: >
   Use to self-improve the SDD skills for the current repo by mining fix-records (_fixes/) and
   review-records (_review/) for recurring prevention points, and writing compact project-specific
-  rules to docs/.skill-context/<skill>/SKILL.md that override each skill's defaults (same priority
+  rules to docs/.skill-context/sdd-<skill>/SKILL.md that override each skill's defaults (same priority
   as nested CLAUDE.md). Cursor-based incremental processing — only new fixes/reviews since the last
   run are analyzed (plus a tail-5 overlap window). Triggers on "evolve skills", "learn from fixes",
   "evolve {skill}", "evolve", "навчись з фіксів", "покращ скіли по ревʼю". Never edits the
@@ -36,17 +36,17 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
   - `docs/features/*/_review/review-*.md` — review-records (findings with verdicts Fix/Defer/Not-an-issue + the gate result). Recurring review findings are systemic skill gaps.
   - `docs/features/*/sad.md` §9 Risks + §10 Assumptions — known risks/debts that a skill should heed.
   - `docs/features/*/adr/NNNN-*.md` — Accepted ADRs (architectural constraints a skill must respect).
-- `docs/.skill-context/<skill>/SKILL.md` — the previously-accumulated rules (read for stale-rule detection + gap analysis). Created by `evolve` on first run per skill.
+- `docs/.skill-context/sdd-<skill>/SKILL.md` — the previously-accumulated rules (read for stale-rule detection + gap analysis). Created by `evolve` on first run per skill.
 - `docs/.loop/evolve-cursor.json` — incremental processing cursor.
 
 ## Critical: never edit built-in skills directly
 
-**NEVER modify any files inside `skills/sdd-*/` (the installed skill directories).** All files there are owned by the SDD install (`install.sh` / the plugin marketplace) and will be **overwritten on the next update** — any direct edit is lost. **ALL improvements go to `docs/.skill-context/<skill>/SKILL.md`** — the project-owned override target. This is the only correct target for built-in-skill improvements. No exceptions. (Custom skills the user authored outside `sdd-*` may be edited directly — but `evolve`'s default target is always skill-context.)
+**NEVER modify any files inside `skills/sdd-*/` (the installed skill directories).** All files there are owned by the SDD install (`install.sh` / the plugin marketplace) and will be **overwritten on the next update** — any direct edit is lost. **ALL improvements go to `docs/.skill-context/sdd-<skill>/SKILL.md`** — the project-owned override target. This is the only correct target for built-in-skill improvements. No exceptions. (Custom skills the user authored outside `sdd-*` may be edited directly — but `evolve`'s default target is always skill-context.)
 
 ## Two-layer learning model
 
 1. **Raw evidence** (`_fixes/*.md`, `_review/*.md`, §9/§10, ADRs) — the source material, scoped per feature.
-2. **Skill-context rules** (`docs/.skill-context/<skill>/SKILL.md`) — the compact, reusable output, scoped repo-wide.
+2. **Skill-context rules** (`docs/.skill-context/sdd-<skill>/SKILL.md`) — the compact, reusable output, scoped repo-wide.
 
 `evolve` is the **primary raw-evidence analyzer**. Skills (`tasks`, `implement`, `refine`, …) **prefer skill-context first** at startup; raw evidence is fallback context only (a skill may read a small targeted subset of `_fixes/` when refining around a known recurring issue, but never the full history by default). Force a full re-analysis by resetting the cursor (delete `evolve-cursor.json`) and re-running `evolve`.
 
@@ -74,7 +74,7 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 7. **Generate + present + apply improvements.**
    - **Generate** one rule per gap (one prevention point = one rule; preserve concrete formats/patterns verbatim from the evidence; traceable to a fix/review/ADR/convention; minimal, focused, no generic advice). Quality rules → [`./templates/skill-context.md`](./templates/skill-context.md).
    - **Present** the evolution report (per-skill: target path, N rules, each with Source/Why/Rule). `AskUserQuestion`: Yes-apply-all / Let-me-pick (batches ≤4) / No-just-save-report. **Do not apply until the user answers.**
-   - **Apply** approved improvements: `mkdir -p docs/.skill-context/<skill>`; create or update `SKILL.md` per the template (update existing rule on same topic / add new / merge narrow rules into a broader one); update the `> Last updated:` + `> Based on:` header lines; **NEVER edit `skills/sdd-*/`**; if a skill-context file ends up rule-less (only header), delete it + its dir.
+   - **Apply** approved improvements: `mkdir -p docs/.skill-context/sdd-<skill>`; create or update `SKILL.md` per the template (update existing rule on same topic / add new / merge narrow rules into a broader one); update the `> Last updated:` + `> Based on:` header lines; **NEVER edit `skills/sdd-*/`**; if a skill-context file ends up rule-less (only header), delete it + its dir.
 8. **Save evolution log + advance cursor.** Write `docs/.loop/evolutions/<YYYY-MM-DD-HHMM>.md` (intelligence summary + improvements applied + patterns identified). **Cursor update:** new patches processed + improvements applied → advance cursor to newest «New» file per type; new patches + NO improvements applied → do NOT advance by default, ask the user (recommended: keep unchanged to allow reruns); execution failure before finalize → do NOT advance. Append the run to the cursor's history.
 9. **Handoff.** Emit the stage-handoff block per [`../_shared/handoff.md`](../_shared/handoff.md) (utility variant — `/clear` optional): *What I did* (skills improved, rules applied, cursor advanced Y/N) + *Review* (the skill-context files, the evolution log) + *Run next*: resume the backbone, or run `review` on recent code to verify the new rules land. Suggest re-running `evolve` after 5-10 more fixes.
 
@@ -84,7 +84,7 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 - Stale rules (Case A/B/C) were surfaced + resolved before gap analysis — step 5 completed (or skipped on no stale rules).
 - Gap analysis checked each prevention point × each target skill independently (not per-fix).
 - Every applied rule is traceable to a fix/review/ADR/convention; no generic advice («write clean code» is not a rule).
-- All improvements landed in `docs/.skill-context/<skill>/SKILL.md` — zero edits to `skills/sdd-*/`.
+- All improvements landed in `docs/.skill-context/sdd-<skill>/SKILL.md` — zero edits to `skills/sdd-*/`.
 - The cursor reflects the run accurately (advanced only when new patches + improvements applied).
 - The evolution log exists; the skill-context files are written in English.
 - The Prevention Point Registry build + the skill-context-only write target are this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)); its result is reported in the handoff.
@@ -109,4 +109,4 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 ## Example invocation
 
 > **User:** «/sdd:evolve fix»
-> **Skill:** target = `fix`. Reads `docs/architecture-map.md` (stack: Node/Prisma/Jest). Cursor: `last_processed_fix = 2026-07-01-double-discount.md`. Globs `_fixes/*.md` → finds 3 new (post-cursor) + tail-5 overlap. Prevention Point Registry: 5 points (2 from `2026-07-15-null-relation.md` — null-check + check-all-usages; 1 from `2026-07-20-unhandled-promise.md` — async-try-catch; 2 from `2026-08-01-prisma-silent-loss.md` — log-prisma-queries + verify-select-vs-findUnique). Stale rules: none (first run for fix). Gaps: all 5 uncovered (base `fix` SKILL.md has none of these). Report: 5 rules for `docs/.skill-context/fix/SKILL.md`. User picks «Yes, apply all». Writes skill-context (English); evolution log `2026-08-07-1305.md`. Cursor advanced to `2026-08-01-prisma-silent-loss.md`. Handoff → resume backbone; re-run after 5-10 more fixes.
+> **Skill:** target = `fix`. Reads `docs/architecture-map.md` (stack: Node/Prisma/Jest). Cursor: `last_processed_fix = 2026-07-01-double-discount.md`. Globs `_fixes/*.md` → finds 3 new (post-cursor) + tail-5 overlap. Prevention Point Registry: 5 points (2 from `2026-07-15-null-relation.md` — null-check + check-all-usages; 1 from `2026-07-20-unhandled-promise.md` — async-try-catch; 2 from `2026-08-01-prisma-silent-loss.md` — log-prisma-queries + verify-select-vs-findUnique). Stale rules: none (first run for fix). Gaps: all 5 uncovered (base `fix` SKILL.md has none of these). Report: 5 rules for `docs/.skill-context/sdd-fix/SKILL.md`. User picks «Yes, apply all». Writes skill-context (English); evolution log `2026-08-07-1305.md`. Cursor advanced to `2026-08-01-prisma-silent-loss.md`. Handoff → resume backbone; re-run after 5-10 more fixes.

@@ -37,6 +37,7 @@ PM + Tech Lead (the spec's co-authors resolve their own ambiguities). PM owns va
 - **Gate (hard-refuse if missing):** `docs/features/<slug>/spec.md`. Absent → STOP and point: «run `specify <slug>` first — clarify sharpens an existing spec, it does not write one».
 - (Optional) `CONTEXT.md` — two-level: read **both** repo-root (project-wide) and `docs/features/<slug>/CONTEXT.md` (feature-scoped; wins on conflict) → [`../glossary/SKILL.md`](../glossary/SKILL.md); if present, `## Glossary` is canonical; an "undefined-term" finding for a word already glossed at either level is a false positive (drop it).
 - **Fast lane (XS/S):** when `specify` produced zero §8 open questions and flagged no ambiguous AC, the skip of this stage is offered by **`specify`'s handoff** (→ the fast lane in [`../_shared/size-matrix.md`](../_shared/size-matrix.md)) — the user takes it there; clarify itself never auto-skips.
+- (Optional, project-level override) `docs/.skill-context/sdd-clarify/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

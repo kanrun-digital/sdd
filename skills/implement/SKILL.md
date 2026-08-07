@@ -30,6 +30,7 @@ Tech Lead drives; the engine runs the cycle. The three subagents ship with the p
 - **Gate (hard refuse):** `docs/features/<slug>/tasks.json`. Missing → «run `tasks <slug>` first».
 - Read for context (the agents read these directly, not via paraphrase): `spec.md` (AC), `data-model.md` + the **staged** migrations under `docs/features/<slug>/migrations/` (a `layer: migration` task **promotes** these into the live `migrations/` tree — see [`./references/inputs.md`](./references/inputs.md)), `contracts/openapi.yaml`, `test-plan.md`, `sad.md`, Accepted `adr/`.
 - Settings: `.claude/sdd.local.md` (auto-created with documented defaults if absent — normally by `specify` at the backbone start; `implement` creates it too if you jump straight here) → [`./references/settings.md`](./references/settings.md).
+- (Optional, project-level override) `docs/.skill-context/sdd-implement/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

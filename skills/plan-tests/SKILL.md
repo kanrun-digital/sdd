@@ -33,6 +33,7 @@ QA + the engineer who will implement the feature (co-authors). QA drives the lev
 - (Optional) `docs/features/<slug>/data-model.md` — the entity shapes tell you what test data to build and what to seed/clean per suite. Read it if present.
 - (Optional) `docs/features/<slug>/sad.md` §6 sequence diagrams — each drawn flow is an e2e candidate; each cross-participant boundary is a contract-test candidate.
 - (Optional) `docs/features/<slug>/.size` — depth hint. Absent → default to M (separate `test-plan.md` file) **and say so loudly in the handoff** — «size M (default — no `.size`; run `/sdd:classify-size <slug>`)».
+- (Optional, project-level override) `docs/.skill-context/sdd-plan-tests/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

@@ -29,6 +29,7 @@ The implementer (drives) + the reviewer who signed off in `review`.
 - `<slug>` — feature slug.
 - **Gate (hard refuse):** a `PASS` review record (`docs/features/<slug>/_review/`) or, at minimum, an implemented + gate-green change. No review yet → «run `review <slug>` first».
 - Read: `spec.md` (what to claim in the changelog), Accepted `adr/` (decisions worth recording), the feature's commits (the `SDD-Task` history).
+- (Optional, project-level override) `docs/.skill-context/sdd-ship/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

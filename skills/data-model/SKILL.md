@@ -35,6 +35,7 @@ Backend Lead.
 - Optional: the sequence diagrams in `sad.md §6` — each `writes/reads <entity>` note is an index candidate (one index per query, justified).
 - (Expected) `sad.md` frontmatter `target_surfaces` — context for which containers persist what. **Absent or empty → warn** («surfaces undeclared — re-run `design`, or proceeding as `backend-service`») **and treat as `[backend-service]`** (→ [`../_shared/surfaces.md`](../_shared/surfaces.md)).
 - **Convention source:** `docs/architecture-map.md` §Migrations (from `survey`) + the `sad.md` persistence decisions (§4/§5/§8) + Accepted ADRs — the migration tool/naming + the DB approach are **derived from here**, not invented (the map also gives module layout, saving a re-scan). For **drift detection** specifically, `explorer` still reads the **actual domain layer** (the map gives layout; drift needs the real struct/field source). Stack-agnostic — no hard-coded path or language.
+- (Optional, project-level override) `docs/.skill-context/sdd-data-model/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Conventions — detect and follow (stack-agnostic)
 

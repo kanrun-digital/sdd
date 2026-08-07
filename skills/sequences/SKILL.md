@@ -34,6 +34,7 @@ Tech Lead (drives the runtime decomposition). The PM confirms that each drawn fl
 - **Strongly expected:** `docs/features/<slug>/spec.md` — §4 user stories tell you *which* flows exist; §5 acceptance criteria are the **coverage floor** — every AC must be shown by a flow, a branch, or an explicit non-runtime N/A (the step-7 coverage check). Present by this stage in the normal pipeline; if genuinely absent, fall back to §6/§5 of `sad.md` for the flow list and note that AC-coverage can't be verified.
 - (Optional) `docs/features/<slug>/.size` — depth hint for *detail* (XS/S may collapse a flow's internal steps), never for *coverage*. Absent → default to M **and say so loudly in the handoff** — «size M (default — no `.size`; run `/sdd:classify-size <slug>`)».
 - (Optional) `.claude/sdd.local.md` `interview_depth` (else medium) — governs only the diagram-confirmation UX (per-diagram prose+ask vs. write+summarize-and-proceed); `sequences` does **not** open its own depth question (it honors the setting, or a `--depth=` arg if passed).
+- (Optional, project-level override) `docs/.skill-context/sdd-sequences/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

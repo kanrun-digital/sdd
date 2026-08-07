@@ -8,7 +8,7 @@ description: >
   whenever a fuzzy word shows up in an interview, spec, or review and you want one
   canonical definition plus a NOT-reference so a homonym can't bite you in six months.
   Triggers on "add term {X}", "what is {X} in our domain", "add to CONTEXT", "fix the
-  glossary", "define {X}", "/sdd:glossary {term}", "додай термін", "онови глосарій",
+  glossary", "define {X}", "glossary {term}", "додай термін", "онови глосарій",
   "що означає {X}". Two-level contract: repo-root CONTEXT.md holds project-wide terms,
   docs/features/{slug}/CONTEXT.md holds feature-scoped ones; readers read both and the
   per-feature entry wins. Lazy-bootstraps the target from a template, checks BOTH levels
@@ -39,6 +39,7 @@ Whoever drives the conversation — anyone who spots ambiguity. Tech Lead approv
 - (Optional) `pending_glossary_terms` — a batch handed over by `specify` after it writes the spec. Process each term in turn.
 - (Optional) an `undefined-term` finding from `clarify` — `clarify` invokes this skill **mid-stream**, one term at a time, the moment such a finding is Resolved (it never invents a meaning inline; the canonical definition lands here).
 - (Optional) proposed phrasings already surfaced in an interview/brainstorm — offer them as definition options instead of asking blank.
+- (Optional, project-level override) `docs/.skill-context/sdd-glossary/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

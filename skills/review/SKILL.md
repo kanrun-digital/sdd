@@ -29,6 +29,7 @@ Tech Lead / a reviewer who did **not** write the code (independence is the point
 - `<slug>` — feature slug.
 - **Gate (hard refuse):** an implemented change must exist (commits on the feature branch, or a non-empty working diff). Nothing to review → «run `implement <slug>` first».
 - Read for the review baseline — the **whole AC chain**, so the trace can be checked end-to-end: `docs/features/<slug>/spec.md` §5 (the full AC set — the source of truth, not the diff's trailers), `sad.md` §6 (the sequence flows/branches each AC should appear in), `data-model.md` / `contracts/openapi.yaml` / Accepted `adr/` (the contracts the code must honour), `test-plan.md` (the AC→test map, if a separate file), and `tasks.json` (which AC each task claimed).
+- (Optional, project-level override) `docs/.skill-context/sdd-review/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

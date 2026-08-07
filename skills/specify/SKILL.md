@@ -37,6 +37,7 @@ PM + Tech Lead (co-authors). PM drives goals / non-goals / KPIs; Tech Lead drive
 - (Optional) `CONTEXT.md` — the two-level glossary: read **both** repo-root (project-wide) and `docs/features/<slug>/CONTEXT.md` (feature-scoped); per-feature wins on conflict → [`../glossary/SKILL.md`](../glossary/SKILL.md). If present, its roles/terms are canonical and override anything that contradicts them.
 - `docs/features/<slug>/.size` — depth hint (MVP vs Full per the size matrix). **Read if present; established here if absent** (step 1 classifies + writes it), so downstream stages never silently default to M. `classify-size` re-classifies when scope changes.
 - (Optional) prior notes / a reference module / a ticket the user already has.
+- (Optional, project-level override) `docs/.skill-context/sdd-specify/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

@@ -6,7 +6,7 @@
 
 ## Skill-context file scaffold
 
-**Path:** `docs/.skill-context/<skill-name>/SKILL.md` (e.g. `docs/.skill-context/fix/SKILL.md`).
+**Path:** `docs/.skill-context/sdd-<skill-name>/SKILL.md` (e.g. `docs/.skill-context/sdd-fix/SKILL.md`).
 
 Create the directory if needed (`mkdir -p`). If the file exists, READ it first, then for each improvement: **update** an existing rule on the same topic (strengthen it, add to its Source list), **add** a new rule (no existing topic match), or **merge** narrow rules into a broader one (only if every prevention point is preserved). Update the `> Last updated:` and `> Based on:` header lines after every change.
 
@@ -39,8 +39,8 @@ Create the directory if needed (`mkdir -p`). If the file exists, READ it first, 
 
 **Cleanup:** if applying improvements (or stale-rule removals in step 5) leaves a skill-context file with no rules (only the header remains), delete the file AND its directory:
 ```
-rm docs/.skill-context/<skill-name>/SKILL.md
-rmdir docs/.skill-context/<skill-name>   # only if empty
+rm docs/.skill-context/sdd-<skill-name>/SKILL.md
+rmdir docs/.skill-context/sdd-<skill-name>   # only if empty
 ```
 
 ---

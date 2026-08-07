@@ -39,6 +39,7 @@ Architect / Tech Lead (drives everything). PM is consulted only on §10 Quality 
 - (Optional) `docs/features/<slug>/.size` — depth hint (MVP vs Full + expected ADR count per the size matrix). Absent → default to M (full set) **and say so loudly in the handoff** — «size M (default — no `.size`; run `/sdd:classify-size <slug>`)».
 - A git repo — so the Step-3 Explore subagent can read code on a brownfield.
 - Skip if `sad.md` already has all 12 sections filled AND `adr/` has ≥1 file — suggest review instead.
+- (Optional, project-level override) `docs/.skill-context/sdd-design/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

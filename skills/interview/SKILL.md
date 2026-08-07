@@ -35,6 +35,8 @@ The depth dial and the Socratic posture are SDD-wide:
 
 ## Depth dial — set this first
 
+(Optional, project-level override) `docs/.skill-context/sdd-interview/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
+
 One `AskUserQuestion`, then commit (**default medium**). The dial is SDD-wide; interview's
 delta — the **3–4 / 6–10 / 10–15** question budget per level and each level's posture — is the
 canonical `interview` row in [`../_shared/interview-depth.md`](../_shared/interview-depth.md)

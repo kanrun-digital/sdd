@@ -31,8 +31,9 @@ The engineer on the bug (drives). PM / Tech Lead is consulted only when triage l
 
 - `<slug>` — optional; pass it when you know which feature owns the bug, otherwise step 2 finds it from the symptom.
 - The bug report, in any form — a sentence, a stack trace, a failing request, a screenshot description.
-- **Soft gate (never hard-refuse):** `docs/features/` with ≥1 `spec.md`. Absent (a brownfield repo that never ran the backbone) → still run, in **no-spec mode**: steps 1 → 3 → 4 → record, skip the spec patch, and recommend `/sdd:survey` in the handoff.
+- **Soft gate (never hard-refuse):** `docs/features/` with ≥1 `spec.md`. Absent (a brownfield repo that never ran the backbone) → still run, in **no-spec mode**: steps 1 → 3 → 4 → record, skip the spec patch, and recommend `survey` in the handoff.
 - (Optional) `.claude/sdd.local.md` — gate command overrides; otherwise the commands are detected per `implement`'s cascade.
+- (Optional, project-level override) `docs/.skill-context/sdd-fix/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 No depth dial and no `.size` here — a fix is one size, and the interview is the bug report itself.
 
@@ -78,5 +79,5 @@ No depth dial and no `.size` here — a fix is one size, and the interview is th
 
 ## Example invocation
 
-> **User:** «/sdd:fix — discounts are applied twice when the user clicks pay twice fast»
+> **User:** «fix — discounts are applied twice when the user clicks pay twice fast»
 > **Skill:** intake confirms: expected one discount per order, got two on a double-click (all users, since the checkout-discounts release). Trace: `docs/features/checkout-discounts/spec.md` AC-04 says «a discount is applied to an order at most once» → the code violates it → **regression**. `explorer` localizes the apply-discount handler (no idempotency check). RED: an integration test posting the same apply twice asserts one discount row — fails with `got 2, want 1` (GOOD red). GREEN: guard on the existing uniqueness key; gate clean. Spec: nothing to patch (AC-04 was right). Record `_fixes/2026-06-12-double-discount.md`; commit `fix: checkout-discounts double-applied discount` + `SDD-Fix:` / `SDD-AC: AC-04` trailers. Handoff: 2 files touched → no review push; resume.
