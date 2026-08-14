@@ -407,6 +407,25 @@ def main() -> int:
               f"skill '{base}' emits the stage-handoff block (the literal phrase is present)",
               f"skill '{base}' SKILL.md never says 'stage-handoff block' — every stage must end with «emit the stage-handoff block per _shared/handoff.md»")
 
+    # --- the handoff contract covers every skill (not just carries the phrase) ---
+    # The check above proves a skill SAYS «stage-handoff block». It does not prove the contract
+    # knows what that skill should put in the block. _shared/handoff.md's canonical-sequence table
+    # is the single source for the review-files column and the next command; a skill missing from
+    # it has to improvise both, which is the duplication the file's own Discipline section forbids.
+    # Five skills (evolve, interview, loop, refine, start) had drifted out of the table exactly
+    # that way — each had grown its own inline version, and `start` had no guidance at all.
+    print("== handoff coverage ==")
+    handoff_md = (ROOT / "skills" / "_shared" / "handoff.md").read_text()
+    seq = handoff_md[handoff_md.index("## Canonical sequence"):handoff_md.index("## Discipline")]
+    tabled = set(re.findall(r"^\| `([a-z-]+)`", seq, re.M))
+    for skill_md in skill_specs:
+        base = skill_md.parent.name
+        check(base in tabled,
+              f"skill '{base}' has a row in the handoff canonical-sequence table",
+              f"skill '{base}' is missing from the canonical-sequence table in "
+              f"_shared/handoff.md — add a row naming the files to review and the next command, "
+              f"so the skill does not improvise its own handoff content")
+
     # --- every skill verifies its own output (the structural self-check contract) ---
     # _shared/self-check.md defines the contract; every SKILL.md either runs a named checklist
     # or maps its heavy verifier (critic/reviewer/drift/mermaid/GATE) onto it — the literal

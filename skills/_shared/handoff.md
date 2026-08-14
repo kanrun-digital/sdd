@@ -58,7 +58,7 @@ Rules for filling it:
   then surfaces at this gate, not three stages later. A missing `.route` always means `standard`
   (the pre-route behaviour — fully back-compatible). (`specify` establishes both at the start, so
   this should be rare.)
-- **Review before continuing** — list **every artifact this stage wrote or changed**. Give each one
+- **Review before continuing** — list **every artifact this stage wrote or changed**. Two skills write nothing (`interview`, `start`): they say so in one line and point at the printed output instead, rather than omitting the section. Give each one
   a real `docs/features/<slug>/…` path (or a repo-root path like `docs/architecture-map.md`) plus a
   one-liner on what to eyeball. This *is* the per-gate review checklist.
 - **Run next** — the next command in **`/sdd:<name> <slug>`** form inside a fenced code block. The
@@ -75,7 +75,7 @@ Rules for filling it:
 
 - **Backbone forward handoff** (`survey → … → review → ship`): `/clear` mandatory + the next stage.
 - **Route-resolved forward handoff** (a backbone stage whose successor is an *optional* stage —
-  `specify`, `clarify`, `design`, `sequences`, `data-model`, `tasks`): before you print *Run next*,
+  `specify`, `clarify`, `design`, `sequences`, `data-model`, `tasks`, `refine`): before you print *Run next*,
   resolve the next stage per `docs/features/<slug>/.route` and the Routes table in
   [`size-matrix.md`](./size-matrix.md):
   - **`quick`** — evaluate the next optional stage's N/A condition yourself. Does it hold? Then
@@ -92,7 +92,8 @@ Rules for filling it:
 - **Terminal** (`ship`): there is no `/sdd` successor. *Run next* becomes **Done**: the PR
   command/URL + «merging to main is your call». Still print *What I did* + *Review* (the changelog
   + PR).
-- **Utility** (`classify-size`, `glossary`, `decide-adr`, `roadmap`, `fix`): called ad-hoc, not a
+- **Utility** (`classify-size`, `glossary`, `decide-adr`, `roadmap`, `fix`, `interview`, `loop`,
+  `evolve`, `start`): called ad-hoc, not a
   gate. `/clear` is **optional**. Recommend it only if the context is large. *Run next* = «resume
   your backbone stage». Name the likely one (e.g. `/sdd:design <slug>`). Print *What I did* +
   *Review* (the one file it wrote). One exception: `fix` alone adds a **conditional**
@@ -120,6 +121,11 @@ Rules for filling it:
 | `decide-adr` | `adr/NNNN-<title>.md` | resume — `/sdd:tasks <slug>` or `/sdd:plan-tests <slug>` |
 | `roadmap` | `docs/roadmap.md` | resume your backbone stage |
 | `fix` | `_fixes/<date>-<short>.md` + the diff (+ the spec patch if any) | resume — or `/sdd:review <slug>` when the fix was wide (>5 files / cross-module) |
+| `interview` | **nothing on disk** — the printed summary is the artifact | `/sdd:specify <slug>` when you will build it · else resume what you were doing |
+| `refine` | `tasks/` + `tasks.json` (corrected in lockstep) | route-resolved: `/sdd:plan-tests <slug>` ↳ or `/sdd:implement <slug>` |
+| `loop` | `.loop/<alias>/artifact.md` + `run.json` + `history.jsonl` | resume the owning skill's flow — e.g. `/sdd:clarify <slug>` after looping a spec |
+| `evolve` | `docs/.skill-context/sdd-<skill>/SKILL.md` + `docs/.loop/evolutions/<ts>.md` | resume the backbone · or `/sdd:review <slug>` to check the new rules land |
+| `start` | **nothing on disk** — the printed dashboard URL is the output | open the dashboard · or run a backbone command here, e.g. `/sdd:specify <slug>` |
 
 The `↳ or` cells above show the `standard`-route rendering. On `quick` the stage auto-skips and the
 `↳ or` inverts. On `full` the `↳ or` line is dropped. See the *Route-resolved* variant.
