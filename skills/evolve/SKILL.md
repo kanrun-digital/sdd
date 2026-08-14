@@ -11,7 +11,7 @@ description: >
   Processing is cursor-based and incremental. The skill analyzes only new fixes/reviews
   since the last run, plus a tail-5 overlap window. Triggers on "evolve skills",
   "learn from fixes", "evolve {skill}", "evolve", "навчись з фіксів",
-  "покращ скіли по ревʼю". Never edits the built-in skills/sdd-*/SKILL.md, because
+  "покращ скіли по ревʼю". Never edits the installed base skill files, because
   re-install overwrites them. All improvements land in skill-context. Repo-level
   utility: one .skill-context tree serves the whole repo, like survey/roadmap.
 ---
@@ -31,6 +31,7 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 ## Inputs
 
 - Optional `<skill>` — evolve only that skill (`fix`, `implement`, `tasks`, …). Accept the bare name or a name with the `sdd-` prefix. Remove any leading slash before you resolve the name. If absent or `all` → evolve every installed skill that has new evidence.
+- **`<sdd-root>` — the installed SDD root.** Under Claude Code (plugin install) it is `${CLAUDE_PLUGIN_ROOT}`. Under the `install.sh` layout (Codex/Cursor) it is `<skills-root>/sdd/`. Installed base skills live at `<sdd-root>/skills/<name>/SKILL.md` — skill **directories are never `sdd-`-prefixed**; only the frontmatter `name:` field carries the `sdd-` prefix (rewritten by `install.sh` / the marketplace). The one place the prefix IS a directory name is `docs/.skill-context/sdd-<skill>/` — that is intentional and unrelated.
 - `.claude/sdd.local.md` — for `artifact_language` (report prose) + `judgment_model`.
 - `docs/architecture-map.md` — the repo's architecture (tech stack, conventions, migration tooling) — the convention source for tech-stack gaps.
 - **Evidence sources (SDD-native, read-only):**
@@ -43,7 +44,7 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 
 ## Critical: never edit built-in skills directly
 
-**NEVER modify any files inside `skills/sdd-*/` (the installed skill directories).** All files there are owned by the SDD install (`install.sh` / the plugin marketplace). The next update **overwrites** them — any direct edit is lost. **ALL improvements go to `docs/.skill-context/sdd-<skill>/SKILL.md`** — the project-owned override target. This is the only correct target for built-in-skill improvements. No exceptions. (Custom skills the user authored outside `sdd-*` may be edited directly. But `evolve`'s default target is always skill-context.)
+**NEVER modify any files inside `<sdd-root>/skills/` (the installed skill directories).** All files there are owned by the SDD install (`install.sh` / the plugin marketplace). The next update **overwrites** them — any direct edit is lost. **ALL improvements go to `docs/.skill-context/sdd-<skill>/SKILL.md`** — the project-owned override target. This is the only correct target for built-in-skill improvements. No exceptions. (Custom skills the user authored outside `<sdd-root>` may be edited directly. But `evolve`'s default target is always skill-context.)
 
 ## Two-layer learning model
 
@@ -55,7 +56,8 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 ## Protocol
 
 1. **Resolve target + load context.**
-   - **Normalize skill name:** strip a leading `/`. If the arg doesn't start with `sdd-` AND a `sdd-<arg>` skill exists → use `sdd-<arg>`. Else use the arg as-is. Verify the resolved skill exists (`skills/sdd-<name>/SKILL.md`). Missing → error + STOP («Skill '<name>' not found. Run `/evolve` without args to evolve all, or specify a valid skill.»). `<skill>` absent or `all` → evolve every installed skill with new evidence.
+   - **Normalize skill name:** strip a leading `/`, then strip a `sdd-` prefix if present — the bare `<name>` is canonical (installed skill *names* are `sdd-<name>`, but skill *directories* never are). `<skill>` absent or `all` → evolve every installed skill with new evidence.
+   - **Locate the base skill:** `<sdd-root>/skills/<name>/SKILL.md` (see Inputs — NOT `skills/sdd-<name>/`, that path exists on no host). Not locatable (host layout differs, or no base skill has that name) → `WARN [evolve]: base SKILL.md for '<name>' not found — continuing with skill-context-only analysis` and continue: steps 4 and 6 then compare against skill-context alone. Do NOT stop.
    - **Read `docs/architecture-map.md`** for tech stack + conventions (the convention source for step 5.2/5.3 gaps).
    - **Read skill-context files** for target skills: specific → only that skill's context (+ evolve's own, if the target isn't evolve itself). `all` → `Glob: docs/.skill-context/*/SKILL.md`.
 2. **Collect intelligence (cursor-based incremental).**
@@ -66,17 +68,17 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
    - **Aggregate patterns:** group by tag/category. Identify recurring problems (same tag 3+ times = systemic), tech-specific pitfalls (tied to the stack), and missing guards.
    - **Read codebase conventions** from `architecture-map.md` (linter configs, test patterns, error-handling style, logging conventions) — focused on areas relevant to the target skill(s).
    - **Do NOT advance the cursor in step 2.** Cursor updates only after successful apply + log write (step 7).
-3. **Read target skills.** Read ONLY the base `skills/sdd-<name>/SKILL.md` for target skills (specific → one. `all` → `Glob: skills/sdd-*/SKILL.md`). Keep them in memory for step 5 gap analysis. Do not re-read.
-4. **Check stale rules in skill-context.** For every target skill with a skill-context file, compare each rule against the base SKILL.md (loaded step 3). **Case A — base fully covers** (equivalent/superset) → collect for report («Fully covered — recommend removing»). **Case B — conflict** → collect («Conflict — user decision»). **Case C — partial overlap** → collect («Partial overlap — user decision»). **Case D — no overlap** → keep as-is. **Scope constraint:** step 4 only ever modifies skill-context files. It NEVER proposes editing base `skills/sdd-*/`.
+3. **Read target skills.** Read ONLY the base `<sdd-root>/skills/<name>/SKILL.md` for target skills (specific → one. `all` → `Glob: <sdd-root>/skills/*/SKILL.md`). A base flagged not-locatable in step 1 → skip here; downstream steps use skill-context alone for that skill. Keep loaded bases in memory for step 5 gap analysis. Do not re-read.
+4. **Check stale rules in skill-context.** For every target skill with a skill-context file, compare each rule against the base SKILL.md (loaded step 3). Base not locatable → skip stale classification for that skill (treat all its rules as Case D). **Case A — base fully covers** (equivalent/superset) → collect for report («Fully covered — recommend removing»). **Case B — conflict** → collect («Conflict — user decision»). **Case C — partial overlap** → collect («Partial overlap — user decision»). **Case D — no overlap** → keep as-is. **Scope constraint:** step 4 only ever modifies skill-context files. It NEVER proposes editing base skills under `<sdd-root>/skills/`.
 5. **Present + resolve stale rules.** If any Case A/B/C: present the stale-rules report (base vs skill-context comparison per rule). Collect decisions in batches of ≤3 per `AskUserQuestion` (Keep / Remove / Rewrite). Apply the decisions. **Do not proceed to step 6 until all stale decisions are collected.** They determine the actual skill-context state for gap analysis. Skip step 5 if no Case A/B/C.
-6. **Analyze gaps.** Re-read skill-context for targets modified in step 5 (do NOT use the step-1 version). A gap exists only if NEITHER base SKILL.md NOR current skill-context covers it:
+6. **Analyze gaps.** Re-read skill-context for targets modified in step 5 (do NOT use the step-1 version). A gap exists only if NEITHER base SKILL.md NOR current skill-context covers it (base not locatable → skill-context alone decides):
    - **5.1 Patch-driven (prevention-point-exhaustive).** Iterate the Prevention Point Registry. For each row, for EACH target skill, ask: is this specific prevention action covered by base OR skill-context? Uncovered (prevention_point, skill) pairs → gaps. **Trap:** a `Source: <fix-file>` reference in a rule means ONE rule was derived from that fix — NOT that all prevention points from that fix are covered. Check the content, not the filename.
    - **5.2 Tech-stack gaps.** Skills reference generic patterns but the repo uses a specific framework/ORM/test style → add framework-specific guidance.
    - **5.3 Convention gaps.** The repo has a specific error-handling/logging/file-structure pattern skills should enforce → add it.
 7. **Generate + present + apply improvements.**
    - **Generate** one rule per gap. One prevention point = one rule. Preserve concrete formats/patterns verbatim from the evidence. Each rule is traceable to a fix/review/ADR/convention. Keep rules minimal, focused, free of generic advice. Quality rules → [`./templates/skill-context.md`](./templates/skill-context.md).
    - **Present** the evolution report (per-skill: target path, N rules, each with Source/Why/Rule). `AskUserQuestion`: Yes-apply-all / Let-me-pick (batches ≤4) / No-just-save-report. **Do not apply until the user answers.**
-   - **Apply** approved improvements: `mkdir -p docs/.skill-context/sdd-<skill>`. Create or update `SKILL.md` per the template (update an existing rule on the same topic / add a new rule / merge narrow rules into a broader one). Update the `> Last updated:` + `> Based on:` header lines. **NEVER edit `skills/sdd-*/`.** If a skill-context file ends up rule-less (only header), delete it + its dir.
+   - **Apply** approved improvements: `mkdir -p docs/.skill-context/sdd-<skill>`. Create or update `SKILL.md` per the template (update an existing rule on the same topic / add a new rule / merge narrow rules into a broader one). Update the `> Last updated:` + `> Based on:` header lines. **NEVER edit `<sdd-root>/skills/`.** If a skill-context file ends up rule-less (only header), delete it + its dir.
 8. **Save evolution log + advance cursor.** Write `docs/.loop/evolutions/<YYYY-MM-DD-HHMM>.md` (intelligence summary + improvements applied + patterns identified). **Cursor update:** new patches processed + improvements applied → advance the cursor to the newest «New» file per type. New patches + NO improvements applied → do NOT advance by default. Ask the user (recommended: keep unchanged to allow reruns). Execution failure before finalize → do NOT advance. Append the run to the cursor's history.
 9. **Handoff.** Emit the stage-handoff block per [`../_shared/handoff.md`](../_shared/handoff.md) (utility variant — `/clear` optional). Fill *What I did* with skills improved, rules applied, cursor advanced Y/N. Fill *Review* with the skill-context files + the evolution log. Fill *Run next* with: resume the backbone, or run `review` on recent code to check that the new rules land. Suggest re-running `evolve` after 5-10 more fixes.
 
@@ -86,14 +88,14 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 - Stale rules (Case A/B/C) were surfaced + resolved before gap analysis — step 5 completed (or skipped on no stale rules).
 - Gap analysis checked each prevention point × each target skill independently (not per-fix).
 - Every applied rule is traceable to a fix/review/ADR/convention. No generic advice («write clean code» is not a rule).
-- All improvements landed in `docs/.skill-context/sdd-<skill>/SKILL.md` — zero edits to `skills/sdd-*/`.
+- All improvements landed in `docs/.skill-context/sdd-<skill>/SKILL.md` — zero edits to `<sdd-root>/skills/`.
 - The cursor reflects the run accurately (advanced only when new patches + improvements applied).
 - The evolution log exists. The skill-context files are written in English.
 - The Prevention Point Registry build + the skill-context-only write target are this skill's **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)). Its result is reported in the handoff.
 
 ## Anti-patterns
 
-- **Editing `skills/sdd-*/SKILL.md` directly.** Re-install overwrites it. All improvements → skill-context, no exceptions.
+- **Editing base `<sdd-root>/skills/<name>/SKILL.md` directly.** Re-install overwrites it. All improvements → skill-context, no exceptions.
 - **Treating a fix-record as one unit.** A fix with N prevention points produces N rules — extract each independently, targeting the right skill(s).
 - **`Source: <fix>` ≠ full coverage.** Finding the filename in a rule's Source means one rule was derived — check that the content covers the specific prevention point.
 - **Generic advice.** «Write clean code» / «handle errors» is not a rule — only project-specific enhancements backed by evidence.

@@ -22,7 +22,7 @@
 
 `docs/.skill-context/sdd-<skill-name>/SKILL.md` — the project-owned override, written by
 [`evolve`](../evolve/SKILL.md). **Read-only for skills**. A skill never writes here. Only `evolve`
-does. Editing it manually is forbidden by the same rule that forbids editing `skills/sdd-*/`.
+does. Editing it manually is forbidden by the same rule that forbids editing the installed base skill directories.
 Re-install overwrites the source, not the project override.
 
 **File format** (mirrors [`evolve/templates/skill-context.md`](../evolve/templates/skill-context.md)):
