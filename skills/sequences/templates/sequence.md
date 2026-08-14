@@ -5,7 +5,7 @@
 <!--   <client>          — whatever initiates the flow (UI, CLI, another service, a scheduler) -->
 <!--   <service>         — the building block that owns this flow (from §5) -->
 <!--   <data-store>      — the persistent store the service reads/writes -->
-<!--   <external-system> — a third party the service calls out to -->
+<!--   <external-system> — a third party the service calls -->
 <!--   <message-bus>     — async transport (queue / event stream) for non-sync flows -->
 <!-- Naming the concrete technology is `design`/`data-model`'s job, not the runtime view's. -->
 
@@ -72,7 +72,7 @@ sequenceDiagram
 
 <!-- COMPENSATION flow (W5). Draw when a flow chains ≥2 async actors into a multi-step saga and a -->
 <!-- later step can fail after an earlier step already committed side-effects. The dead-letter -->
-<!-- branch above only quarantines the failing step; it does NOT undo the steps that succeeded. -->
+<!-- branch above only quarantines the failing step. It does NOT undo the steps that succeeded. -->
 <!-- Gate: if you draw a multi-step async flow, draw this OR mark an explicit N/A with a reason -->
 <!-- ("each step is independently idempotent + DLQ-only is an accepted policy — ADR-NNNN"). -->
 

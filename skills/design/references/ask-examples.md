@@ -1,6 +1,6 @@
 # design-specific `AskUserQuestion` shapes
 
-The canonical question/option contract — junior-friendly, bilingual, label = next mechanical step, description = 3–5 sentences with the four mandatory elements — lives in [`../../_shared/ask-style.md`](../../_shared/ask-style.md). Read that first. This file keeps only the **design-specific shapes** that aren't in the shared file: the strategic-decision-with-ADR-spawn, the blast-radius gate, and the Save-as-OQ follow-up. Examples are stack-agnostic — substitute your repo's real names.
+The canonical question/option contract lives in [`../../_shared/ask-style.md`](../../_shared/ask-style.md). It is junior-friendly and bilingual. The label names the next mechanical step. The description has 3–5 sentences with the four mandatory elements. Read that file first. This file keeps only the **design-specific shapes** that are not in the shared file. They are the strategic-decision-with-ADR-spawn, the blast-radius gate, and the Save-as-OQ follow-up. The examples are stack-agnostic. Substitute your repo's real names.
 
 ## Strategic decision (§4) — option labels name the ADR spawn
 
@@ -46,7 +46,7 @@ Options:
 
 ## Save-as-OQ follow-up (capture owner + due)
 
-Fired immediately after any section resolves to Save-as-OQ:
+The skill fires it immediately after any section resolves to Save-as-OQ:
 
 ```
 Question:

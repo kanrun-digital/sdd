@@ -1,28 +1,28 @@
 # `+check` validation procedure — fresh-context finding validator for `refine`
 
-> **Reference-only.** Not a skill. This file describes the optional findings-validation pass that runs when `refine` is invoked with the `+check` flag. The parent skill defers to this document so the main `SKILL.md` stays focused on the default refinement workflow; `+check` is opt-in and most invocations do not need it.
+> **Reference-only.** Not a skill. This file describes the optional findings-validation pass that runs when `refine` is invoked with the `+check` flag. The parent skill defers to this document. The main `SKILL.md` then stays focused on the default refinement workflow. `+check` is opt-in. Most invocations do not need it.
 
 ## When this runs
 
-`refine` is invoked with `+check`. The pass executes between Step 4 (Identify findings) and Step 6 (Present + apply). Without `+check`, skip this procedure entirely — the output has no validator-related lines and the report's Summary block stays in its default shape without the two `+check` counter rows.
+`refine` is invoked with `+check`. The pass executes between Step 4 (Identify findings) and Step 6 (Present + apply). Without `+check`, skip this procedure entirely. The output then has no validator-related lines. The report's Summary block keeps its default shape, without the two `+check` counter rows.
 
-`+check` together with a hard-refuse prereq is impossible (the skill already stopped). `+check` on a plan with zero findings skips the dispatch (phase a is a no-op) and proceeds to phase b (dependencies still recompute normally).
+`+check` together with a hard-refuse prereq is impossible. The skill already stopped. `+check` on a plan with zero findings skips the dispatch (phase a is a no-op) and proceeds to phase b. Dependencies still recompute normally.
 
 ## The two phases
 
 ### Phase (a) — validate the four content groups
 
-1. **Collect items** from the four findings groups built in Step 4: `missing` (group 1), `improvements` (group 2 + any dependency findings that were routed here as «can parallelize» improvements), `removals` (group 3), and `out_of_scope` (group 4). Number them across all four groups in display order — the group label is carried alongside each item. **If the combined list is empty, skip steps 2–5 of phase (a) entirely**: do not dispatch the validator, treat phase (a) as successful with `hidden = 0`, `adjusted = 0`, and proceed directly to phase (b).
+1. **Collect items** from the four findings groups built in Step 4: `missing` (group 1), `improvements` (group 2 + any dependency findings routed here as «can parallelize» improvements), `removals` (group 3), and `out_of_scope` (group 4). Number the items across all four groups in display order. The group label is carried alongside each item. **If the combined list is empty, skip steps 2–5 of phase (a) entirely**. Do not dispatch the validator. Treat phase (a) as successful with `hidden = 0`, `adjusted = 0`. Proceed directly to phase (b).
 
-2. **Build the project context block**: the working directory path, a one-line summary of the plan being refined (`tasks.json` path + task count + the scope anchor from step 2: «feature = <spec §1>; AC set = <§5 ids>»), and the user's improvement prompt — verbatim when the run had one, or the literal marker `none — bare auto-review` when no prompt text was passed. The validator needs the prompt to tell a user-requested task apart from agent-invented gold-plating (the same distinction `finding-categories.md` group 4 makes).
+2. **Build the project context block**: the working directory path, a one-line summary of the plan being refined (`tasks.json` path + task count + the scope anchor from step 2: «feature = <spec §1>; AC set = <§5 ids>»), and the user's improvement prompt. Inline the prompt verbatim when the run had one. Use the literal marker `none — bare auto-review` when no prompt text was passed. The validator needs the prompt. It tells a user-requested task apart from agent-invented gold-plating. `finding-categories.md` group 4 makes the same distinction.
 
 3. **Render the validator prompt** from the template below. Substitute two placeholders:
    - `{{PROJECT_CONTEXT}}` — the block from step 2.
    - `{{ITEMS}}` — the numbered findings list, each under its own `### Item N (group: missing|improvements|removals|out_of_scope)` heading, in the four-field prose shape from [`./finding-categories.md`](./finding-categories.md).
 
-4. **Dispatch one call**: `Task(subagent_type: "general-purpose", prompt: <rendered template>)`. The subagent runs with **fresh context** — it never saw the conversation that produced the findings. Read-only behavior (`Read`, `Glob`, `Grep` only — no writes, no commands) is enforced by the verbatim prompt below, **not** by the dispatch interface — `general-purpose` exposes the full tool set, so a tool-level restriction is not available. This mirrors the clean-context discipline [`../../_shared/critic.md`](../../_shared/critic.md) uses: the validator Reads `tasks.json` + `tasks/*.md` + the cited codebase files **itself** — the skill inlines only the findings list + the context block, never the plan body or the codebase.
+4. **Dispatch one call**: `Task(subagent_type: "general-purpose", prompt: <rendered template>)`. The subagent runs with **fresh context**. It never saw the conversation that produced the findings. The verbatim prompt below enforces read-only behavior (`Read`, `Glob`, `Grep` only — no writes, no commands). The dispatch interface does **not** enforce it. `general-purpose` exposes the full tool set. A tool-level restriction is not available. This mirrors the clean-context discipline [`../../_shared/critic.md`](../../_shared/critic.md) uses. The validator Reads `tasks.json` + `tasks/*.md` + the cited codebase files **itself**. The skill inlines only the findings list + the context block. It never inlines the plan body or the codebase.
 
-5. **Parse the response** by `### Item N` headings. The group of each item is always its **original** group from step 1 — the validator is forbidden by the prompt from changing it. The `Group:` line in the response is an integrity check, not a control field: if its value differs from the original group, treat the whole item block as malformed (see failure modes below). For each well-formed item:
+5. **Parse the response** by `### Item N` headings. The group of each item is always its **original** group from step 1. The prompt forbids the validator from changing it. The `Group:` line in the response is an integrity check, not a control field. If its value differs from the original group, treat the whole item block as malformed (see failure modes below). For each well-formed item:
    - `Verdict: keep` → keep the item unchanged in its original group.
    - `Verdict: modify` → replace the item text with `Modified-text`, put it back in its original group. Increment `adjusted`.
    - `Verdict: drop` → remove the item from the output. Increment `hidden`.
@@ -37,12 +37,12 @@ After phase (a) finishes, the main skill (not the validator) recomputes the 🔗
 - tasks rescued by `removals.drop` or `out_of_scope.drop` (validator overruled the proposal) stay in the plan and remain valid dependency targets,
 - `improvements` only reword existing tasks; they never add or remove nodes from the graph.
 
-Any dependency that points at a task absent from the post-(a) plan is discarded. Dependencies are NOT sent to the validator — the legacy short form (`Task #X should depend on Task #Y. Reason: …`) is preserved and the counters from phase (a) do not include this group.
+Any dependency that points at a task absent from the post-(a) plan is discarded. Dependencies are NOT sent to the validator. The legacy short form (`Task #X should depend on Task #Y. Reason: …`) is preserved. The counters from phase (a) do not include this group.
 
 ## Failure modes
 
-- **Per-item malformed response** (heading missing, no `Verdict` line, unknown verdict token, missing `Modified-text` line when `Verdict` is `modify`, or `Group:` value that differs from the item's original group): treat that item as `keep` and append one extra line at the very end of the Step 6 output: `WARN [+check]: validator response for item N was malformed, kept as-is`. Continue with the remaining items.
-- **Whole-dispatch failure** (empty response, exception, timeout, validator refusal): treat **all** items in phase (a) as `keep`, skip the `Hidden by +check` / `Adjusted by +check` Summary rows, and append one line at the end of Step 6: `WARN [+check]: validator failed (<reason>), all items kept as-is`. Phase (b) still runs against the unfiltered list — dependencies are recomputed normally.
+- **Per-item malformed response** (heading missing, no `Verdict` line, unknown verdict token, missing `Modified-text` line when `Verdict` is `modify`, or `Group:` value that differs from the item's original group): treat that item as `keep`. Append one extra line at the very end of the Step 6 output: `WARN [+check]: validator response for item N was malformed, kept as-is`. Continue with the remaining items.
+- **Whole-dispatch failure** (empty response, exception, timeout, validator refusal): treat **all** items in phase (a) as `keep`. Skip the `Hidden by +check` / `Adjusted by +check` Summary rows. Append one line at the end of Step 6: `WARN [+check]: validator failed (<reason>), all items kept as-is`. Phase (b) still runs against the unfiltered list. Dependencies are recomputed normally.
 
 ## Output additions
 
@@ -53,7 +53,7 @@ When phase (a) ran successfully (no whole-dispatch failure), the Step 6 Summary 
 - Adjusted by +check: M
 ```
 
-The counters cover the four validated groups (`missing`, `improvements`, `removals`, `out_of_scope`) — `Dependencies to fix` is computed after validation and is not part of the counters. Skip both rows entirely when `+check` was not set, when the whole-dispatch failure path applies (the single `WARN [+check]` line replaces them), or when Step 6 takes the no-findings branch (a «0 found across all groups» report has no Summary block to extend).
+The counters cover the four validated groups (`missing`, `improvements`, `removals`, `out_of_scope`). `Dependencies to fix` is computed after validation. It is not part of the counters. Skip both rows entirely in three cases. Case 1: `+check` was not set. Case 2: the whole-dispatch failure path applies. The single `WARN [+check]` line then replaces them. Case 3: Step 6 takes the no-findings branch. A «0 found across all groups» report has no Summary block to extend.
 
 ---
 

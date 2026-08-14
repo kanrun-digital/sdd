@@ -1,10 +1,10 @@
 # Dynamic-workflow execution (`workflow_mode: auto`)
 
-When the decision tree selects the workflow, the engine **generates a `Workflow` script** from the DAG and runs it. This is the unattended, maximally-parallel mode: each independent task flows through its own pipeline, and a failure drops only that task's subtree while other branches keep going.
+When the decision tree selects the workflow, the engine **generates a `Workflow` script** from the DAG and runs it. This is the unattended, maximally-parallel mode. Each independent task flows through its own pipeline. A failure drops only that task's subtree. Other branches keep going.
 
 ## Why a generated workflow (not a fixed one)
 
-The shape of the work is `tasks.json` — different every feature. So the engine emits a script tailored to this DAG: validate → layer → fan-out → per-task pipeline. The script is data-driven from the tasks array; the engine fills it in and invokes `Workflow`.
+The shape of the work is `tasks.json`. It differs every feature. The engine emits a script tailored to this DAG: validate → layer → fan-out → per-task pipeline. The tasks array drives the script as data. The engine fills it in and invokes `Workflow`.
 
 ## Generated script shape
 
@@ -33,19 +33,19 @@ for (const layer of kahnLayers(TASKS)) {              // computed from deps
 }
 ```
 
-- **Schema-validated verdicts.** Each stage returns a structured verdict (`RED_VERDICT { class: GOOD|BAD|false_pass|NON, failing_line }`, `GATE_VERDICT { unit, integration, lint, vet, gate_green }`, `REVIEW_VERDICT { ac_satisfied, issues[] }`) so the orchestrator branches on data, not prose.
-- **Fail drops the subtree.** A stage that throws (or returns `gate_green: false` past retries) drops that task to `null`; the engine removes it from `done`, so every transitively-dependent task is skipped (its deps never complete). Independent branches finish unaffected — this is the workflow's advantage over a team halt.
-- **Parallel cap.** `parallel(...)` respects `max_parallel_agents` (the workflow runtime also caps concurrency); a wide layer queues the overflow.
+- **Schema-validated verdicts.** Each stage returns a structured verdict (`RED_VERDICT { class: GOOD|BAD|false_pass|NON, failing_line }`, `GATE_VERDICT { unit, integration, lint, vet, gate_green }`, `REVIEW_VERDICT { ac_satisfied, issues[] }`). The orchestrator then branches on data, not prose.
+- **Fail drops the subtree.** A stage that throws (or returns `gate_green: false` past retries) drops that task to `null`. The engine removes it from `done`. Every transitively-dependent task is then skipped (its deps never complete). Independent branches finish unaffected. This is the workflow's advantage over a team halt.
+- **Parallel cap.** `parallel(...)` respects `max_parallel_agents` (the workflow runtime also caps concurrency). A wide layer queues the overflow.
 
 ## Serialization inside the workflow
 
-The same lanes as the team apply: `layer: migration` tasks are forced into a single ordered sub-sequence (don't place two migrations in the same parallel layer — chain them via synthetic deps before computing Kahn layers), and tasks with overlapping `files_hint` get a synthetic dep so they never land in the same parallel batch. A **compile-coupled pair** (shared contract file in `files_hint`) gets the same synthetic dep AND its commit step is merged — one shared gate, one commit with every task's `SDD-Task`/`SDD-AC` trailers ([`tdd-loop.md`](./tdd-loop.md) §COMMIT). Each migration task **promotes** its staged `docs/features/<slug>/migrations/<NN>_*` file into the live `migrations/` (next free number, in ordinal order) before applying it — see [`./inputs.md`](./inputs.md).
+The same lanes as the team apply. `layer: migration` tasks are forced into a single ordered sub-sequence. Do not place two migrations in the same parallel layer. Chain them via synthetic deps before computing Kahn layers. Tasks with overlapping `files_hint` get a synthetic dep. They then never land in the same parallel batch. A **compile-coupled pair** (shared contract file in `files_hint`) gets the same synthetic dep AND a merged commit step. The pair gets one shared gate and one commit. The commit carries every task's `SDD-Task`/`SDD-AC` trailers ([`tdd-loop.md`](./tdd-loop.md) §COMMIT). Each migration task **promotes** its staged `docs/features/<slug>/migrations/<NN>_*` file into the live `migrations/` (next free number, in ordinal order) before it applies the migration. See [`./inputs.md`](./inputs.md).
 
 ## Commit + integration
 
-- Commits are produced by the `commit` step of each pipeline (or batched by the engine after the workflow returns, if `auto_commit: per_phase`), with `SDD-Task`/`SDD-AC` trailers, serialized in dependency order.
-- Integration tier follows `require_integration`: in CI (Docker present) the integration RED→GREEN runs inside the verify stage; locally under `auto` with no Docker it's NON-red and the proving run relies on CI for the integration green.
+- The `commit` step of each pipeline produces commits. The engine batches them after the workflow returns if `auto_commit: per_phase`. Commits carry `SDD-Task`/`SDD-AC` trailers. They are serialized in dependency order.
+- The integration tier follows `require_integration`. In CI (Docker present) the integration RED→GREEN runs inside the verify stage. Locally under `auto` with no Docker it is NON-red. The proving run then relies on CI for the integration green.
 
 ## Graceful fallback
 
-If the `Workflow` tool is **not available** at runtime, this whole mode is skipped by the decision-tree guard — the engine falls through to the team (if eligible) or to sequential single-agent TDD. The generated script is never a hard dependency.
+If the `Workflow` tool is **not available** at runtime, the decision-tree guard skips this whole mode. The engine continues with the team (if eligible) or with sequential single-agent TDD. The generated script is never a hard dependency.

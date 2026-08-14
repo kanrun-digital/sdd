@@ -1,6 +1,6 @@
 # Skill-context file + evolution-log scaffolds
 
-> **Template-only.** Not a skill. `evolve` step 7 writes skill-context files from the first scaffold and evolution logs from the second. Both are written in **English** regardless of the repo's `artifact_language` — skill-context rules are consumed by AI agents across sessions; the evolution log is a human-readable record (English ensures consistent interpretation + cross-repo portability).
+> **Template-only.** Not a skill. `evolve` step 7 writes skill-context files from the first scaffold and evolution logs from the second. `evolve` writes both in **English** regardless of the repo's `artifact_language` — skill-context rules are consumed by AI agents across sessions. The evolution log is a human-readable record (English ensures consistent interpretation + cross-repo portability).
 
 ---
 
@@ -8,7 +8,7 @@
 
 **Path:** `docs/.skill-context/sdd-<skill-name>/SKILL.md` (e.g. `docs/.skill-context/sdd-fix/SKILL.md`).
 
-Create the directory if needed (`mkdir -p`). If the file exists, READ it first, then for each improvement: **update** an existing rule on the same topic (strengthen it, add to its Source list), **add** a new rule (no existing topic match), or **merge** narrow rules into a broader one (only if every prevention point is preserved). Update the `> Last updated:` and `> Based on:` header lines after every change.
+Create the directory if needed (`mkdir -p`). If the file exists, READ it first. Then for each improvement, do one of three things: **update** an existing rule on the same topic (strengthen it, add to its Source list), **add** a new rule (no existing topic match), or **merge** narrow rules into a broader one (only if every prevention point is preserved). Update the `> Last updated:` and `> Based on:` header lines after every change.
 
 ```md
 # Project Rules for sdd-<skill-name>
@@ -35,9 +35,9 @@ Create the directory if needed (`mkdir -p`). If the file exists, READ it first, 
 - **Preserve concrete formats verbatim.** If the evidence specifies `prisma.order.findUnique({ where: { id } })` vs `findFirst`, the rule includes the exact call — not «use the right Prisma method».
 - **Traceable.** Every rule's Source column lists the evidence path(s). A rule with no Source is invalid.
 - **No generic advice.** «Write clean code» / «Handle errors» / «Be careful with nulls» is not a rule — only project-specific enhancements backed by evidence.
-- **Minimal.** Add rules; don't rewrite the skill's workflow. Skill-context enriches; it does not restructure.
+- **Minimal.** Add rules. Do not rewrite the skill's workflow. Skill-context enriches. It does not restructure.
 
-**Cleanup:** if applying improvements (or stale-rule removals in step 5) leaves a skill-context file with no rules (only the header remains), delete the file AND its directory:
+**Cleanup:** a skill-context file can lose all its rules after improvements or stale-rule removals in step 5. No rules means only the header remains. In that case, delete the file AND its directory:
 ```
 rm docs/.skill-context/sdd-<skill-name>/SKILL.md
 rmdir docs/.skill-context/sdd-<skill-name>   # only if empty
@@ -90,4 +90,4 @@ Create `docs/.loop/evolutions/` if needed (`mkdir -p`). One log per `evolve` run
 **Rules for the log:**
 - Append-only across runs (do not edit past logs).
 - Cursor-state (before/after) is recorded so a missed-prevention-point rerun is detectable.
-- Patterns-identified carries forward the recurrence signal — if a pattern keeps appearing across runs, it's a candidate for a stronger rule or a dedicated skill (`/evolve` suggests this in the handoff).
+- Patterns-identified preserves the recurrence signal. If a pattern keeps appearing across runs, it is a candidate for a stronger rule or a dedicated skill (`/evolve` suggests this in the handoff).

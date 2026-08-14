@@ -3,9 +3,9 @@
 Six internal lenses for Phase 2. These are lenses for *you*, not labels for the
 user — never announce "now I'll do a premortem". For each frame below: what it
 catches, a **flat** question (what a neutral interviewer asks) and the **framed**
-question (sharper, forces a position). Mix frames; don't iterate the list in order.
+question (sharper, forces a position). Mix frames. Do not iterate the list in order.
 
-Every framed question still obeys the hard rules: it goes through AskUserQuestion
+Every framed question still obeys the hard rules. It goes through AskUserQuestion
 with 2-4 concrete options, the first marked `(Recommended)`.
 
 ---
@@ -30,7 +30,7 @@ Catches the cost of winning that the user hasn't priced in.
   - *(Recommended)* Your calendar — you can't service the demand you create
   - Quality — the bar you set in week 1 is unsustainable
   - Focus — it pulls you off the thing that actually pays
-- **Surfaces:** success has a bill; naming it now changes the scale you should aim for.
+- **Surfaces:** success has a bill. Naming it now changes the scale you should aim for.
 
 ## 3. Naive listener — "how does this sound to someone hearing it cold?"
 
@@ -74,7 +74,7 @@ Catches the idea-for-someone-else where the user is answering on their behalf.
   - *(Recommended)* "We tried this and it died" — there's prior history you're discounting
   - "Who owns it when you're out?" — the bus-factor question
   - "This competes with X we already do" — an overlap you haven't named
-- **Surfaces:** objections the user is too close to see; re-routes the interview through the real decider.
+- **Surfaces:** objections the user is too close to see. It re-routes the interview through the real decider.
 
 ---
 
@@ -85,5 +85,5 @@ Catches the idea-for-someone-else where the user is answering on their behalf.
 - Idea is **urgent** → cost of waiting (test the deadline).
 - Idea is **for a team / someone else** → the other person (re-route through them).
 
-When a lens produces a question you can't reduce to 2-4 concrete options, it's not
-ready — pick a different lens rather than asking it open-ended.
+When a lens produces a question you cannot reduce to 2-4 concrete options, it is not
+ready. Pick a different lens rather than asking it open-ended.

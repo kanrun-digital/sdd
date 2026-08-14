@@ -1,6 +1,6 @@
 # Draft generation — per-section contract for specify step 6
 
-The authoritative format for each section is the `<!-- instruction -->` comment in [`../templates/spec.md`](../templates/spec.md). This file is the operational glue: where content comes from and what is forbidden.
+The authoritative format for each section is the `<!-- instruction -->` comment in [`../templates/spec.md`](../templates/spec.md). This file is the operational glue. It states where content comes from and what is forbidden.
 
 ## Inputs in priority order
 
@@ -11,13 +11,13 @@ The authoritative format for each section is the `<!-- instruction -->` comment 
 
 ## §5 acceptance-criteria contract
 
-AC describes a **business-observable outcome from the actor's perspective**, in Given/When/Then. **No upper cap** — propose as many as needed so **every §4 user story has ≥1 AC** and all five coverage types appear. If a `Drop` / `Save as Open Question` during Socratic leaves a coverage type empty **or a retained §4 user story with no AC**, regenerate a replacement AC and run a mini-batch on it (the two coverage floors, see [`socratic.md`](./socratic.md)). The «every US has ≥1 AC» rule is a **re-checked floor**, not only a draft-time target — it's verified after every §5 resolution, so `sequences` and `review` downstream can rely on each use-case having a testable criterion.
+An AC describes a **business-observable outcome from the actor's perspective**, in Given/When/Then. **No upper cap** — propose as many as needed. **Every §4 user story has ≥1 AC**, and all five coverage types appear. If a `Drop` / `Save as Open Question` during Socratic leaves a coverage type empty **or a retained §4 user story with no AC**, regenerate a replacement AC. Run a mini-batch on it (the two coverage floors, see [`socratic.md`](./socratic.md)). The «every US has ≥1 AC» rule is a **re-checked floor**, not only a draft-time target. It is verified after every §5 resolution. `sequences` and `review` downstream can then rely on each use-case having a testable criterion.
 
 Five coverage types, ≥1 each:
 
 1. **happy** — actor does the main flow → system records the outcome and confirms.
 2. **error** — actor submits invalid input → system blocks it and explains the reason (phrase as «system shows the actor that <field> must be <constraint>»).
-3. **authorization** — actor lacks permission (cross-tenant / cross-role / not-owner) → system denies access or hides existence; rationale in business terms.
+3. **authorization** — actor lacks permission (cross-tenant / cross-role / not-owner) → system denies access or hides existence. Rationale in business terms.
 4. **domain invariant** — actor violates a named invariant → system blocks the action and names the invariant in plain language.
 5. **cross-context** — actor's action depends on state in another bounded context → system enforces the cross-context rule.
 
@@ -36,11 +36,11 @@ The technical mapping for all of these lives in `api` (HTTP method/path/status, 
 
 ## Stack-agnostic hygiene for §1–§3
 
-The product-level sections must not name a **concrete technology** — a specific datastore, message broker, framework, or library. Those are `design` decisions. The old SDLC skill hard-coded a Go/Postgres regex (`Postgres|Redis|Kafka|JSONB`…); the stack-agnostic rule is: flag any proper-noun product/library name in the WHAT/WHY sections and move it to the design stage.
+The product-level sections must not name a **concrete technology** — a specific datastore, message broker, framework, or library. Those are `design` decisions. The old SDLC skill hard-coded a Go/Postgres regex (`Postgres|Redis|Kafka|JSONB`…). The stack-agnostic rule is: flag any proper-noun product/library name in the WHAT/WHY sections. Move it to the design stage.
 
 ## Pre-write hygiene (before Socratic)
 
 - §4 US roles use CONTEXT glossary terms verbatim.
 - §3 Non-goals each carry a reason (no inventing).
 - §1 ¶3 states the committed approach without losing the vector.
-- §5 has ≥1 of each coverage type and 0 forbidden tokens (self-scan; the critic + regex are the backstop).
+- §5 has ≥1 of each coverage type and 0 forbidden tokens (self-scan. The critic + regex are the backstop).

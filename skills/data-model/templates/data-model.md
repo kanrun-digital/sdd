@@ -24,9 +24,9 @@ erDiagram
 
 ## Entities
 
-<!-- instruction: one subsection per entity, grouped by aggregate root. Types are written in
-your target database's vocabulary (the examples below use Postgres-style names; substitute your
-DB's equivalent). The examples are ILLUSTRATIVE, not mandates — PK type, audit columns
+<!-- instruction: one subsection per entity, grouped by aggregate root. Types use your target
+database's vocabulary. The examples below use Postgres-style names. Substitute your DB's
+equivalent. The examples are ILLUSTRATIVE, not mandates. PK type, audit columns
 (created_at / updated_at / none), and constraint usage all follow the REPO's conventions. -->
 
 ### `<entity>`
@@ -40,10 +40,10 @@ DB's equivalent). The examples are ILLUSTRATIVE, not mandates — PK type, audit
 
 **Aggregate root:** <which entity owns this one, or "root">.
 **Access patterns:** <pattern> → index `<idx_name>` on `<columns>`.
-**Constraints:** UNIQUE on `<...>`; FK → `<other>(id)`.
+**Constraints:** UNIQUE on `<...>`. FK → `<other>(id)`.
 
 <!-- The constraint set (UNIQUE / NOT NULL / FK / DEFAULT / CHECK / triggers) follows the REPO's
-conventions — match what the codebase already does; data-model neither imposes nor forbids a style. -->
+conventions — match what the codebase already does. Data-model neither imposes nor forbids a style. -->
 
 ## Indexes
 

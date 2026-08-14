@@ -1,8 +1,8 @@
 # Refinement report — `refine` Step 6 output scaffold
 
-> **Template-only.** Not a skill. `refine` step 6 renders the approved-for-presentation findings into this shape before the `AskUserQuestion`. The emoji-grouped sections are kept for scannability; the items inside «🆕 Missing», «📝 Improvements», «🗑️ Removals», and «💡 Out of scope» all follow the **same four-field prose shape** from [`../references/finding-categories.md`](../references/finding-categories.md) — no labeled `Why:` / `Issue:` / `Fix:` fields. The «🔗 Dependency Fixes» group uses the short legacy form.
+> **Template-only.** Not a skill. `refine` step 6 renders the approved-for-presentation findings into this shape before the `AskUserQuestion`. The emoji-grouped sections stay for scannability. The items inside «🆕 Missing», «📝 Improvements», «🗑️ Removals», and «💡 Out of scope» all follow the **same four-field prose shape** from [`../references/finding-categories.md`](../references/finding-categories.md) — no labeled `Why:` / `Issue:` / `Fix:` fields. The «🔗 Dependency Fixes» group uses the short legacy form.
 
-Report prose follows `artifact_language`; task ids, `files_hint` paths, code citations, and the `acs` ids stay verbatim (they are machine-anchored). Render every group heading even when empty — a «0 found» line is required for scannability (the user must see that a category was checked, not skipped).
+Report prose follows `artifact_language`. Task ids, `files_hint` paths, code citations, and the `acs` ids stay verbatim (they are machine-anchored). Render every group heading even when empty — a «0 found» line is required for scannability (the user must see that a category was checked, not skipped).
 
 ---
 
@@ -67,8 +67,8 @@ Apply these refinements?
 
 Based on the choice:
 - **Yes, apply all** → apply every finding synchronously to `tasks/*.md` AND `tasks.json` (step 6 writeback).
-- **Let me pick which ones** → present findings in batches of up to 4 per `AskUserQuestion`; each finding's options are `Apply` / `Skip`. Continue until all are resolved. Apply only the approved subset.
-- **No, keep the plan as is** → exit without modifications, commit nothing, emit the forward handoff (the plan is unchanged; `plan-tests` / `implement` proceed on the original).
+- **Let me pick which ones** → present findings in batches of up to 4 per `AskUserQuestion`. Each finding's options are `Apply` / `Skip`. Continue until all are resolved. Apply only the approved subset.
+- **No, keep the plan as is** → exit without modifications, commit nothing, emit the forward handoff (the plan is unchanged, and `plan-tests` / `implement` proceed on the original).
 
 ---
 

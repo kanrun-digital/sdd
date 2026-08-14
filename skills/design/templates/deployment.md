@@ -9,8 +9,8 @@ feature_size: "<from .size: XS/S/M/L/XL>"
 # Deployment
 
 <!-- The runtime topology for sad.md §7 (Deployment view): where it runs, how many replicas, where the
-     background worker lives, AT WHAT NUMBERS it scales. N/A allowed for XS/S that reuses an existing
-     deployment unit with no change. Replace the generic node labels with your real infrastructure. -->
+     background worker lives, AT WHAT NUMBERS it scales. XS/S that reuses an existing deployment unit
+     with no change may use N/A. Replace the generic node labels with your real infrastructure. -->
 
 ```mermaid
 flowchart TB

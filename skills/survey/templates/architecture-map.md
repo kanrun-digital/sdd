@@ -17,7 +17,7 @@ frontend: ""             # "" = no frontend; else the framework/kit, e.g. "react
 
 > The **current** architecture (what exists today), produced by `survey` and read by
 > specify / design / data-model / implement. Refresh with `survey` when the repo drifts past
-> `reflects_commit`. This is generated; a hand-maintained `docs/architecture.md`, if present, is
+> `reflects_commit`. This map is generated. A hand-maintained `docs/architecture.md`, if present, is
 > authoritative and reconciled below — not replaced.
 
 ## Stack
@@ -85,7 +85,7 @@ Skip with <!-- N/A: no frontend --> for a backend-only repo. Cite a file for eac
 ## Where things live / closest precedents
 
 <!-- instruction: a short guide — "a feature like X lives here and looks like <precedent>". Helps
-design slot the new feature in and helps implement copy the right pattern. -->
+design place the new feature and helps implement copy the right pattern. -->
 
 - A new <kind> feature → `<path>`, modelled on `<existing feature>` (`<file:line>`).
 - A new screen / UI component → composed from the existing design system (§Frontend), modelled on `<existing screen/component>` (`<file:line>`).

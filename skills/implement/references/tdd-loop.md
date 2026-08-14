@@ -1,10 +1,10 @@
 # TDD loop — the per-task cycle (step 8)
 
-Every task runs `SELECT → RED → GREEN → REFACTOR → GATE → COMMIT`. This is the same cycle whether the runner is the sequential agent, a team `implementer`, or a Workflow stage. The RED step is the load-bearing one — skip its discipline and the whole method collapses into "write code, write a test that happens to pass".
+Every task runs `SELECT → RED → GREEN → REFACTOR → GATE → COMMIT`. The cycle is the same for every runner: the sequential agent, a team `implementer`, or a Workflow stage. The RED step carries the method. Skip its discipline and the whole method collapses into "write code, write a test that happens to pass".
 
 ## SELECT
 
-Pick the next task whose `deps` are all `done`. In sequential mode that's the topo order; in parallel modes the orchestrator hands it out. Read the task body + its `acs` from `spec.md §5` + the relevant `test-plan.md` rows. Know, before writing anything, what observable outcome the test will assert.
+Pick the next task whose `deps` are all `done`. In sequential mode that is the topo order. In parallel modes the orchestrator hands it out. Read the task body + its `acs` from `spec.md §5` + the relevant `test-plan.md` rows. Before you write anything, know what observable outcome the test will assert.
 
 ## RED — write the failing test first
 
@@ -19,28 +19,28 @@ Pick the next task whose `deps` are all `done`. In sequential mode that's the to
    | **false-pass** | green on the very first run, before any production code | the test is too weak (asserts nothing real) — **strengthen it** until it's GOOD red |
    | **NON-red** | skipped because its dependency is unavailable (e.g. Docker absent for an integration test) | not a pass and not a fail — record NON-red, governed by `require_integration` |
 
-4. **Quote the failing line** (the assertion + expected-vs-actual, or the «undefined: X» line) before writing any production code. This is the proof that the test exercises the right thing.
+4. **Quote the failing line** (the assertion + expected-vs-actual, or the «undefined: X» line) before you write any production code. The quote proves that the test exercises the right thing.
 
-A task with only a NON-red integration test and no unit coverage cannot be driven by TDD locally — write the unit-level RED too, and let the integration RED land in CI (the proving-run pattern).
+A task with only a NON-red integration test and no unit coverage cannot be driven by TDD locally. Write the unit-level RED too. Let the integration RED land in CI (the proving-run pattern).
 
 ## GREEN — minimal code to pass
 
-Write the **least** code that turns the quoted failing assertion green. No speculative generality, no unrelated edits, nothing outside the task's `files_hint`. Re-run the unit command; confirm the previously-quoted failure is now green and nothing else broke.
+Write the **least** code that turns the quoted failing assertion green. Add no speculative generality. Make no unrelated edits. Touch nothing outside the task's `files_hint`. Re-run the unit command. Confirm the previously-quoted failure is now green. Confirm nothing else broke.
 
 ## REFACTOR — clean while staying green
 
-Tidy names, extract helpers, remove duplication — re-running the unit command after each change. If a refactor goes red and isn't trivially fixable, **revert it**; the task's job is the GREEN, not the cleanup.
+Tidy names, extract helpers, remove duplication. Re-run the unit command after each change. If a refactor goes red and is not trivially fixable, **revert it**. The task's job is the GREEN, not the cleanup.
 
 ## GATE — the task isn't done until this is clean
 
 Run, per the detected commands + settings:
 
 - **unit** — must be green.
-- **integration** — green if available; NON-red recorded if Docker is absent under `require_integration: auto`; BLOCK was already enforced for `always`.
+- **integration** — green if available. Record NON-red if Docker is absent under `require_integration: auto`. BLOCK was already enforced for `always`.
 - **lint** (if `gate_lint` and a linter resolved) — clean.
 - **vet/typecheck** (if `gate_vet` and a command resolved) — clean.
 
-Any hard-gate failure (unit red, or integration red when it ran, or lint/vet errors) → the task is not done. Fix, or escalate (see [`escalation.md`](./escalation.md)).
+Any hard-gate failure (unit red, integration red when it ran, lint/vet errors) means the task is not done. Fix it, or escalate (see [`escalation.md`](./escalation.md)).
 
 ## COMMIT — task-scoped, traceable
 
@@ -56,22 +56,22 @@ SDD-AC: AC-02
 SDD-AC: AC-04
 ```
 
-One `SDD-AC` trailer per AC the task satisfied; the `SDD-Task` trailer ties the commit to `tasks.json`. Then mark the task `done` in `tracker.md`. (`per_phase` batches a phase's tasks into one commit; `off` leaves committing to the user but still updates the tracker.)
+Write one `SDD-AC` trailer per AC the task satisfied. The `SDD-Task` trailer ties the commit to `tasks.json`. Then mark the task `done` in `tracker.md`. (`per_phase` batches a phase's tasks into one commit. `off` leaves committing to the user but still updates the tracker.)
 
-**Compile-coupled lane exception.** Tasks in one compile-coupled lane (a shared-contract change + its implementer(s), marked by `tasks` via the shared contract file in `files_hint`) cannot each be committed green alone — the contract change breaks every implementer at compile time. They run **one shared GATE and one commit**: the commit carries an `SDD-Task` trailer **per task** and all of their `SDD-AC` trailers together, and the body names the coupling (e.g. «compile-coupled: T3 interface change + T4 implementation»). This is a sanctioned exception to task-scoped commits, not a license to batch unrelated tasks.
+**Compile-coupled lane exception.** Tasks in one compile-coupled lane cannot each be committed green alone. A lane is a shared-contract change + its implementer(s). `tasks` marks it via the shared contract file in `files_hint`. The contract change breaks every implementer at compile time. The lane runs **one shared GATE and one commit**. The commit carries an `SDD-Task` trailer **per task** and all of their `SDD-AC` trailers together. The body names the coupling (e.g. «compile-coupled: T3 interface change + T4 implementation»). This is a sanctioned exception to task-scoped commits. It is not a license to batch unrelated tasks.
 
-In parallel modes the **lead serializes commits in dependency order** even though the work happened concurrently — the history stays linear and bisectable.
+In parallel modes the **lead serializes commits in dependency order** even though the work happened concurrently. The history stays linear and bisectable.
 
 ## WHOLE-FEATURE gate — before handing off to review (W2-adjacent)
 
-The per-task GATE proves each task green in isolation. It does **not** prove the tasks compose: task T2's change can break T1's test if they touch different files (T2 changed a shared helper's signature; T1's test imports it), and T2's own GATE wouldn't catch that because T2's test doesn't exercise T1's path.
+The per-task GATE proves each task green in isolation. It does **not** prove the tasks compose. Task T2's change can break T1's test when they touch different files. Example: T2 changed a shared helper's signature. T1's test imports it. T2's own GATE does not catch that. T2's test does not exercise T1's path.
 
 After **all** tasks are committed, run **one whole-feature gate** before emitting the handoff to `review`:
 
-1. Run the **full suite end-to-end** (unit + integration + lint + vet) on the final HEAD of the feature branch — not just the files the last task touched.
-2. If any test that was green at its task's GATE is now red, that's a cross-task regression — fix it (re-enter the TDD loop for the responsible task) before handing off. Do **not** defer it to `review` — `review` is read-only (it doesn't run tests), so a red suite at review means a loop-back to `implement` that could have been caught here for free.
+1. Run the **full suite end-to-end** (unit + integration + lint + vet) on the final HEAD of the feature branch. Do not run only the files the last task touched.
+2. If any test that was green at its task's GATE is now red, that is a cross-task regression. Fix it before handing off. Re-enter the TDD loop for the responsible task. Do **not** defer it to `review`. `review` is read-only (it does not run tests). A red suite at review means a loop-back to `implement` that could have been caught here for free.
 3. Record the whole-feature gate result in `tracker.md` (one line: `whole-feature gate: <unit/integration/lint/vet counts> at <commit>`).
 
-This is cheap insurance against the most common multi-task integration failure, and it keeps `review` focused on the diff's correctness rather than on «why is this green task now red».
+This is cheap insurance against the most common multi-task integration failure. It also keeps `review` focused on the diff's correctness, not on «why is this green task now red».
 
-**Interaction with `require_integration: auto` + NON-red.** If the whole-feature gate runs with integration tier NON-red (Docker absent locally), surface that explicitly in the handoff — `ship`'s G5 warning depends on this signal being visible. The bet is still that CI runs the integration tier; the whole-feature gate makes that bet explicit rather than silent.
+**Interaction with `require_integration: auto` + NON-red.** If the whole-feature gate runs with the integration tier NON-red (Docker absent locally), surface that explicitly in the handoff. `ship`'s G5 warning depends on this signal being visible. The bet is still that CI runs the integration tier. The whole-feature gate makes that bet explicit, not silent.

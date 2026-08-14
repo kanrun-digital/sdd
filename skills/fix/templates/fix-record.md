@@ -16,8 +16,8 @@ recurrence_of: <none | _fixes/<date>-<short>.md>
 
 ## Root cause
 
-<!-- 2–4 sentences: the mechanism, the file:line, and why it slipped past the existing
-     tests (no test at that level? a too-weak assertion? an untested branch?). -->
+<!-- 2–4 sentences: the mechanism, the file:line, and why the existing tests did not catch it
+     (no test at that level? a too-weak assertion? an untested branch?). -->
 
 ## The pinning test
 
@@ -34,5 +34,5 @@ recurrence_of: <none | _fixes/<date>-<short>.md>
 
 ## Follow-ups
 
-<!-- Refactors / adjacent risks the fix exposed but deliberately did NOT touch (the fix
+<!-- Refactors / adjacent risks the fix exposed but deliberately did NOT address (the fix
      commit stays minimal) — each as one actionable line. Or «none». -->

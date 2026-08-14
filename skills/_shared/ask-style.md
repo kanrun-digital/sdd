@@ -2,55 +2,86 @@
 
 > **Reference-only.** Not a skill. Every skill that calls `AskUserQuestion` reads this for the
 > canonical shape of questions and options. The rule: an **option label is the next mechanical
-> step the skill takes**, not just a name; the **description explains, in plain words, what will
-> happen** — written so a first-year junior can pick correctly without a senior beside them.
+> step the skill takes**, not just a name. The **description explains, in plain words, what will
+> happen**. Write it so a first-year junior can pick correctly without a senior beside them.
 
-> **Volume vs. style.** How **many** questions a Q&A skill asks scales with the interview-depth dial
-> (easy asks few, hard asks all — see [`interview-depth.md`](./interview-depth.md)). The **per-question
-> explanatory rule below is unchanged at every depth** — even a single easy-level question is glossed
-> and explained in full. Depth tunes the count; it never licenses a dry question.
+> **Volume vs. style.** The **number** of questions a Q&A skill asks scales with the
+> interview-depth dial (easy asks few, hard asks all — see
+> [`interview-depth.md`](./interview-depth.md)). The **per-question explanatory rule below is
+> unchanged at every depth**. Even a single easy-level question is glossed and explained in full.
+> Depth tunes the count. It never licenses a dry question.
 
 ## The one rule that matters most
 
-**Never ask dryly.** The most common failure is a terse, jargon-dense question — a few words plus acronyms, no context — that forces the user to already know the project to answer. Fix it two ways, every time:
+**Never ask dryly.** The most common failure is a terse, jargon-dense question. It has a few words
+plus acronyms, with no context. It forces the user to already know the project to answer. Fix it
+two ways, every time:
 
-1. **Gloss every technical term inline, on first use** — the plain meaning in parentheses, right there. Not «order by RICE» but «order by RICE — a quick score, Reach × Impact × Confidence ÷ Effort, where higher = more value per unit of work». Not «forces a worktree» but «forces a worktree — a separate working copy of the repo so two agents don't edit the same files». The reader should never have to look a term up to choose.
-2. **Spend the words on the WHY and the trade-off**, not the WHAT. A short label is fine; the *description* is where you explain — in plain language — what happens, what you gain and lose, and the hidden catch.
+1. **Gloss every technical term inline, on first use** — the plain meaning in parentheses, right
+   there. Not «order by RICE» but «order by RICE — a quick score, Reach × Impact × Confidence ÷
+   Effort, where higher = more value per unit of work». Not «forces a worktree» but «forces a
+   worktree — a separate working copy of the repo so two agents don't edit the same files». The
+   reader should never have to look a term up to choose.
+2. **Spend the words on the WHY and the trade-off**, not the WHAT. A short label is fine. The
+   *description* is where you explain, in plain language, what happens, what you gain and lose,
+   and the hidden catch.
 
-If a question reads like a config dump or a spec excerpt, it's wrong. Write it as if explaining the choice to a capable colleague who just joined and doesn't know your acronyms yet. **More explanation always beats less here** — a long, clear description is a feature, not bloat.
+A question that reads like a config dump or a spec excerpt is wrong. Write it as an explanation to
+a capable colleague who just joined and doesn't know your acronyms yet. **More explanation always
+beats less here** — a long, clear description is a feature, not bloat.
 
 ## Shape
 
 - **`question`** — 3–4 sentences in three blocks:
-  - **CONTEXT** — why this decision, what scenario to picture, what exactly we're deciding (one sentence with a concrete example).
-  - **WHY IT MATTERS** — which quality goal / NFR / spec vector it touches; reversibility (irreversible? multi-module? affects performance / security / UX?); the main trade-off in play.
+  - **CONTEXT** — why this decision, what scenario to picture, and what exactly we decide (one
+    sentence with a concrete example).
+  - **WHY IT MATTERS** — which quality goal / NFR / spec vector it touches. Reversibility
+    (irreversible? multi-module? affects performance / security / UX?). The main trade-off in play.
   - **READ OPTIONS** — a nudge to read the descriptions before choosing.
 - **Each option**:
-  - `label` — 1–5 words, **action form** = the next mechanical step: «Прийняти», «Виправити», «Винести у відкрите питання», «Викинути», «Зафіксувати як ADR». Add «(Recommended)» to the first option when you recommend it.
+  - `label` — 1–5 words, **action form** = the next mechanical step: «Прийняти», «Виправити»,
+    «Винести у відкрите питання», «Викинути», «Зафіксувати як ADR». Add «(Recommended)» to the
+    first option when you recommend it.
   - `description` — 3–5 sentences with four mandatory elements (below).
 
 ## The four mandatory elements of a `description`
 
-1. **What technically happens** — concrete names: tables / endpoints / files / ADR numbers. Not «modify the API» but «add field `is_active BOOLEAN` to table `members` and a new route in the module's handler».
-2. **What you gain / what you lose** — the trade-off in plain words, **every technical term glossed**:
-   - not «backfill migration» → «a script that walks every existing row and fills the new field; while it runs the rows are read-locked for writes»
-   - not «cursor pagination» → «the client sends the last id it saw so the next page starts after it; avoids `OFFSET`, which slows down on large pages»
-   - not «GIN index» → «a special index type that lets you search inside JSON columns, but takes 3–5× more space and writes slower»
-3. **The skill's next mechanical step** — «I spawn ADR-NNNN titled X, add a row to the §9 ADR table, the schema is locked for the data-model stage».
-4. **Hidden trade-off** — if there's a condition under which the choice breaks («only works if Redis is already in your stack», «in 6 months you'll need downtime for a backfill», «existing users have to re-login»), state it **right in the description**, not in a follow-up. A junior won't see that trigger on their own.
+1. **What technically happens** — concrete names: tables / endpoints / files / ADR numbers. Not
+   «modify the API» but «add field `is_active BOOLEAN` to table `members` and a new route in the
+   module's handler».
+2. **What you gain / what you lose** — the trade-off in plain words, **every technical term
+   glossed**:
+   - not «backfill migration» → «a script that walks every existing row and fills the new field;
+     while it runs the rows are read-locked for writes»
+   - not «cursor pagination» → «the client sends the last id it saw so the next page starts after
+     it; avoids `OFFSET`, which slows down on large pages»
+   - not «GIN index» → «a special index type that lets you search inside JSON columns, but takes
+     3–5× more space and writes slower»
+3. **The skill's next mechanical step** — «I spawn ADR-NNNN titled X, add a row to the §9 ADR
+   table, the schema is locked for the data-model stage».
+4. **Hidden trade-off** — a condition may exist under which the choice breaks («only works if
+   Redis is already in your stack», «in 6 months you'll need downtime for a backfill», «existing
+   users have to re-login»). State it **right in the description**, not in a follow-up. A junior
+   won't see that trigger on their own.
 
 ## Language
 
-- **Ukrainian throughout** — labels + descriptions. Technical identifiers stay in their original form (ADR, JSONB, JWT, UUID, FK, OpenAPI) — they are names. The *actions* are Ukrainian («Прийняти», «Відредагувати», «Винести у §11 OQ», «Видалити»).
-- Glossary roles and domain-invariant **names** (natural-language phrases like «no published lessons») are allowed — they are business terms.
-- This section governs **conversation** (question + option text) only. The language documents are *written in* is a separate per-project switch — `artifact_language` in `.claude/sdd.local.md` → [`artifact-language.md`](./artifact-language.md).
+- **Ukrainian throughout** — labels + descriptions. Technical identifiers stay in their original
+  form (ADR, JSONB, JWT, UUID, FK, OpenAPI) — they are names. The *actions* are Ukrainian
+  («Прийняти», «Відредагувати», «Винести у §11 OQ», «Видалити»).
+- Glossary roles and domain-invariant **names** (natural-language phrases like «no published
+  lessons») are allowed — they are business terms.
+- This section governs **conversation** (question + option text) only. The language of written
+  documents is a separate per-project switch: `artifact_language` in `.claude/sdd.local.md` →
+  [`artifact-language.md`](./artifact-language.md).
 
 ## Forbidden
 
 - Terse English labels («Approve», «Edit», «Drop», «Reword»).
 - One-line descriptions.
 - Technical terms without a gloss (UNION, backfill, GIN, cursor, idempotent, transactional…).
-- Trade-offs hidden in a follow-up («if you pick this I'll later ask about X, which has complexity Y»).
+- Trade-offs hidden in a follow-up («if you pick this I'll later ask about X, which has complexity
+  Y»).
 
 ## Counter-example (deprecated) vs correct
 
@@ -106,8 +137,15 @@ Options:
       tends to drift over time. You can switch to scoring later if the list grows."
 ```
 
-The dry version is unanswerable without knowing what RICE is; the explanatory version teaches the term in the act of asking and makes the trade-off obvious.
+The dry version is unanswerable without knowledge of RICE. The explanatory version teaches the term
+in the act of asking. It makes the trade-off obvious.
 
 ## Why (feedback, 2026-05-23 + reinforced 2026-05-29)
 
-The user is a PM, methodist, or junior dev opening the repo for the first time. Terse English questions give them neither the substance of the decision nor the difference between options. Verbatim (2026-05-23): «Треба щоб пояснення були ще більш зрозумілими для людей котрі буквально джуни в розробці». Reinforced (2026-05-29): «при опитуваннях треба більш explanatory запитання і варіанти відповідей, бо зараз клод доволі сухо опитує і багато термінів на короткий текст» — i.e. the dryness + term-density was still happening, so this file now leads with the "never ask dryly / gloss every term" rule above.
+The user is a PM, methodist, or junior dev who opens the repo for the first time. Terse English
+questions give them neither the substance of the decision nor the difference between options.
+Verbatim (2026-05-23): «Треба щоб пояснення були ще більш зрозумілими для людей котрі буквально
+джуни в розробці». Reinforced (2026-05-29): «при опитуваннях треба більш explanatory запитання і
+варіанти відповідей, бо зараз клод доволі сухо опитує і багато термінів на короткий текст». That
+is, the dryness + term-density was still happening. This file therefore now leads with the «never
+ask dryly / gloss every term» rule above.

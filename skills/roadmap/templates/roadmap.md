@@ -5,7 +5,7 @@ updated_at: "<YYYY-MM-DD>"
 
 # Roadmap — <repo>
 
-> **Direction, not a promise.** Near-term work is firm; the further out an item is, the more
+> **Direction, not a promise.** Near-term work is firm. The further out an item is, the more
 > directional and likely-to-change it is. This is **not** a release plan and carries **no dates** —
 > it's the set of outcomes we're pursuing, at decreasing certainty over time. The *solution* for any
 > item lives in its `docs/features/<slug>/` spec, not here.
@@ -14,7 +14,7 @@ updated_at: "<YYYY-MM-DD>"
 
 <!-- instruction: features whose docs/features/<slug>/ spec exists and is being built. One ROW each:
 the OUTCOME (the why), a link to the feature folder, and a status (designing / implementing / review).
-No spec detail — link, don't duplicate. specify promotes an item here; ship moves it to Shipped. -->
+No spec detail — link, don't duplicate. specify promotes an item here. ship moves it to Shipped. -->
 
 | Outcome (the why) | Feature | Status |
 |---|---|---|
@@ -23,7 +23,7 @@ No spec detail — link, don't duplicate. specify promotes an item here; ship mo
 ## Next — problems / opportunities (deliberately not yet spec'd)
 
 <!-- instruction: the prioritized candidate pool. Each row is an OUTCOME/PROBLEM, not a solution, and
-has NO feature folder yet (it gets one when pulled into Now via specify). Ordered by RICE desc.
+has NO feature folder yet (it gets one when specify promotes it into Now). Ordered by RICE desc.
 RICE = (Reach × Impact × Confidence) ÷ Effort — Impact 3/2/1/0.5/0.25, Confidence 100/80/50%, Effort person-weeks. -->
 
 | Outcome / problem | RICE | R · I · C · E |

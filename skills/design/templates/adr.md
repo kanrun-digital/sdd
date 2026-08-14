@@ -1,6 +1,6 @@
 <!-- Format: MADR (Markdown Any Decision Record). -->
-<!-- Spawned by `design` when a decision crosses the blast-radius gate (references/blast-radius.md),
-     and also written by `decide-adr` for post-hoc decisions. -->
+<!-- `design` spawns this record when a decision crosses the blast-radius gate (references/blast-radius.md).
+     `decide-adr` also writes it for post-hoc decisions. -->
 
 ---
 status: Accepted                                # Proposed → Accepted → Superseded by NNNN. `design` writes Accepted directly.
@@ -28,8 +28,8 @@ ticket: "<tracker ticket that triggered the feature>"
 
 ## Decision drivers
 
-<bullets — the quality goals / constraints that pushed the choice. Each bullet comes from spec §6 NFR,
-or §2 SAD Constraints, or a §1 top-3 quality goal. Don't invent drivers — this filters out pet decisions.>
+<bullets — the quality goals / constraints that pushed the choice. Each bullet derives from spec §6 NFR,
+or §2 SAD Constraints, or a §1 top-3 quality goal. Do not invent drivers. This filter removes pet decisions.>
 
 - <e.g. latency target from spec §6 NFR>
 - <e.g. multi-tenant isolation requirement from spec §6.1>
@@ -46,7 +46,7 @@ Do NOT add a strawman — an option an existing constraint already excludes (a c
 
 ## Decision outcome
 
-**Chosen:** Option <letter or name>. <1–2 sentences — why this won over the alternatives, citing the
+**Chosen:** Option <letter or name>. <1–2 sentences — why this option beat the alternatives, citing the
 decision drivers above.>
 
 ## Consequences
@@ -68,7 +68,7 @@ decision drivers above.>
 
 <!-- Without this section an ADR is an orphan. An ADR lives in three links:
        1) up to the spec (which user story triggered it)
-       2) up to a §N of the SAD (which section it attaches to)
+       2) up to a §N of the SAD (its SAD section)
        3) sideways to a sibling ADR (if together they form one contract) -->
 
 - Spec: [[../spec.md]]

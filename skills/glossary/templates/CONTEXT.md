@@ -8,12 +8,12 @@ updated_at: "<today YYYY-MM-DD>"
 <!--
 CONTEXT.md is the domain glossary — not a spec and not a scratch pad. NO implementation
 detail here (no datastore/broker/framework names, no API contracts) — only domain words
-and the boundaries between them. Implementation choices live in the SAD and ADRs; behaviour
+and the boundaries between them. Implementation choices live in the SAD and ADRs. Behaviour
 lives in spec.md.
 
 Terms get fixed inline, the moment they surface in an interview / spec / review — never
-batched «I'll consolidate later». Empty H2 → prune before commit; keep only the sections
-that carry real content. ## Glossary is mandatory; the other two are optional.
+batched «I'll consolidate later». Empty H2 → prune before commit. Keep only the sections
+that carry real content. ## Glossary is mandatory. The other two are optional.
 -->
 
 ## Glossary

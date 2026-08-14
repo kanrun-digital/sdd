@@ -1,12 +1,12 @@
 # Skill-context consumer contract — how every skill reads its project-level override
 
 > **Reference-only.** Not a skill. `evolve` writes compact, project-specific rules to
-> `docs/.skill-context/sdd-<skill>/SKILL.md`; this file is the **one contract for how every skill
+> `docs/.skill-context/sdd-<skill>/SKILL.md`. This file is the **one contract for how every skill
 > reads them at startup**. Each skill keeps a one-line pointer in its `## Inputs` section (see
-> «How a skill links» below) and supplies nothing else — the read/apply/verify discipline lives
-> only here. This exists because a rule scattered across 19 SKILL.md files drifts; a rule in one
-> place is the same rule everywhere (same principle as `agent-roster.md` tying model/effort policy
-> together).
+> «How a skill links» below). It supplies nothing else. The read/apply/verify discipline lives
+> only here. A rule scattered across 19 SKILL.md files drifts. A rule in one place is the same
+> rule everywhere (same principle as `agent-roster.md` tying model/effort policy together). This
+> file exists for that reason.
 
 ## TL;DR (короткий вступ українською)
 
@@ -21,9 +21,9 @@
 ## Where a skill reads (the file)
 
 `docs/.skill-context/sdd-<skill-name>/SKILL.md` — the project-owned override, written by
-[`evolve`](../evolve/SKILL.md). **Read-only for skills** — a skill never writes here;
-only `evolve` does (editing it manually is forbidden by the same rule that forbids editing
-`skills/sdd-*/` — re-install overwrites the source, not the project override).
+[`evolve`](../evolve/SKILL.md). **Read-only for skills**. A skill never writes here. Only `evolve`
+does. Editing it manually is forbidden by the same rule that forbids editing `skills/sdd-*/`.
+Re-install overwrites the source, not the project override.
 
 **File format** (mirrors [`evolve/templates/skill-context.md`](../evolve/templates/skill-context.md)):
 
@@ -42,61 +42,62 @@ only `evolve` does (editing it manually is forbidden by the same rule that forbi
 **Rule**: <specific, actionable instruction — concrete formats verbatim>
 ```
 
-The file is always **English** (consumed by AI agents across sessions, regardless of the repo's
-`artifact_language`).
+The file is always **English**. AI agents across sessions consume it, regardless of the repo's
+`artifact_language`.
 
 ## When a skill reads (the timing)
 
 At startup, in the **Inputs phase** — before any generation. Every skill's `## Inputs` section
-carries a one-line pointer (see «How a skill links»); the pointer names the path and the
-precedence. The read is **conditional**: `test -f docs/.skill-context/sdd-<skill-name>/SKILL.md` —
-**absent → no-op** (the skill runs on its defaults; fully backwards-compatible — a repo that
-never ran `evolve` behaves exactly as before).
+carries a one-line pointer (see «How a skill links»). The pointer names the path and the
+precedence. The read is **conditional**: `test -f docs/.skill-context/sdd-<skill-name>/SKILL.md`.
+**Absent → no-op**. The skill then runs on its defaults. This is fully backwards-compatible — a
+repo that never ran `evolve` behaves exactly as before.
 
 ## How a skill applies (the precedence — 3 rules, from aif-plan's proven contract)
 
-1. **Conflict → skill-context wins.** When a skill-context rule conflicts with a general rule in
-   the skill's own SKILL.md, the skill-context rule wins (more specific context takes priority —
-   the same principle as nested `CLAUDE.md` files).
+1. **Conflict → skill-context wins.** A skill-context rule may conflict with a general rule in the
+   skill's own SKILL.md. The skill-context rule then wins. More specific context takes priority —
+   the same principle as nested `CLAUDE.md` files.
 2. **No-conflict → apply both.** General rules from SKILL.md + project rules from skill-context.
-3. **Never ignore a skill-context rule** even if it seems to contradict the skill's defaults —
-   it exists because the project's experience proved the default insufficient.
+3. **Never ignore a skill-context rule**, even one that seems to contradict the skill's defaults.
+   It exists because the project's experience proved the default insufficient.
 
 **Scope:** skill-context rules apply to **all outputs** of the skill — artifacts, handoff, and
-templates. If a skill-context rule says «tasks MUST include X» or «the spec MUST have section Y»,
-the skill's template is a **base structure** that gets augmented accordingly. Generating output
-that violates a skill-context rule is a bug.
+templates. A rule may say «tasks MUST include X» or «the spec MUST have section Y». The skill's
+template is then a **base structure** that gets augmented accordingly. Output that violates a
+skill-context rule is a bug.
 
 ## The structural-contract carve-out (what skill-context may NOT override)
 
-Skill-context is a **soft override** — it enriches behavior, never restructures contracts. It may
+Skill-context is a **soft override**. It enriches behavior. It never restructures contracts. It may
 **never**:
 
-- hard-refuse where the base skill wouldn't (a skill-context rule can't turn a warning into a gate),
+- hard-refuse where the base skill would not. A skill-context rule cannot turn a warning into a
+  gate.
 - change a **structural contract** (the `tasks.json` schema, the handoff-block format, the DAG
   rules, the TDD `SELECT → RED → GREEN` order, the critic dispatch discipline, the `tasks.json` ↔
-  `tasks/*.md` one-model contract),
+  `tasks/*.md` one-model contract).
 - rewrite the skill's workflow (add/remove protocol steps).
 
-If a skill-context rule **conflicts with a structural contract**, the skill emits a **warning**
-(«⚠ skill-context rule '<name>' targets a structural contract — deferred to base SKILL.md;
-`evolve` should not have written this»), applies the base contract, and continues. The
-consumer never breaks the pipeline because of a malformed override — this is the carve-out that
-keeps the loop safe.
+A skill-context rule may **conflict with a structural contract**. The skill then emits a
+**warning** («⚠ skill-context rule '<name>' targets a structural contract — deferred to base
+SKILL.md; `evolve` should not have written this»). It applies the base contract. It continues. A
+malformed override never breaks the pipeline. This carve-out keeps the loop safe.
 
 ## Enforcement (the verify step)
 
 After generating **any output artifact** (and before the handoff), the skill verifies the output
-against **every rule in its skill-context file** (one check per rule — however many there are).
-A violated rule → fix the output before the handoff; never silently commit a violating artifact.
-A skill that can't verify a rule cheaply (a judgment call, not structural) surfaces it in the
-handoff's *What I did* («skill-context: N rules applied, M judgment-only — see above») rather
-than pretending a clean pass.
+against **every rule in its skill-context file**. It runs one check per rule, however many there
+are. A violated rule → fix the output before the handoff. Never silently commit a violating
+artifact. A skill may be unable to verify a rule cheaply (a judgment call, not structural). It then
+surfaces the rule in the handoff's *What I did* («skill-context: N rules applied, M judgment-only —
+see above»). It never pretends a clean pass.
 
 ## How a skill links (the pointer format)
 
-Each skill adds **one bullet** to its `## Inputs` section (or its first section if it has none,
-e.g. `interview`'s `## Depth dial`), naming its own skill-context path and this file:
+Each skill adds **one bullet** to its `## Inputs` section. A skill with no such section uses its
+first section instead (e.g. `interview`'s `## Depth dial`). The bullet names its own skill-context
+path and this file:
 
 ```md
 - (Optional, project-level override) `docs/.skill-context/sdd-<name>/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
@@ -105,26 +106,26 @@ e.g. `interview`'s `## Depth dial`), naming its own skill-context path and this 
 - `sdd-<name>` is the skill's installed name (the frontmatter `name:`).
 - The bullet is the **last** in the `## Inputs` section (after the skill's own inputs).
 - **Idempotent:** a skill that already carries the pointer (a re-run, a re-install) is not
-  re-inserted — the marker is the `skill-context.md` link.
-- The pointer is **present even when no skill-context exists yet** — it documents where the
-  override lives, so the first `evolve` run has a known consumer contract to write against.
+  re-inserted. The marker is the `skill-context.md` link.
+- The pointer is **present even when no skill-context exists yet**. It documents where the override
+  lives. The first `evolve` run then has a known consumer contract to write against.
 
 ## Anti-patterns
 
-- **Duplicating the contract in 19 files.** The discipline lives here; the skill carries only the
+- **Duplicating the contract in 19 files.** The discipline lives here. The skill carries only the
   one-line pointer. A skill that inlines the precedence rule will drift from the others.
-- **Treating skill-context as optional-but-ignorable.** Absent → no-op is correct; present-but-
-  ignored is a bug (the project wrote a rule for a reason).
-- **A structural override.** Skill-context never hard-refuses, never changes a schema/contract —
-  the carve-out above. A malformed override warns + defers, it doesn't break the pipeline.
-- **Verifying the draft, not the disk.** The output check runs against the written artifact
-  (same discipline as `self-check.md` — the file as written is what downstream reads).
-- **Silently committing a violating output.** A stated violation is acceptable; a hidden one is
+- **Treating skill-context as optional-but-ignorable.** Absent → no-op is correct.
+  Present-but-ignored is a bug (the project wrote a rule for a reason).
+- **A structural override.** Skill-context never hard-refuses. It never changes a schema/contract —
+  the carve-out above. A malformed override warns + defers. It does not break the pipeline.
+- **Verifying the draft, not the disk.** The output check runs against the written artifact (same
+  discipline as `self-check.md`). Downstream reads the file as written.
+- **Silently committing a violating output.** A stated violation is acceptable. A hidden one is
   not — the same contract `self-check.md` enforces.
 
 ## Where the writer side lives
 
 `evolve` ([`../evolve/SKILL.md`](../evolve/SKILL.md)) is the **only writer** of
-`docs/.skill-context/`. This file is the **reader contract**; the writer protocol (Prevention
+`docs/.skill-context/`. This file is the **reader contract**. The writer protocol (Prevention
 Point Registry, cursor, stale-rule detection) lives in evolve. The two sides agree on the file
-format + path; they never share logic.
+format + path. They never share logic.

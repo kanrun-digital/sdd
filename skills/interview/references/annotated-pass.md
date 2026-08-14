@@ -24,8 +24,8 @@ newsletter for engineering managers."
 
 ### Phase 1 — Understand the idea
 
-> [why] The one-liner exists, so skip "what is it" and go straight to audience
-> precision — "engineering managers" is a wide net.
+> [why] The one-liner exists, so skip "what is it" and target audience precision directly —
+> "engineering managers" is a wide net.
 
 **Q1 — Which manager, exactly?**
 - **(Recommended) New EMs in their first year** — sharpest pain, least served ← picked
@@ -39,7 +39,7 @@ newsletter for engineering managers."
 - Feels less alone in the role
 - Saves it to read "later" (be honest if this is the real outcome)
 
-> [why] "Tries one tactic" is a strong, testable outcome. Move on — Phase 1 is done in 2.
+> [why] "Tries one tactic" is a strong, testable outcome. Continue — Phase 1 is done in 2.
 
 ---
 

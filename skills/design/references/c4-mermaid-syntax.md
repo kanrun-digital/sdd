@@ -2,7 +2,7 @@
 
 > **TL;DR (UA).** C4 — 4 рівні діаграм як zoom на мапі. **L1 Context** (система як чорний ящик + актори + зовнішні системи) = §3 SAD. **L2 Container** (внутрішня декомпозиція: модулі, сервіси, БД, черги) = §5 SAD. L3/L4 — поза межами цього skill. *Кордон довіри* (`Container_Boundary`) — лінія, за якою дані не довіряєш без перевірки.
 
-design emits C4 Level 1 (Context) in §3 and Level 2 (Container) in §5 as Mermaid blocks inline in `sad.md`. L3 Component and L4 Code are deliberately out of scope — request a separate diagramming pass if you need them. Mermaid renders natively in GitHub and in Obsidian.
+design emits C4 Level 1 (Context) in §3 and Level 2 (Container) in §5. It writes them as Mermaid blocks inline in `sad.md`. L3 Component and L4 Code are deliberately out of scope. If you need them, request a separate diagramming pass. Mermaid renders natively in GitHub and in Obsidian.
 
 ## L1 — System Context (`C4Context`)
 
@@ -32,12 +32,12 @@ C4Context
 - `System(id, "name", "description")` — internal system.
 - `System_Ext(id, "name", "description")` — external system.
 - `SystemDb(id, "name", "description")` — external database (rare at L1).
-- `Rel(from, to, "label", "protocol")` — connection; protocol is optional but recommended.
+- `Rel(from, to, "label", "protocol")` — a connection. The protocol is optional but recommended.
 
 **Rules of thumb:**
 - Show *your* system as one box — decomposition lives in L2.
 - An external system = different owner / process / lifecycle. Internal modules of the same deployable do **not** appear in L1.
-- 5–10 elements total. More than that = you're showing too much.
+- 5–10 elements total. More than that means you are showing too much.
 
 ## L2 — Container (`C4Container`)
 
@@ -77,11 +77,11 @@ C4Container
 - `System_Ext` and `Person` can be reused from L1.
 
 **Rules of thumb:**
-- For a single deployable: each module = one `Container`; the boundary brackets the whole process.
+- For a single deployable: each module = one `Container`. The boundary brackets the whole process.
 - Datastores live *outside* the boundary if they're separate processes (almost always).
 - Show a background worker / scheduled job as its own container — its lifecycle matters even when it runs in-process.
 
-**Multi-surface features — one `Container` per declared `target_surface`.** When §4 declares more than one surface (frontmatter `target_surfaces` → [`../../_shared/surfaces.md`](../../_shared/surfaces.md)), §5 draws one container for each. A `[backend-service, web-frontend, mobile-app]` feature shows the SPA **and** the mobile app **and** the backend API — both UI surfaces *consume* the API's contract, neither authors one:
+**Multi-surface features — one `Container` per declared `target_surface`.** When §4 declares more than one surface (frontmatter `target_surfaces` → [`../../_shared/surfaces.md`](../../_shared/surfaces.md)), §5 draws one container for each. A `[backend-service, web-frontend, mobile-app]` feature shows the SPA **and** the mobile app **and** the backend API. Both UI surfaces *consume* the API's contract. Neither surface authors one:
 
 ```mermaid
 C4Container
@@ -106,10 +106,10 @@ C4Container
 
 ## Common mistakes
 
-- **Mixing levels.** Don't put a component (a single class/struct) inside a Container diagram — either zoom out (it's part of the Container) or move to L3.
+- **Mixing levels.** Do not put a component (a single class/struct) inside a Container diagram. Either zoom out (it's part of the Container) or move to L3.
 - **Typos in `Container_Boundary`.** Common: `Container_Bondary`, `ContainerBoundary` (no underscore). Mermaid silently renders an empty block.
 - **`Rel` to an undeclared element.** Declare every `Person`/`Container`/`System*` first, then the `Rel` lines.
-- **L1 with internal modules.** L1 = business scope. If a module shows up in L1, you're already at L2.
+- **L1 with internal modules.** L1 = business scope. If a module appears in L1, you are already at L2.
 - **No label or protocol on `Rel`.** «Connected» tells the reader nothing. Always: what it does + how.
 
 ## Validating before commit
@@ -119,9 +119,9 @@ C4Container
 npx -y @mermaid-js/mermaid-cli@latest -i <(awk '/^```mermaid$/,/^```$/' docs/features/<slug>/sad.md) -o /tmp/out.svg
 ```
 
-In practice: open `sad.md` in Obsidian or push to GitHub and inspect the render — both fail loudly on syntax errors.
+In practice: open `sad.md` in Obsidian, or push to GitHub and inspect the render. Both fail loudly on syntax errors.
 
 ## When the diagram doesn't fit
 
 - L2 over 10–15 elements → split the feature into two SADs (one per bounded context), or drop tactical containers (the worker) into a note below the diagram.
-- L1 with 15+ external systems → you're documenting the *organization*, not the *feature*. Pull back to «the systems this feature directly talks to».
+- L1 with 15+ external systems → you're documenting the *organization*, not the *feature*. Limit it to «the systems this feature directly talks to».

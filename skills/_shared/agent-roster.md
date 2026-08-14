@@ -2,13 +2,20 @@
 
 > **Reference-only.** Not a skill. Skills and the implement engine read this for the model/effort
 > matrix, the override precedence, and the contract every spawned agent follows. The canonical
-> agent definitions live in `agents/*.md`; this file is the policy that ties them together.
+> agent definitions live in `agents/*.md`. This file is the policy that ties them together.
 
 ## The roster (model + effort by role)
 
-Model is chosen by the **kind of work**, not by taste — judgment gets the strongest model, execution gets a balanced one, search/scan gets the cheapest. Effort is the reasoning depth that role needs.
+The **kind of work** chooses the model, not taste. Judgment gets the strongest model. Execution
+gets a balanced one. Search/scan gets the cheapest. Effort is the reasoning depth that the role
+needs.
 
-The `model` column uses **portable tier-labels** (`cheap` / `balanced` / `judgment`) so the policy is host-agnostic. On Anthropic hosts the mapping is: `cheap` → `haiku`, `balanced` → `sonnet`, `judgment` → `opus` (or `fable` for the Mythos tier). On non-Anthropic hosts (Kimi / GLM / ChatGPT / Codex / Cursor) the host's own model settings resolve each tier — the agent frontmatter is `model: inherit` (the session model) and the tier is picked via `judgment_model` / `model_<role>` (see below) or the host config.
+The `model` column uses **portable tier-labels** (`cheap` / `balanced` / `judgment`) so the policy
+is host-agnostic. On Anthropic hosts the mapping is: `cheap` → `haiku`, `balanced` → `sonnet`,
+`judgment` → `opus` (or `fable` for the Mythos tier). On non-Anthropic hosts (Kimi / GLM /
+ChatGPT / Codex / Cursor), the host's own model settings resolve each tier. The agent frontmatter
+is `model: inherit` (the session model). The tier is picked via `judgment_model` / `model_<role>`
+(see below) or the host config.
 
 | Agent | Kind of work | `model` (tier) | `effort` | Tools |
 |---|---|---|---|---|
@@ -22,22 +29,36 @@ The `model` column uses **portable tier-labels** (`cheap` / `balanced` / `judgme
 | `strategist` | generate the 3 strategic approaches (judgment) | `judgment` | `high` | Read, Grep, Glob |
 | `analyst` | multi-perspective review of approaches (judgment) | `judgment` | `high` | Read, Grep, Glob |
 
-Rationale: judgment quality (review, critique, ambiguity, strategy, multi-perspective synthesis) is where a stronger model pays off; execution (write code/tests to a clear spec) is well served by a balanced model and escalates only when it gets stuck; a read-only scan is cheap. The **ideation trio** (`specify` step 3, gated by the depth dial) follows the same logic: `researcher` is gathering-and-citing work (balanced model + web tools), while `strategist` and `analyst` are judgment (generating real alternatives, synthesizing across lenses) and get the strongest model. (Treat model-by-role as a sound principle — the headline "stronger orchestrator + cheaper workers wins by X%" claim from the multi-agent literature did not survive verification, so we lean on role-fit, not a magic ratio.)
+Rationale: judgment quality (review, critique, ambiguity, strategy, multi-perspective synthesis)
+is where a stronger model pays off. Execution (write code/tests to a clear spec) is well served by
+a balanced model. It escalates only when it gets stuck. A read-only scan is cheap. The **ideation
+trio** (`specify` step 3, gated by the depth dial) follows the same logic. `researcher` is
+gathering-and-citing work (balanced model + web tools). `strategist` and `analyst` are judgment
+(generating real alternatives, synthesizing across lenses). They get the strongest model. Treat
+model-by-role as a sound principle. The headline "stronger orchestrator + cheaper workers wins by
+X%" claim from the multi-agent literature did not survive verification. So we lean on role-fit,
+not a magic ratio.
 
 ## Dispatching (`subagent_type`)
 
-These agents are **plugin-namespaced**. Spawn each with `subagent_type: "sdd:<name>"` — the id Claude Code registers and shows in the available-agents list — **not** the bare name and **not** an `sdd-…` prefix:
+These agents are **plugin-namespaced**. Spawn each with `subagent_type: "sdd:<name>"`. That is
+the id Claude Code registers and shows in the available-agents list. Do **not** use the bare name.
+Do **not** use an `sdd-…` prefix:
 
 `sdd:explorer` · `sdd:test-author` · `sdd:implementer` · `sdd:reviewer` · `sdd:critic` · `sdd:devils-advocate` · `sdd:researcher` · `sdd:strategist` · `sdd:analyst`
 
-So when a skill says «dispatch the `explorer` agent», the call is `subagent_type: "sdd:explorer"`. If the namespaced agent isn't available at runtime, fall back to the general-purpose (or `Explore`) agent the skill names, passing the same prompt. A fallback agent never reads `agents/*.md` — everything it must know arrives in the prompt, **including the async report-delivery instruction** (shared-contract point 2 below) when the host runs it in background/teammate mode.
+So when a skill says «dispatch the `explorer` agent», the call is `subagent_type: "sdd:explorer"`.
+The namespaced agent may be unavailable at runtime. Then use the general-purpose (or `Explore`)
+agent that the skill names, with the same prompt. A fallback agent never reads `agents/*.md`.
+Everything it must know arrives in the prompt. Include the **async report-delivery instruction**
+(shared-contract point 2 below) when the host runs it in background/teammate mode.
 
 ### Cross-tool dispatch
 
-The `subagent_type: "sdd:<name>"` form is **Claude Code-only** — it's the id the plugin loader
+The `subagent_type: "sdd:<name>"` form is **Claude Code-only**. It is the id the plugin loader
 registers. Under **Codex CLI / Cursor** the installer generates a custom agent named `sdd-<name>`
-(into `.codex/agents/` / `.cursor/agents/`); dispatch that, or — when the host has no agent
-mechanism in reach — run the agent file's instructions **inline** in the current context. Same
+(into `.codex/agents/` / `.cursor/agents/`). Dispatch that agent. When the host has no agent
+mechanism in reach, run the agent file's instructions **inline** in the current context. Same
 degrade-don't-block rule and the full mapping table: [`tool-adapters.md`](./tool-adapters.md).
 
 ## Override precedence (highest wins)
@@ -46,45 +67,66 @@ degrade-don't-block rule and the full mapping table: [`tool-adapters.md`](./tool
 env var  >  per-invocation (the Agent call)  >  model_<role>  >  judgment_model  >  frontmatter  >  session
 ```
 
-**`judgment_model`** (`.claude/sdd.local.md`; default `opus`) is the one-switch
+**`judgment_model`** (`.claude/sdd.local.md`, default `opus`) is the one-switch
 tier for the **judgment agents** — `reviewer` / `critic` / `devils-advocate` / `strategist` /
-`analyst`. Accepts: an Anthropic alias (`opus` — the default; `fable` for the Mythos tier) **or a
-full model ID** (`claude-opus-5`, `kimi-k2`, `glm-4`, `gpt-4o`, …) — on a non-Anthropic host, set
+`analyst`. Accepts: an Anthropic alias (`opus` — the default, `fable` for the Mythos tier) **or a
+full model ID** (`claude-opus-5`, `kimi-k2`, `glm-4`, `gpt-4o`, …). On a non-Anthropic host, set
 it to that host's judgment-tier model. Setting it raises all five without touching `agents/*.md`
-(their frontmatter is `model: inherit` — the session model); a per-role `model_<role>` key still
+(their frontmatter is `model: inherit` — the session model). A per-role `model_<role>` key still
 wins for its role. It never applies to execution (`test-author` / `implementer`) or
 gathering (`explorer` / `researcher`) roles. See the settings doc:
 [`../implement/references/settings.md`](../implement/references/settings.md).
 
 - **`model`** env: `CLAUDE_CODE_SUBAGENT_MODEL`. Values: `haiku|sonnet|opus|fable|inherit|<full-model-id>` (the env already accepts a full model ID — this is the portable lever on any host).
 - **`effort`** env: `CLAUDE_CODE_EFFORT_LEVEL`. Values: `low|medium|high|xhigh|max|<number>` (`xhigh`/`max` only on Opus 4.8 / 4.7).
-- The `CLAUDE_CODE_*` env vars are **Claude Code-only** levers — Codex CLI / Cursor ignore them; pick the model in the host's own settings there.
-- Per-project overrides live in `.claude/sdd.local.md` as `model_<role>` / `effort_<role>` keys (see the implement settings). On a non-Anthropic host, set `model_<role>` or `judgment_model` to a **full model ID** (e.g. `kimi-k2`, `glm-4`, `gpt-4o`) — the Anthropic aliases (`haiku`/`sonnet`/`opus`/`fable`) are Anthropic-only.
+- The `CLAUDE_CODE_*` env vars are **Claude Code-only** levers. Codex CLI / Cursor ignore them.
+  Pick the model in the host's own settings there.
+- Per-project overrides live in `.claude/sdd.local.md` as `model_<role>` / `effort_<role>` keys
+  (see the implement settings). On a non-Anthropic host, set `model_<role>` or `judgment_model`
+  to a **full model ID** (e.g. `kimi-k2`, `glm-4`, `gpt-4o`). The Anthropic aliases
+  (`haiku`/`sonnet`/`opus`/`fable`) are Anthropic-only.
 
-> **Caveat (verify on your build).** Some Claude Code builds have reported the `effort:` *frontmatter*
-> having no observable runtime effect (GitHub claude-code#43083). The field is documented and we set
-> it, but treat the **env path** (`CLAUDE_CODE_EFFORT_LEVEL`) as the reliable lever, and the per-role
-> `effort_*` settings keys map to it. If a run feels under-reasoned, set the env var.
+> **Caveat (verify on your build).** Some Claude Code builds report the `effort:` *frontmatter*
+> with no observable runtime effect (GitHub claude-code#43083). The field is documented and we
+> set it. But treat the **env path** (`CLAUDE_CODE_EFFORT_LEVEL`) as the reliable lever. The
+> per-role `effort_*` settings keys map to it. If a run feels under-reasoned, set the env var.
 
 ## Scale with feature size
 
 Default effort/model scale with the feature `.size` (see [`size-matrix.md`](./size-matrix.md)):
 
-- **XS/S** → keep the roster defaults (cheap; the work is small).
-- **M** → roster defaults; escalation handles the hard tasks.
-- **L/XL** → bump execution effort to `high`; **the critical verifications go to `xhigh`** — the
-  `reviewer` (dispatched by `review`) and the `critic` (dispatched by `design` / `specify`) run at
-  `effort: xhigh` via `CLAUDE_CODE_EFFORT_LEVEL` (the reliable lever — see the caveat above); the
-  other judgment agents stay `high`. A cross-module change is where reasoning depth pays off, and
-  the final review/critique is where it pays off most.
+- **XS/S** → keep the roster defaults (cheap — the work is small).
+- **M** → roster defaults. Escalation handles the hard tasks.
+- **L/XL** → bump execution effort to `high`. **The critical verifications go to `xhigh`**. The
+  `reviewer` (dispatched by `review`) and the `critic` (dispatched by `design` / `specify`) run
+  at `effort: xhigh` via `CLAUDE_CODE_EFFORT_LEVEL` (the reliable lever — see the caveat above).
+  The other judgment agents stay `high`. A cross-module change is where reasoning depth pays
+  off. The final review/critique is where it pays off most.
 
 A skill/engine that knows the size applies this before dispatch and says so in its banner.
 
 ## The shared agent contract (every spawned agent)
 
-1. **Clean, isolated context by default.** A spawned agent does **not** see the parent conversation, tool results, system prompt, invoked skills, or files already read — the **only channel is the Agent prompt string**. So the dispatching skill must inline paths, the draft/diff, and decisions explicitly; the agent re-reads upstream artifacts itself. Only the agent's final message returns. This isolation *is* the "fork" for independent review/critique — fresh eyes are the point.
-   - **Fork mode** (`CLAUDE_CODE_FORK_SUBAGENT`, experimental) inherits the full conversation + shares the prompt cache. Use it **only** for a live side-task that genuinely needs the running context — never for `reviewer` / `critic` / `devils-advocate`, whose value is independence.
-2. **The report must reach the dispatcher.** The final message IS the deliverable. When the host runs subagents asynchronously (background/teammate mode), the dispatching skill appends to the prompt: «also send your full final report as a message to your dispatcher (main)». An idle/completion signal without content is NOT a verdict — the dispatcher pulls the report through the host's messaging channel before proceeding.
-3. **Worker preamble.** When an orchestrator (the implement team/workflow) delegates, it wraps the task: «execute directly, do not spawn sub-agents, use tools directly, report results with absolute file paths». A subagent cannot spawn subagents, so the lead owns fan-out.
-4. **Verify before claiming done.** Before saying "done / fixed / passing": IDENTIFY the command that proves it → RUN it → READ the output → only then claim, with the evidence. Words like "should / probably / seems" are a red flag that verification hasn't run.
-5. **Cite or drop.** Read-only judgment agents (reviewer/critic/devil's-advocate) emit only cited findings (`file:line` + the artifact/AC clause). An uncited finding is dropped, not shipped.
+1. **Clean, isolated context by default.** A spawned agent does **not** see the parent
+   conversation, tool results, system prompt, invoked skills, or files already read. The **only
+   channel is the Agent prompt string**. The dispatching skill must therefore inline paths, the
+   draft/diff, and decisions explicitly. The agent re-reads upstream artifacts itself. Only the
+   agent's final message returns. This isolation *is* the "fork" for independent review/critique —
+   fresh eyes are the point.
+   - **Fork mode** (`CLAUDE_CODE_FORK_SUBAGENT`, experimental) inherits the full conversation +
+     shares the prompt cache. Use it **only** for a live side-task that genuinely needs the
+     running context. Never use it for `reviewer` / `critic` / `devils-advocate`. Their value is
+     independence.
+2. **The report must reach the dispatcher.** The final message IS the deliverable. The host may
+   run subagents asynchronously (background/teammate mode). The dispatching skill then appends to
+   the prompt: «also send your full final report as a message to your dispatcher (main)». An
+   idle/completion signal without content is NOT a verdict. The dispatcher pulls the report
+   through the host's messaging channel before it proceeds.
+3. **Worker preamble.** When an orchestrator (the implement team/workflow) delegates, it wraps
+   the task: «execute directly, do not spawn sub-agents, use tools directly, report results with
+   absolute file paths». A subagent cannot spawn subagents. The lead therefore owns fan-out.
+4. **Verify before claiming done.** Before saying "done / fixed / passing": IDENTIFY the command
+   that proves it → RUN it → READ the output → only then claim, with the evidence. Words like
+   "should / probably / seems" are a red flag that verification hasn't run.
+5. **Cite or drop.** Read-only judgment agents (reviewer/critic/devil's-advocate) emit only cited
+   findings (`file:line` + the artifact/AC clause). An uncited finding is dropped, not shipped.

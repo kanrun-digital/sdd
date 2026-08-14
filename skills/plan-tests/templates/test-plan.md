@@ -2,9 +2,9 @@
 <!-- M+: write to docs/features/<slug>/test-plan.md (this whole file). -->
 <!-- XS/S: paste only the "## AC coverage" + "## Edge cases / error paths" blocks inline into -->
 <!--       spec.md under a `## Test plan` heading — no frontmatter, no separate file. -->
-<!-- The plan is written BEFORE tests exist; `implement` reads the AC→test map and writes the -->
+<!-- Write this plan BEFORE tests exist. `implement` reads the AC→test map and writes the -->
 <!-- red tests against it. Stay STACK-AGNOSTIC: name test LEVELS, never a runner / broker / -->
-<!-- load tool. The real commands are detected by `implement` against the repo, not fixed here. -->
+<!-- load tool. `implement` detects the real commands from the repo. Do not fix them here. -->
 
 ---
 status: Draft
@@ -20,8 +20,8 @@ feature_size: "<XS|S|M|L|XL>"
 
 ## Levels
 
-<!-- The only allowed levels — generic, no tool names. Drop a row that doesn't apply to this -->
-<!-- feature; mark it <!-- N/A: reason -->  rather than padding it. `implement` picks the actual -->
+<!-- The only allowed levels — generic, no tool names. Drop a row that does not apply to this -->
+<!-- feature. Mark it <!-- N/A: reason -->  rather than padding it. `implement` picks the actual -->
 <!-- runner/tool for each level from what the repo already uses. -->
 <!-- The Component / Visual-regression / E2E-through-UI rows apply ONLY when sad.md frontmatter -->
 <!-- target_surfaces declares a UI surface (web-frontend / mobile-app / desktop-app) — the -->
@@ -30,18 +30,18 @@ feature_size: "<XS|S|M|L|XL>"
 | Level | Scope | Strategy (generic — no tool names) |
 |---|---|---|
 | Unit | Pure logic: a rule, a calculation, a validator — no I/O. | In-memory, no external dependency. |
-| Integration | The module against a real dependency it owns (store / cache / queue). | An ephemeral real dependency, e.g. a throwaway DB container spun up per suite. |
-| Contract | A boundary between two participants — an API shape or event schema both sides agree on. | Validate the real shape against the agreed contract; no hand-rolled stubs. |
+| Integration | The module against a real dependency it owns (store / cache / queue). | An ephemeral real dependency, e.g. a throwaway DB container started per suite. |
+| Contract | A boundary between two participants — an API shape or event schema both sides agree on. | Validate the real shape against the agreed contract. No hand-rolled stubs. |
 | E2E | One full flow end to end (one per critical user story). | The flow exercised through its real entry point against ephemeral dependencies. |
 | Load | NFR validation — only when an NFR carries a number. | The load tool already in your repo, or e.g. k6 or Locust. |
-| Component *(UI surface only)* | A UI component exercised in isolation — props/state → rendered output + interactions. | Render in a component harness; assert output + behaviour, no full app boot. |
-| Visual-regression *(web UI only)* | The rendered UI diffed against an approved baseline image. | Snapshot the render; fail on an unintended visual diff; update the baseline deliberately. |
+| Component *(UI surface only)* | A UI component exercised in isolation — props/state → rendered output + interactions. | Render in a component harness. Assert output + behaviour, no full app boot. |
+| Visual-regression *(web UI only)* | The rendered UI diffed against an approved baseline image. | Snapshot the render. Fail on an unintended visual diff. Update the baseline deliberately. |
 | E2E-through-UI *(UI surface only)* | A user-story flow driven through the real UI, not just the API. | The flow exercised through the rendered UI against ephemeral dependencies. |
 
 ## AC coverage
 
 <!-- THE CORE OF THIS PLAN: every acceptance criterion in spec.md §5 → at least one test row. -->
-<!-- One AC may fan out to several rows (a unit test for the rule + an e2e test for the flow). -->
+<!-- One AC may span several rows (a unit test for the rule + an e2e test for the flow). -->
 <!-- Zero uncovered ACs allowed. Name the test from the AC's intent, not a framework convention. -->
 <!-- Expected outcome in plain words — NO status numbers, NO error-code strings, NO SQL. -->
 
@@ -54,7 +54,7 @@ feature_size: "<XS|S|M|L|XL>"
 
 ## Edge cases / error paths
 
-<!-- Each error / authorization AC gets its OWN dedicated row — never folded into a happy path. -->
+<!-- Each error / authorization AC gets its OWN dedicated row — never merged into a happy path. -->
 <!-- Add the boundary & failure cases the spec implies. Outcome named in plain words. -->
 
 - <missing required identifier> → expected: <named outcome>
@@ -63,8 +63,8 @@ feature_size: "<XS|S|M|L|XL>"
 
 ## Test data
 
-<!-- How test data is built and torn down. Seed = factories/fixtures for the entity shape -->
-<!-- (read data-model.md if present). Cleanup boundary matters: no cleanup → flaky suite → CI block. -->
+<!-- How to build the test data and remove it after the run. Seed = factories/fixtures for the entity -->
+<!-- shape (read data-model.md if present). Cleanup boundary matters: no cleanup → flaky suite → CI block. -->
 
 - Seed strategy: <factories / fixtures matching data-model.md entities>.
 - Integration dependency: an ephemeral real dependency (throwaway container), NOT a mocked store.

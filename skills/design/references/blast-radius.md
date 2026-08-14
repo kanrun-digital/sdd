@@ -2,7 +2,7 @@
 
 > **TL;DR (UA).** *Blast radius* — «масштаб удару»: наскільки боляче буде передумати рішення через 3 місяці. Три критерії: (1) переробка ≥3 днів (незворотнє); (2) бачать ≥2 модулі; (3) є чесна альтернатива. **2 з 3 → ADR.** 0 — inline у sad.md. Очікувано 5–12 ADR на M-функцію.
 
-The skill makes 15–30 decisions per pass. Without a gate you'd either spawn one ADR per decision (noise — kills the genre) or zero (loses the *why* of the important ones). The blast-radius heuristic picks the right 5–12. It is design's per-skill Socratic gate, run on every **Approved** decision (see [`./socratic.md`](./socratic.md)).
+The skill makes 15–30 decisions per pass. Without a gate, you would spawn one ADR per decision (noise — kills the genre) or zero (loses the *why* of the important ones). The blast-radius heuristic picks the right 5–12. It is design's per-skill Socratic gate. The skill runs it on every **Approved** decision (see [`./socratic.md`](./socratic.md)).
 
 ## The three criteria
 
@@ -14,11 +14,11 @@ A decision crosses the threshold if it scores **2 of 3** (a single criterion = b
 
 **Fires** for, e.g.:
 
-- **Storage shape** — relational vs document vs object store; moving later means a data migration measured in weeks.
+- **Storage shape** — relational vs document vs object store. Moving later means a data migration measured in weeks.
 - **Sync vs async module coupling** — a direct call vs a background event changes the data shape and the failure model of everything downstream.
-- **ID strategy** — random vs time-sortable vs auto-increment; switching later needs a *backfill* (a script that walks every existing row and rewrites its id, read-locking those rows while it runs).
-- **Auth model** — sessions vs per-request tokens; changes the shape of every request.
-- **Sharding / partition key** — the key data is spread across servers by; changing it later means re-clustering everything.
+- **ID strategy** — random vs time-sortable vs auto-increment. Switching later needs a *backfill* (a script that walks every existing row and rewrites its id, read-locking those rows while it runs).
+- **Auth model** — sessions vs per-request tokens. It changes the shape of every request.
+- **Sharding / partition key** — the key that the data is spread across servers by. Changing it later means re-clustering everything.
 
 **Does not fire** for, e.g.:
 
@@ -30,17 +30,17 @@ A decision crosses the threshold if it scores **2 of 3** (a single criterion = b
 
 > Does this decision change a contract seen by ≥2 modules?
 
-**Fires** for: an event schema crossing module boundaries; a shared error-code namespace; a pagination convention used by several endpoints; a migration adding a column other modules read.
+**Fires** for: an event schema crossing module boundaries, a shared error-code namespace, a pagination convention used by several endpoints, and a migration that adds a column other modules read.
 
-**Does not fire** for: an internal function name inside one module; a private method signature; a log format used by only one component.
+**Does not fire** for: an internal function name inside one module, a private method signature, and a log format used by only one component.
 
 ### 3. Has legitimate alternatives
 
 > Will a reader six months from now ask «why not X?» where X is a real, non-strawman alternative?
 
-**Excludes:** decisions where the alternative is obviously worse (no strawman ADRs); decisions where the alternative is ruled out by an existing constraint (no ADR for «we used the language the repo is already written in»).
+**Excludes:** decisions where the alternative is obviously worse (no strawman ADRs). Also excludes decisions where an existing constraint rules the alternative out (no ADR for «we used the language the repo is already written in»).
 
-**Catches:** choices that look arbitrary from the code (why *this* cache TTL? why *this* circuit-breaker threshold?); trade-offs where two reasonable engineers would pick differently; anything where the option set was 2–3 serious options, not 1.
+**Catches:** choices that look arbitrary from the code (why *this* cache TTL? why *this* circuit-breaker threshold?). Also catches trade-offs where two reasonable engineers would pick differently. Also catches anything where the option set was 2–3 serious options, not 1.
 
 ## Using the heuristic during the Socratic pass
 
@@ -53,7 +53,7 @@ After each `AskUserQuestion` choice:
 ## Why 5–12 per M feature
 
 - **Below 5:** probably under-ADR-ing (missed an irreversibility) — unless the feature is genuinely XS/S (2–4 is fine).
-- **5–12:** healthy for an M feature; each ADR is a real decision with reread value.
+- **5–12:** healthy for an M feature. Each ADR is a real decision with reread value.
 - **Above 12:** probably over-ADR-ing — bundle, re-scope, or move tactical detail inline. L/XL may justify 10–15.
 
 ## Closing self-review
@@ -65,7 +65,7 @@ After each `AskUserQuestion` choice:
 
 ## Anti-patterns
 
-- **ADR-ifying the alternative you rejected.** The ADR is about the chosen path; alternatives go in `## Considered options`, not their own file.
+- **ADR-ifying the alternative you rejected.** The ADR is about the chosen path. Alternatives go in `## Considered options`, not their own file.
 - **An ADR with `Status: Proposed` from this skill.** Synchronous decisions with the user → `Accepted`. Use `decide-adr` for asynchronous Proposed → Accepted flows.
-- **One ADR per quality goal.** Quality goals live in §10; ADRs document the specific *decisions* taken because of them.
+- **One ADR per quality goal.** Quality goals live in §10. ADRs document the specific *decisions* taken because of them.
 - **A title that names the problem, not the decision.** `0003-rate-limiting.md` (bad) vs `0003-sliding-window-counter.md` (good).
