@@ -364,6 +364,38 @@ def main() -> int:
           f"missing from README: {sorted(set_keys - rd_keys) or 'none'}; "
           f"extra in README: {sorted(rd_keys - set_keys) or 'none'}")
 
+    # --- a skill that claims it writes nothing must be unable to write ---
+    # `interview` states «interview writes **no files**» in its body. Prose is not a guarantee: the
+    # model can still call Write. `disallowed-tools` removes the tool from the pool for the turn
+    # that invokes the skill, so the claim becomes enforced rather than asserted. The check ties
+    # the two together in both directions, so a future edit that teaches such a skill to write a
+    # file fails here instead of silently contradicting its own documentation.
+    #
+    # Scope note, deliberately narrow: the guarantee covers the invoking turn only — the
+    # restriction clears on the user's next message (Claude Code skills reference). For a
+    # single-turn skill that is the whole run; for a multi-turn Socratic one it covers the opening
+    # turn. `start` is NOT in this set: it claims «writes no artifact», but it does auto-create
+    # `.claude/sdd.local.md`, so Write is load-bearing there.
+    print("== write-free skills ==")
+    WRITE_TOOLS = {"Write", "Edit", "NotebookEdit"}
+    for skill_md in skill_specs:
+        base = skill_md.parent.name
+        text = skill_md.read_text()
+        claims = "writes **no files**" in text
+        fm = read_frontmatter(skill_md)
+        declared = set(fm.get("disallowed-tools", "").replace(",", " ").split())
+        if claims:
+            check(WRITE_TOOLS <= declared,
+                  f"skill '{base}' claims it writes no files and disallows {sorted(WRITE_TOOLS)}",
+                  f"skill '{base}' says «writes **no files**» but its frontmatter does not disallow "
+                  f"{sorted(WRITE_TOOLS - declared)} — the claim is prose only; add them to "
+                  f"`disallowed-tools` so the tool is removed from the pool")
+        elif declared & WRITE_TOOLS:
+            check(False, "",
+                  f"skill '{base}' disallows {sorted(declared & WRITE_TOOLS)} but never claims it "
+                  f"writes no files — either the restriction is wrong (it will break a write path) "
+                  f"or the body should state the guarantee")
+
     # --- every stage ends with the handoff block (the v1.8.1 output contract) ---
     # The phrase «stage-handoff block» is the contract wording every spine's final step uses;
     # a bare `handoff.md` substring (e.g. in a passing mention) is not enough to prove the

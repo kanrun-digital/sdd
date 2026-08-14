@@ -3,6 +3,7 @@ name: interview
 model: inherit
 effort: high
 agents: []
+disallowed-tools: Write Edit NotebookEdit Bash
 description: >
   Use BEFORE specify to stress-test a raw idea before you commit to a spec. The skill
   runs a Socratic interview. It surfaces hidden assumptions, names tradeoffs, exposes
