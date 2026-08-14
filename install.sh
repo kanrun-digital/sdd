@@ -75,8 +75,63 @@ case "$TOOL" in
   cursor) SKILLS_ROOT="$PREFIX/.cursor/skills"; AGENTS_DIR="$PREFIX/.cursor/agents" ;;
 esac
 
+# --- legacy flat layout (pre-v1.9.0 installs, or a hand-copied skills/ tree) ---------------
+# Before the nested <skills-root>/sdd/skills/<name>/ layout there was a FLAT one: one
+# <skills-root>/sdd-<name>/SKILL.md per skill, plus a <skills-root>/sdd-shared/ carrying
+# skills/_shared. Those directories survive `rm -rf $SKILLS_ROOT/sdd` untouched, and because
+# they declare the same frontmatter names as the fresh install the host tool discovers every
+# skill TWICE — half the copies stale. So remove them too, but ONLY the ones we can prove are
+# ours; a user skill that happens to start with `sdd-` must never be collateral.
+#   proof of ownership, either:
+#     sdd-<name>/SKILL.md whose FRONTMATTER `name:` starts with `sdd-`   → an installed skill
+#     sdd-shared/ holding a file from skills/_shared                     → the shared bundle
+# Anything else under sdd-* is left in place and reported (warn, never fail): we cannot
+# attribute it, and deleting a directory on a guess is worse than a duplicate skill entry.
+LEGACY_SHARED_MARKERS=(tool-adapters.md agent-roster.md skill-context.md self-check.md handoff.md)
+
+legacy_is_ours() { # $1 = candidate directory; exit 0 only when provably an sdd artifact
+  local dir="$1" marker
+  if [ -f "$dir/SKILL.md" ]; then
+    # `name:` must live in the frontmatter block — stop at the closing `---` so a `name: sdd-…`
+    # quoted somewhere in the body cannot pass as ownership
+    if awk 'NR==1 { if ($0 != "---") exit; next }
+            $0 == "---" { exit }
+            /^name:[[:space:]]*sdd-/ { ok = 1; exit }
+            END { exit ok ? 0 : 1 }' "$dir/SKILL.md"; then
+      return 0
+    fi
+    return 1
+  fi
+  if [ "$(basename "$dir")" = "sdd-shared" ]; then
+    for marker in "${LEGACY_SHARED_MARKERS[@]}"; do
+      if [ -f "$dir/$marker" ]; then return 0; fi
+    done
+  fi
+  return 1
+}
+
+clean_legacy_flat_layout() {
+  local dir removed=0 unknown=""
+  for dir in "$SKILLS_ROOT"/sdd-*; do
+    [ -d "$dir" ] || continue   # no match → the glob stays literal; a stray file → not ours
+    if legacy_is_ours "$dir"; then
+      rm -rf "${dir:?}"
+      removed=$((removed + 1))
+    else
+      unknown="$unknown $(basename "$dir")"
+    fi
+  done
+  if [ "$removed" -gt 0 ]; then
+    log "removed ${removed} legacy flat sdd-* skill dir(s) from $SKILLS_ROOT (pre-v1.9.0 layout — they would have doubled every skill)"
+  fi
+  if [ -n "$unknown" ]; then
+    warn "left untouched under $SKILLS_ROOT (sdd-* but not recognisable as an sdd install):$unknown — if these are stale sdd copies, remove them by hand"
+  fi
+}
+
 # --- idempotent clean (also the uninstall path) ------------------------------------------
 rm -rf "${SKILLS_ROOT:?}/sdd"
+if [ -d "$SKILLS_ROOT" ]; then clean_legacy_flat_layout; fi
 rm -f "$AGENTS_DIR"/sdd-*.toml "$AGENTS_DIR"/sdd-*.md
 
 if [ "$UNINSTALL" = 1 ]; then

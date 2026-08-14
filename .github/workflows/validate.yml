@@ -109,6 +109,22 @@ jobs:
             # idempotency: a second run cleans first and converges to the same layout
             ./install.sh "$tool" --src . --prefix "$prefix"
             grep -q '^name: sdd-specify$' "$skills/sdd/skills/specify/SKILL.md"
+            # upgrade over the pre-v1.9.0 FLAT layout: ours goes, everything else stays
+            mkdir -p "$skills/sdd-specify" "$skills/sdd-shared" "$skills/sdd-foreign" \
+                     "$skills/sdd-empty" "$skills/lazybird-api"
+            printf -- '---\nname: sdd-specify\ndescription: stale copy\n---\n' > "$skills/sdd-specify/SKILL.md"
+            printf -- '---\nname: foreign-thing\ndescription: a user skill\n---\n' > "$skills/sdd-foreign/SKILL.md"
+            printf -- '---\nname: lazybird-api\ndescription: unrelated\n---\n' > "$skills/lazybird-api/SKILL.md"
+            cp skills/_shared/tool-adapters.md "$skills/sdd-shared/tool-adapters.md"
+            ./install.sh "$tool" --src . --prefix "$prefix"
+            for gone in sdd-specify sdd-shared; do
+              test ! -e "$skills/$gone" || { echo "FAIL: legacy flat $gone survived the upgrade"; exit 1; }
+            done
+            for kept in sdd-foreign/SKILL.md sdd-empty lazybird-api/SKILL.md; do
+              test -e "$skills/$kept" || { echo "FAIL: installer deleted unattributable $kept"; exit 1; }
+            done
+            grep -q '^name: sdd-specify$' "$skills/sdd/skills/specify/SKILL.md"
+            rm -rf "$skills/sdd-foreign" "$skills/sdd-empty" "$skills/lazybird-api"
             # a mid-install failure must roll back, not leave a half-copy
             mkdir "$prefix/broken-src" && cp -R skills agents "$prefix/broken-src/"
             sed_i() { if sed --version >/dev/null 2>&1; then sed -i "$@"; else sed -i '' "$@"; fi; }

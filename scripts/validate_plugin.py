@@ -153,9 +153,16 @@ def main() -> int:
               f"codex silently skips a root-local './' plugin; got {cm_src!r}")
 
     installer = ROOT / "install.sh"
-    check(installer.exists() and installer.read_text().startswith("#!/usr/bin/env bash"),
+    installer_text = installer.read_text() if installer.exists() else ""
+    check(installer_text.startswith("#!/usr/bin/env bash"),
           "install.sh exists and is a bash script (#!/usr/bin/env bash)",
           "install.sh is missing or lacks the #!/usr/bin/env bash shebang")
+    # an upgrade over a pre-v1.9.0 flat install must delete the old <skills-root>/sdd-<name>/
+    # dirs; leaving them registers every skill twice, half of them with stale content
+    check("clean_legacy_flat_layout" in installer_text and "legacy_is_ours" in installer_text,
+          "install.sh removes the legacy flat sdd-* layout on install and uninstall",
+          "install.sh must clean the pre-v1.9.0 flat <skills-root>/sdd-<name>/ dirs "
+          "(clean_legacy_flat_layout + legacy_is_ours) — otherwise upgrading leaves every skill registered twice")
 
     VALID_MODELS = {"haiku", "sonnet", "opus", "fable", "inherit"}
     VALID_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
