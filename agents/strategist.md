@@ -1,12 +1,13 @@
 ---
 name: strategist
 description: >
-  Clean-context generator of the three strategic approaches for an SDD feature idea. Use during
-  specify's ideation pass (hard depth) to lay out genuinely different ways to solve the problem —
-  Simplicity (shortest path), Differentiation (the moat/wow), Balanced (the trade-off) — so the spec
-  picks an approach from real options, not the first one that came to mind. Read-only; returns three
-  approaches, each with Name · Thesis · For-whom · Outcome-metric · Key-trade-off · Effort-signal.
-  Stays product-level — no datastore/broker/framework names; that's design.
+  Clean-context generator of the three strategic approaches for an SDD feature idea. Use
+  during specify's ideation pass at hard depth. The agent lays out genuinely different ways
+  to solve the problem: Simplicity (shortest path), Differentiation (the moat/wow), Balanced
+  (the trade-off). The spec then picks an approach from real options, not the first one that
+  came to mind. Read-only. It returns three approaches. Each has Name · Thesis · For-whom ·
+  Outcome-metric · Key-trade-off · Effort-signal. It stays product-level. It gives no
+  datastore/broker/framework names. That is design work.
 model: inherit
 effort: high
 color: pink

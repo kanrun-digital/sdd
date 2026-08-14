@@ -4,16 +4,18 @@ model: inherit
 effort: medium
 agents: [explorer]
 description: >
-  Use to design the data model AND generate the actual forward + rollback migrations in one
-  pass — shippable SQL, not a plan. Triggers on "data model for {slug}", "schema for {slug}",
-  "generate migrations for {slug}", "DB design + migration", "/sdd:data-model {slug}",
-  "модель даних для {slug}", "схема для {slug}", "згенеруй міграції". Reads spec.md §5 +
-  sad.md §5 building blocks + the §6 sequence diagrams, then writes docs/features/{slug}/data-model.md plus
-  paired *.up.sql / *.down.sql migrations STAGED under docs/features/{slug}/migrations/ (NOT the
-  live migrations/ tree — implement promotes them when the feature is actually built) and an audit
-  report. Greenfield-first; brownfield delta via --mode brownfield; drift-only via --drift-only.
-  Hard-refuses if spec.md or sad.md is missing. Stack-agnostic: detects and FOLLOWS the repo's DB +
-  migration conventions and domain layer — it imposes no DB philosophy and writes no rules file.
+  Use to design the data model AND generate the actual forward + rollback migrations in
+  one pass. Output is shippable SQL, not a plan. Triggers on "data model for {slug}",
+  "schema for {slug}", "generate migrations for {slug}", "DB design + migration",
+  "/sdd:data-model {slug}", "модель даних для {slug}", "схема для {slug}",
+  "згенеруй міграції". Reads spec.md §5 + sad.md §5 building blocks + the §6 sequence
+  diagrams. Writes docs/features/{slug}/data-model.md plus paired *.up.sql / *.down.sql
+  migrations STAGED under docs/features/{slug}/migrations/ and an audit report. It does
+  NOT write into the live migrations/ tree. implement promotes the staged migrations
+  when the feature is actually built. Greenfield-first. Brownfield delta via
+  --mode brownfield. Drift-only via --drift-only. Hard-refuse if spec.md or sad.md is
+  missing. Stack-agnostic: the skill detects and FOLLOWS the repo's DB + migration
+  conventions and domain layer. It imposes no DB philosophy and writes no rules file.
 ---
 
 # Skill: data-model

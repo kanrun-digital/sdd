@@ -4,15 +4,17 @@ model: inherit
 effort: high
 agents: [explorer]
 description: >
-  Use to fix a reported bug spec-first: reproduce it, trace the symptom to the owning feature's
-  acceptance criteria, pin it with a failing (RED) test, apply the minimal GREEN fix through the
-  same per-task gate implement uses, then patch the spec so the bug class can't silently return.
-  Triggers on "fix {bug}", "fix the bug in {slug}", "bug in {feature}", "/sdd:fix {slug}",
-  "regression in {slug}", "полагодь баг", "виправ багу", "регресія в {slug}", "чому зламалось".
-  Triage is three-way: AC exists and is violated (regression) / AC is ambiguous (spec-bug —
-  patch the wording) / no AC covers it (gap — add one, marked added-by-fix). Works on a repo
-  with no specs at all (soft mode — code-first, recommends survey after). Writes a fix record
-  under docs/features/{slug}/_fixes/ and commits with an SDD-Fix trailer.
+  Use to fix a reported bug spec-first. Reproduce the bug. Trace the symptom to the
+  owning feature's acceptance criteria. Pin it with a failing (RED) test. Apply the
+  minimal GREEN fix through the same per-task gate implement uses. Then patch the spec
+  so the bug class cannot silently return. Triggers on "fix {bug}", "fix the bug in
+  {slug}", "bug in {feature}", "/sdd:fix {slug}", "regression in {slug}", "полагодь
+  баг", "виправ багу", "регресія в {slug}", "чому зламалось". Triage has three
+  outcomes. The AC exists and is violated (regression). The AC is ambiguous (spec-bug
+  — patch the wording). No AC covers the bug (gap — add one, marked added-by-fix).
+  Works on a repo with no specs at all (soft mode — code-first, recommends survey
+  after). Writes a fix record under docs/features/{slug}/_fixes/ and commits with an
+  SDD-Fix trailer.
 ---
 
 # Skill: fix

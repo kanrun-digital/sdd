@@ -4,14 +4,15 @@ model: inherit
 effort: medium
 agents: []
 description: >
-  Use to add Mermaid sequenceDiagram blocks to the SAD's runtime view (sad.md §6) — one per
-  critical flow, showing how a request moves between participants with happy + error paths.
-  Triggers on "sequences for {slug}", "sequence diagram for {slug}", "draw the runtime flow",
-  "add a sequence to the SAD", "/sdd:sequences {slug}", "діаграми послідовності {slug}",
-  "sequence для {slug}", "намалюй потік {slug}". Reads sad.md §5 for participants, drafts each
-  flow from templates/sequence.md with generic participants, walks them Socratically one flow at
-  a time, and writes confirmed blocks into sad.md §6 — they inform data-model indexes downstream.
-  Hard-refuse if sad.md is missing → run `design {slug}` first.
+  Use to add Mermaid sequenceDiagram blocks to the SAD runtime view (sad.md §6). The skill
+  writes one block per critical flow. Each block shows how a request moves between
+  participants. It shows happy + error paths. Triggers on "sequences for {slug}", "sequence
+  diagram for {slug}", "draw the runtime flow", "add a sequence to the SAD", "/sdd:sequences
+  {slug}", "діаграми послідовності {slug}", "sequence для {slug}", "намалюй потік {slug}".
+  The skill reads sad.md §5 for participants. It drafts each flow from templates/sequence.md
+  with generic participants. It confirms each flow with you Socratically, one flow at a time.
+  It writes confirmed blocks into sad.md §6. These blocks inform data-model indexes
+  downstream. Hard-refuse if sad.md is missing → run `design {slug}` first.
 ---
 
 # Skill: sequences

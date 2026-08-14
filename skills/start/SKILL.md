@@ -4,18 +4,18 @@ model: inherit
 effort: low
 agents: []
 description: >
-  Use to open the SDD visual dashboard — the local read-only browser UI that shows every
-  feature's pipeline stage, renders its artifacts (markdown, mermaid C4/sequence/ER, OpenAPI
-  as plain YAML), and drives the pipeline by sending sdd-<skill>
+  Use to open the SDD visual dashboard. The dashboard is a local read-only browser UI. It
+  shows every feature's pipeline stage. It renders the artifacts (markdown, mermaid
+  C4/sequence/ER, OpenAPI as plain YAML). It drives the pipeline. It sends sdd-<skill>
   commands back into this live session. Triggers on "start the dashboard", "open the SDD
   dashboard", "sdd dashboard", "start", "show the pipeline UI", "відкрий дашборд",
-  "запусти панель SDD". The dashboard MCP server auto-starts at session open (via .mcp.json),
-  resolves the project from CLAUDE_PROJECT_DIR, binds its loopback HTTP listener, and writes the
-  dashboard URL (with a per-session capability token) to ~/.claude/dashboard/current.url —
-  so start's job is simply to READ that file and print the URL. No MCP tool call, no channel
-  round-trip on the common path. Opt-in: requires dashboard_enabled: true in .claude/sdd.local.md
-  and Bun installed; if either is missing it prints guidance and exits cleanly (pure-markdown
-  skills are unaffected).
+  "запусти панель SDD". The dashboard MCP server auto-starts at session open via .mcp.json.
+  It resolves the project from CLAUDE_PROJECT_DIR. It binds its loopback HTTP listener. It
+  writes the dashboard URL to ~/.claude/dashboard/current.url. The URL carries a capability
+  token for this session. So start only READs that file and prints the URL. The common path
+  makes no MCP tool call and no channel round-trip. Opt-in: the skill requires
+  dashboard_enabled: true in .claude/sdd.local.md. It also requires Bun installed. If either
+  is missing, it prints guidance and exits cleanly. Pure-markdown skills are unaffected.
 ---
 
 # Skill: start

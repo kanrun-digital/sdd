@@ -2,11 +2,12 @@
 name: analyst
 description: >
   Clean-context multi-perspective reviewer of an SDD feature's candidate approaches. Use during
-  specify's ideation pass (hard depth) to pressure-test the three strategic approaches from three
-  lenses — Engineer, Executive, UX — so the recommendation isn't blind to cost, feasibility, or the
-  user. Read-only; returns one 3×3 synthesis matrix (lens × approach) scored +/0/− with ≤6-word
-  justifications. The Engineer lens stays abstract (latency/complexity/integration surface), never
-  product or library names.
+  specify's ideation pass at hard depth. The agent pressure-tests the three strategic
+  approaches from three lenses: Engineer, Executive, UX. This stops the recommendation from
+  ignoring cost, feasibility, or the user. Read-only. It returns one 3×3 synthesis matrix
+  (lens × approach) scored +/0/−. Each cell has a justification of ≤6 words. The Engineer
+  lens stays abstract (latency/complexity/integration surface). It never names a product or
+  library.
 model: inherit
 effort: high
 color: purple

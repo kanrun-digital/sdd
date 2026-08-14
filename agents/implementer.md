@@ -1,11 +1,12 @@
 ---
 name: implementer
 description: >
-  Makes a failing SDD test pass — the GREEN + REFACTOR + GATE steps of test-driven development.
-  Use after test-author has produced a red test for a task. Given the task and its quoted
-  failing line, it writes the minimal production code to pass, refactors while staying green,
-  and runs the per-task gate (unit + integration-if-available + lint + vet). It never weakens
-  or edits the test to force a pass.
+  Makes a failing SDD test pass. This covers the GREEN + REFACTOR + GATE steps of test-driven
+  development. Use after test-author produces a red test for a task. The agent receives the
+  task and its quoted failing line. It writes the minimal production code to pass. It
+  refactors while the tests stay green. It runs the per-task gate (unit +
+  integration-if-available + lint + vet). It never weakens or edits the test to force a
+  pass.
 model: inherit
 effort: medium
 color: green

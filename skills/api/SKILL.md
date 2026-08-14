@@ -4,17 +4,17 @@ model: inherit
 effort: medium
 agents: []
 description: >
-  Use to derive the API contract for a feature — an OpenAPI 3.1 document at
-  docs/features/{slug}/contracts/openapi.yaml plus a drift/sync report (and an events doc when
-  the feature has async flows). Triggers on "api for {slug}", "openapi for {slug}",
+  Use to derive the API contract for a feature. Writes an OpenAPI 3.1 document at
+  docs/features/{slug}/contracts/openapi.yaml, a drift/sync report, and an events doc when
+  the feature has async flows. Triggers on "api for {slug}", "openapi for {slug}",
   "API contract for {slug}", "lock the interface for {slug}", "events for {slug}",
   "/sdd:api {slug}", "контракт API для {slug}", "OpenAPI для {slug}", "опиши ендпоінти".
-  The contract is never hand-written: it is a derived function of data-model.md (typed fields +
+  The contract is never hand-written. The skill derives it from data-model.md (typed fields +
   constraints), the sad.md §6 sequence diagrams (error branches, async actors), and spec.md
   acceptance criteria. Runs an inline drift check (does the contract match the model and the
   sequences?) and a reconcile mode. Hard-refuse if data-model.md is missing AND the feature
-  changes the schema → run `data-model {slug}` first; on a legal no-schema-change skip it
-  derives from the existing schema instead.
+  changes the schema. Then tell the user to run `data-model {slug}` first. On a legal
+  no-schema-change skip, the skill derives from the existing schema instead.
 ---
 
 # Skill: api

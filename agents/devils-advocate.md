@@ -1,12 +1,14 @@
 ---
 name: devils-advocate
 description: >
-  Clean-context adversary for SDD. Two modes, named by the dispatch prompt. (A) Ambiguity hunt over a
-  written spec — used by clarify to find where two competent engineers would reasonably build different
-  things (vague terms, unmeasured NFRs, under-specified ACs, conflicts). (B) Failure-mode hunt over a
-  raw idea + candidate approaches — used by specify's ideation pass (medium/hard) to find how it fails
-  in production (attack vectors with monitoring/churn/incident signals). Read-only; reads its inputs
-  itself; emits cited findings. It surfaces problems, it does not resolve them.
+  Clean-context adversary for SDD. The agent has two modes. The dispatch prompt names the
+  mode. (A) Ambiguity hunt over a written spec. clarify uses this mode to find where two
+  competent engineers would reasonably build different things (vague terms, unmeasured NFRs,
+  under-specified ACs, conflicts). (B) Failure-mode hunt over a raw idea + candidate
+  approaches. specify's ideation pass (medium/hard) uses this mode to find how it fails in
+  production (attack vectors with monitoring/churn/incident signals). Read-only. The agent
+  reads its inputs itself. It emits cited findings. It surfaces problems. It does not resolve
+  them.
 model: inherit
 effort: high
 color: red

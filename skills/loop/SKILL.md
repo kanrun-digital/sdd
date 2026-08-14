@@ -4,16 +4,17 @@ model: inherit
 effort: high
 agents: [critic, reviewer]
 description: >
-  Use to run a strict multi-iteration Reflex Loop that polishes a single SDD artifact (spec.md,
-  sad.md, api/openapi.yaml, sequences, tasks.json, or any feature doc) until a quality gate passes
-  or iteration/stagnation limits are reached. Six phases per iteration — PLAN → PRODUCE ‖ PREPARE →
-  EVALUATE → CRITIQUE → REFINE — with parallel execution where possible and persistence to disk so
-  state survives /clear. Triggers on "loop {artifact}", "iterate {artifact}", "reflex loop",
-  "polish {artifact} until {criterion}", "/sdd:loop {slug}", "рефлексивний цикл", "ітеративно
-  покращуй". Distinct from the built-in mini-loops (Socratic loop + critic + self-check) every
-  backbone skill already has: /sdd:loop is for when those weren't enough — a dedicated, gated,
-  resumable polish loop over one artifact. Never runs inline; dispatches the clean-context critic
-  for EVALUATE/CRITIQUE (reuses _shared/critic.md, never duplicates it).
+  Use to run a strict multi-iteration Reflex Loop that polishes one SDD artifact (spec.md,
+  sad.md, api/openapi.yaml, sequences, tasks.json, or any feature doc). The loop ends when a
+  quality gate passes. It also ends when it reaches iteration or stagnation limits. Each
+  iteration runs six phases: PLAN → PRODUCE ‖ PREPARE → EVALUATE → CRITIQUE → REFINE. Steps run
+  in parallel where possible. The loop writes state to disk, so the state survives /clear.
+  Triggers on "loop {artifact}", "iterate {artifact}", "reflex loop", "polish {artifact} until
+  {criterion}", "/sdd:loop {slug}", "рефлексивний цикл", "ітеративно покращуй". Every backbone
+  skill already has built-in mini-loops (Socratic loop + critic + self-check). Use /sdd:loop
+  when those were not enough. It is a dedicated, gated, resumable loop over one artifact. It
+  never runs inline. It dispatches the clean-context critic for EVALUATE and CRITIQUE. It
+  reuses _shared/critic.md. It never duplicates that file.
 ---
 
 # Skill: loop

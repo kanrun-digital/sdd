@@ -4,12 +4,14 @@ model: inherit
 effort: high
 agents: [reviewer]
 description: >
-  Use to run an independent, clean-context code review of an implemented feature against its
-  spec and acceptance criteria before shipping. Triggers on "review {slug}", "code review the
-  changes for {slug}", "review the diff for {slug}", "is {slug} ready to ship", "/sdd:review {slug}",
-  "переглянь зміни {slug}", "код-рев'ю фічі {slug}", "рев'ю diff". Dispatches the reviewer
-  subagent over the whole feature diff (stage 1 spec/AC compliance, stage 2 quality), collects
-  cited findings, and resolves each with you. Hard-refuses if the feature isn't implemented yet.
+  Use to run an independent, clean-context code review of an implemented feature. The review
+  checks the change against the spec and the acceptance criteria before shipping. Triggers on
+  "review {slug}", "code review the changes for {slug}", "review the diff for {slug}", "is
+  {slug} ready to ship", "/sdd:review {slug}", "переглянь зміни {slug}", "код-рев'ю фічі
+  {slug}", "рев'ю diff". The skill dispatches the reviewer subagent over the whole feature
+  diff. Stage 1 checks spec/AC compliance. Stage 2 checks quality. The skill collects cited
+  findings. It resolves each finding with you. It hard-refuses if the feature is not
+  implemented yet.
 ---
 
 # Skill: review

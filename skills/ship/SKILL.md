@@ -4,12 +4,13 @@ model: inherit
 effort: medium
 agents: []
 description: >
-  Use to close the loop after review — verify the feature actually works, write the changelog /
-  knowledge-base note, and open the pull request. Triggers on "ship {slug}", "open a PR for {slug}",
-  "changelog for {slug}", "prepare {slug} for merge", "/sdd:ship {slug}", "відправ фічу {slug}",
-  "створи PR для {slug}", "changelog для {slug}". Re-runs the gate, runs the app/feature to confirm
-  the spec's outcomes for real (not just green tests), drafts a changelog + PR body that link spec/
-  AC/ADRs, and proposes the PR command for whatever forge the repo uses. Never auto-merges to main.
+  Use to close the loop after review. The skill verifies that the feature actually works. It
+  writes the changelog / knowledge-base note. It opens the pull request. Triggers on "ship
+  {slug}", "open a PR for {slug}", "changelog for {slug}", "prepare {slug} for merge",
+  "/sdd:ship {slug}", "відправ фічу {slug}", "створи PR для {slug}", "changelog для {slug}".
+  It re-runs the gate. It runs the app/feature to confirm the spec's outcomes for real, not
+  just green tests. It drafts a changelog + PR body that link spec/AC/ADRs. It proposes the
+  PR command for the forge the repo uses. It never auto-merges to main.
 ---
 
 # Skill: ship

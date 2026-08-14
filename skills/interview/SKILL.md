@@ -4,16 +4,16 @@ model: inherit
 effort: high
 agents: []
 description: >
-  Use BEFORE specify to stress-test a raw idea — pressure-test it before you commit to a
-  spec. A Socratic interview that surfaces hidden assumptions, names tradeoffs, exposes
-  imprecisions, and proposes fresh angles. Scope is any idea (product, content, business,
-  architecture, refactor approach), but in an SDD repo the natural exit is /sdd:specify on
-  the surviving idea. Triggers on "interview {slug}", "stress test {slug}", "challenge this",
-  "poke holes", "rip this apart", "/sdd:interview {slug}", "погрилити", "розбери цю ідею",
-  "розʼєби". Runs 3 phases (understand intent → surface tradeoffs and weak spots → propose
-  new angles) via AskUserQuestion, ends with a summary of risks, alternatives, and the next
-  step. Optional — the backbone starts at specify; reach for interview when the idea itself
-  isn't settled yet.
+  Use BEFORE specify to stress-test a raw idea before you commit to a spec. The skill
+  runs a Socratic interview. It surfaces hidden assumptions, names tradeoffs, exposes
+  imprecisions, and proposes fresh angles. Scope is any idea (product, content,
+  business, architecture, refactor approach). In an SDD repo, the natural exit is
+  /sdd:specify on the surviving idea. Triggers on "interview {slug}", "stress test
+  {slug}", "challenge this", "poke holes", "rip this apart", "/sdd:interview {slug}",
+  "погрилити", "розбери цю ідею", "розʼєби". Runs 3 phases (understand intent →
+  surface tradeoffs and weak spots → propose new angles) via AskUserQuestion. Ends
+  with a summary of risks, alternatives, and the next step. Optional. The backbone
+  starts at specify. Use interview when the idea itself is not settled yet.
 ---
 
 # Skill: interview

@@ -2,11 +2,12 @@
 name: researcher
 description: >
   Clean-context competitive + adjacent-solution researcher for an SDD feature idea. Use during
-  specify's ideation pass (medium/hard depth) to find how the market and adjacent products already
-  solve this problem — so the spec's recommendation is grounded in what exists, not a guess. Has web
-  access (WebSearch/WebFetch) plus the project knowledge-base; returns one cited table (Product · URL ·
-  Features · Value · Gap), each row footnoted with date + query. Stays product-level — never names a
-  datastore/broker/framework, never invents a competitor to fill the table.
+  specify's ideation pass (medium/hard depth). The agent finds how the market and adjacent
+  products already solve this problem. This grounds the spec's recommendation in what exists,
+  not a guess. It has web access (WebSearch/WebFetch) plus the project knowledge-base. It
+  returns one cited table (Product · URL · Features · Value · Gap). Each row carries a
+  footnote with date + query. It stays product-level. It never names a
+  datastore/broker/framework. It never invents a competitor to fill the table.
 model: inherit
 effort: medium
 color: orange

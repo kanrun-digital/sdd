@@ -4,15 +4,17 @@ model: inherit
 effort: medium
 agents: [explorer]
 description: >
-  Use to establish the repo's architecture map the rest of the pipeline reads. Two modes: on an
-  EXISTING codebase it scans once and persists what's there; on an EMPTY/greenfield repo it runs a
-  short, level-adaptive foundation session — picks the stack / folder structure / data approach /
-  conventions WITH you (defaults-heavy), fixes them as the foundation + foundational ADRs, and emits
-  a scaffold tasks.json that implement materializes into a real skeleton. Triggers on "survey the
-  codebase", "map the architecture", "set up a new project", "bootstrap the foundation",
-  "survey", "вивчи кодову базу", "карта архітектури", "новий проєкт", "заклади фундамент".
-  Output: docs/architecture-map.md (+ adr/ + scaffold tasks.json on greenfield). Records
-  reflects_commit for staleness; reads, never overwrites, an authored architecture doc.
+  Use to establish the repo's architecture map. The rest of the pipeline reads this map. The
+  skill has two modes. On an EXISTING codebase it scans once and persists what is there. On
+  an EMPTY or greenfield repo it runs a short, level-adaptive foundation session. That
+  session picks the stack / folder structure / data approach / conventions WITH you. It is
+  defaults-heavy. It fixes these choices as the foundation + foundational ADRs. It emits a
+  scaffold tasks.json. The implement stage materializes that file into a real skeleton.
+  Triggers on "survey the codebase", "map the architecture", "set up a new project",
+  "bootstrap the foundation", "survey", "вивчи кодову базу", "карта архітектури", "новий
+  проєкт", "заклади фундамент". Output: docs/architecture-map.md (+ adr/ + scaffold
+  tasks.json on greenfield). The skill records reflects_commit for staleness. It reads an
+  authored architecture doc. It never overwrites it.
 ---
 
 # Skill: survey

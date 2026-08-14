@@ -4,14 +4,15 @@ model: inherit
 effort: medium
 agents: []
 description: >
-  Use to keep the portfolio layer above individual features — one living docs/roadmap.md of
-  outcomes, structured Now / Next / Later, that links to per-feature specs without duplicating
-  them. Triggers on "roadmap", "what's next", "prioritize the roadmap", "add to the roadmap",
-  "show the roadmap", "roadmap", "роадмеп", "що далі", "пріоритети", "додай у roadmap".
-  Captures a candidate as an outcome/problem (lands in Next/Later, RICE-scored), promotes/demotes
-  between horizons, and renders the board. It is outcome-altitude — NOT a feature list or a
-  dated Gantt; the solution lives in the feature's spec, not here. specify promotes an item to
-  Now; ship moves it to Shipped — so delivery keeps the roadmap in sync.
+  Use to keep the portfolio layer above individual features. The skill maintains one living
+  docs/roadmap.md of outcomes. The file is structured Now / Next / Later. It links to
+  per-feature specs without duplicating them. Triggers on "roadmap", "what's next",
+  "prioritize the roadmap", "add to the roadmap", "show the roadmap", "roadmap", "роадмеп",
+  "що далі", "пріоритети", "додай у roadmap". It captures a candidate as an outcome or
+  problem. The item lands in Next/Later with a RICE score. It promotes and demotes items
+  between horizons. It renders the board. It stays at outcome altitude. It is NOT a feature
+  list or a dated Gantt. The solution lives in the feature's spec, not here. specify promotes
+  an item to Now. ship moves an item to Shipped. So delivery keeps the roadmap in sync.
 ---
 
 # Skill: roadmap

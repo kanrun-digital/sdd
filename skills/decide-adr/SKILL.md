@@ -4,16 +4,17 @@ model: inherit
 effort: high
 agents: []
 description: >
-  Use to record a post-hoc or asynchronous architecture decision as a MADR ADR when it
-  was NOT captured during the synchronous design pass — a choice made in code, in a chat,
-  on a whiteboard, or one a tasks/review gate flagged as missing. Triggers on "ADR for
-  {decision}", "adr for {slug}", "document the decision on {topic}", "lock in the decision
-  about {X}", "MADR for {topic}", "/sdd:decide-adr {slug} {title}", "створи ADR для рішення",
-  "задокументуй рішення", "ADR на {тему}". Confirms the decision is ADR-worthy via the
-  blast-radius gate, picks the next 4-digit number, copies design's MADR template, and
-  fills context / drivers / considered options / outcome / honest consequences. Supports a
-  Proposed → Accepted review flow. Output: docs/features/{slug}/adr/NNNN-{title}.md.
-  For decisions made live with the user, use `design` — it spawns ADRs inline (Accepted).
+  Use to record a post-hoc or asynchronous architecture decision as a MADR ADR. Applies
+  when the decision was NOT captured during the synchronous design pass. This covers a
+  choice made in code, in a chat, on a whiteboard, or one a tasks/review gate flagged
+  as missing. Triggers on "ADR for {decision}", "adr for {slug}", "document the decision
+  on {topic}", "lock in the decision about {X}", "MADR for {topic}",
+  "/sdd:decide-adr {slug} {title}", "створи ADR для рішення", "задокументуй рішення",
+  "ADR на {тему}". Confirms the decision is ADR-worthy via the blast-radius gate. Picks
+  the next 4-digit number. Copies design's MADR template. Fills context / drivers /
+  considered options / outcome / honest consequences. Supports a Proposed → Accepted
+  review flow. Output: docs/features/{slug}/adr/NNNN-{title}.md. For decisions made live
+  with the user, use `design`. It spawns ADRs inline (Accepted).
 ---
 
 # Skill: decide-adr

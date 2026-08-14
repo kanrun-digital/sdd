@@ -4,14 +4,15 @@ model: inherit
 effort: medium
 agents: []
 description: >
-  Use to turn a feature's acceptance criteria into a test plan before any test is written — a
-  table that maps every spec.md §5 acceptance criterion to at least one test, names the test
-  levels (unit / integration / e2e / contract / load) without binding to a language or
-  framework, and fixes the integration and data strategy. Triggers on "plan tests for {slug}",
-  "test plan for {slug}", "how do we test {slug}", "test strategy for {slug}",
+  Use to turn a feature's acceptance criteria into a test plan before any test is written. The
+  plan is a table. It maps every spec.md §5 acceptance criterion to at least one test. It names
+  the test levels (unit / integration / e2e / contract / load). It does not bind to a language
+  or framework. It fixes the integration and data strategy. Triggers on "plan tests for
+  {slug}", "test plan for {slug}", "how do we test {slug}", "test strategy for {slug}",
   "/sdd:plan-tests {slug}", "план тестів для {slug}", "як тестувати {slug}", "тест-план".
-  Output: docs/features/{slug}/test-plan.md (separate file for M+), or inline in spec.md for
-  XS/S per the size matrix. Hard-refuse if spec.md is missing → run `specify {slug}` first.
+  Output: docs/features/{slug}/test-plan.md as a separate file for M+. Output is inline in
+  spec.md for XS/S, per the size matrix. Hard-refuse if spec.md is missing → run `specify
+  {slug}` first.
 ---
 
 # Skill: plan-tests

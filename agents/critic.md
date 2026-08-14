@@ -1,10 +1,11 @@
 ---
 name: critic
 description: >
-  Clean-context coherence critic for SDD artifacts (a spec or a SAD). Use after a Socratic pass to
-  detect cross-section drift, coherence damage from user edits, structural gaps, and constraint/
-  quality leaks the per-section walk could not see. Read-only; reads the upstream artifacts itself;
-  emits cited findings only. It judges coherence, it does not propose new design.
+  Clean-context coherence critic for SDD artifacts (a spec or a SAD). Use after a Socratic
+  pass. The agent detects cross-section drift, coherence damage from user edits, structural
+  gaps, and constraint/quality leaks. The per-section walk could not see these problems.
+  Read-only. It reads the upstream artifacts itself. It emits cited findings only. It judges
+  coherence. It does not propose new design.
 model: inherit
 effort: high
 color: magenta

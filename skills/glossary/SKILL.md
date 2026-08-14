@@ -4,19 +4,20 @@ model: inherit
 effort: low
 agents: []
 description: >
-  Use to capture or update domain terms in CONTEXT.md before their meaning drifts —
-  whenever a fuzzy word shows up in an interview, spec, or review and you want one
-  canonical definition plus a NOT-reference so a homonym can't bite you in six months.
-  Triggers on "add term {X}", "what is {X} in our domain", "add to CONTEXT", "fix the
-  glossary", "define {X}", "glossary {term}", "додай термін", "онови глосарій",
-  "що означає {X}". Two-level contract: repo-root CONTEXT.md holds project-wide terms,
-  docs/features/{slug}/CONTEXT.md holds feature-scoped ones; readers read both and the
-  per-feature entry wins. Lazy-bootstraps the target from a template, checks BOTH levels
-  for a conflicting existing entry, asks for a one-sentence definition + the concept it's
-  confused with, and appends one line to ## Glossary. Skip generic tech words (HTTP, queue,
-  cache) — those are not domain terms. Output: created/edited CONTEXT.md. Runs anytime, no
-  input gate; specify, clarify, design and api read its ## Glossary as the canonical source
-  of role and domain-term names.
+  Use to capture or update domain terms in CONTEXT.md before their meaning drifts.
+  Apply when a fuzzy word appears in an interview, a spec, or a review. Captures one
+  canonical definition plus a NOT-reference, so a homonym cannot mislead you in six
+  months. Triggers on "add term {X}", "what is {X} in our domain", "add to CONTEXT",
+  "fix the glossary", "define {X}", "glossary {term}", "додай термін", "онови
+  глосарій", "що означає {X}". Two levels apply. Repo-root CONTEXT.md holds
+  project-wide terms. docs/features/{slug}/CONTEXT.md holds feature-scoped terms.
+  Readers read both, and the per-feature entry wins. Lazy-bootstraps the target from
+  a template. Checks BOTH levels for a conflicting existing entry. Asks for a
+  one-sentence definition + the concept it is confused with. Appends one line to
+  ## Glossary. Skip generic tech words (HTTP, queue, cache). Those are not domain
+  terms. Output: created/edited CONTEXT.md. Runs anytime, with no input gate.
+  specify, clarify, design and api read its ## Glossary as the canonical source of
+  role and domain-term names.
 ---
 
 # Skill: glossary

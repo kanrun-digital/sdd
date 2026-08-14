@@ -4,16 +4,16 @@ model: inherit
 effort: high
 agents: [devils-advocate]
 description: >
-  Use to run an ambiguity sweep over a written spec.md and close every under-specified
-  point before planning or design proceeds — so two engineers can't reasonably build
-  different things from the same spec. Triggers on "clarify {slug}", "find ambiguities in
+  Use to sweep a written spec.md for ambiguity and close every under-specified point
+  before planning or design proceeds. This stops two engineers from building different
+  things from the same spec. Triggers on "clarify {slug}", "find ambiguities in
   {slug}", "is the spec ready", "sharpen the spec", "/sdd:clarify {slug}",
   "прояснити специфікацію", "знайди неоднозначності {slug}", "чи готова специфікація".
-  Re-reads the spec, dispatches a clean-context devil's-advocate subagent to list where the
-  spec forks, then for each ambiguity runs AskUserQuestion to RESOLVE it (tighten §1/§5/§6
-  in place) or DEFER it (→ §8 Open questions with owner+due). Output: an updated
-  docs/features/{slug}/spec.md with every ambiguity resolved or deferred — none dangling.
-  Hard-refuse if spec.md is missing.
+  The skill re-reads the spec and dispatches a clean-context devil's-advocate subagent
+  to list where the spec forks. For each ambiguity it runs AskUserQuestion to RESOLVE it
+  (tighten §1/§5/§6 in place) or DEFER it (→ §8 Open questions with owner+due). Output:
+  an updated docs/features/{slug}/spec.md with every ambiguity resolved or deferred.
+  None dangle. Hard-refuse if spec.md is missing.
 ---
 
 # Skill: clarify

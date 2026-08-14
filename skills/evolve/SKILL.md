@@ -4,14 +4,16 @@ model: inherit
 effort: high
 agents: []
 description: >
-  Use to self-improve the SDD skills for the current repo by mining fix-records (_fixes/) and
-  review-records (_review/) for recurring prevention points, and writing compact project-specific
-  rules to docs/.skill-context/sdd-<skill>/SKILL.md that override each skill's defaults (same priority
-  as nested CLAUDE.md). Cursor-based incremental processing — only new fixes/reviews since the last
-  run are analyzed (plus a tail-5 overlap window). Triggers on "evolve skills", "learn from fixes",
-  "evolve {skill}", "evolve", "навчись з фіксів", "покращ скіли по ревʼю". Never edits the
-  built-in skills/sdd-*/SKILL.md (re-install overwrites them) — all improvements land in skill-context.
-  Repo-level utility (one .skill-context tree serves the whole repo), like survey/roadmap.
+  Use to improve the SDD skills for the current repo. Mines fix-records (_fixes/) and
+  review-records (_review/) for recurring prevention points. Writes compact
+  project-specific rules to docs/.skill-context/sdd-<skill>/SKILL.md. These rules
+  override each skill's defaults with the same priority as nested CLAUDE.md.
+  Processing is cursor-based and incremental. The skill analyzes only new fixes/reviews
+  since the last run, plus a tail-5 overlap window. Triggers on "evolve skills",
+  "learn from fixes", "evolve {skill}", "evolve", "навчись з фіксів",
+  "покращ скіли по ревʼю". Never edits the built-in skills/sdd-*/SKILL.md, because
+  re-install overwrites them. All improvements land in skill-context. Repo-level
+  utility: one .skill-context tree serves the whole repo, like survey/roadmap.
 ---
 
 # Skill: evolve

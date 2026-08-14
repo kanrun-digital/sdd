@@ -4,14 +4,15 @@ model: inherit
 effort: medium
 agents: []
 description: >
-  Use to break a designed feature into atomic, ≤1-day tasks with a dependency graph, a
-  per-task Definition of Done, and a machine-readable tasks.json that the implement engine
-  consumes. Triggers on "task breakdown for {slug}", "break down tasks for {slug}",
-  "tasks for {slug}", "plan the work for {slug}", "/sdd:tasks {slug}", "розбий на задачі {slug}",
-  "декомпозиція {slug}", "список задач". Reads spec.md + sad.md + Accepted ADRs (+ data-model +
-  openapi if present), writes docs/features/{slug}/tasks/{_epic,tracker,<task>}.md AND
-  docs/features/{slug}/tasks.json. Tracker export to any issue tracker is optional and
-  tool-neutral. Hard-refuses if spec.md or sad.md or an Accepted ADR is missing.
+  Use to break a designed feature into atomic tasks of ≤1 day each. The skill gives each task
+  a place in a dependency graph and a Definition of Done. It writes a machine-readable
+  tasks.json. The implement engine consumes it. Triggers on "task breakdown for {slug}",
+  "break down tasks for {slug}", "tasks for {slug}", "plan the work for {slug}", "/sdd:tasks
+  {slug}", "розбий на задачі {slug}", "декомпозиція {slug}", "список задач". The skill reads
+  spec.md + sad.md + Accepted ADRs. It also reads data-model + openapi if present. It writes
+  docs/features/{slug}/tasks/{_epic,tracker,<task>}.md AND docs/features/{slug}/tasks.json.
+  Export of the tracker to any issue tracker is optional and tool-neutral. It hard-refuses if
+  spec.md or sad.md or an Accepted ADR is missing.
 ---
 
 # Skill: tasks

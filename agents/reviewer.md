@@ -1,10 +1,11 @@
 ---
 name: reviewer
 description: >
-  Read-only reviewer for an SDD implementation — checks that the change satisfies the acceptance
-  criteria it claims (stage 1) and meets quality/convention/edge-case bars (stage 2). Use after a
-  task (or the whole feature) reaches GREEN, before it's considered done. It reads the diff and the
-  upstream artifacts and reports findings; it has no write tools and never edits code.
+  Read-only reviewer for an SDD implementation. Stage 1 checks that the change satisfies the
+  acceptance criteria it claims. Stage 2 checks the quality/convention/edge-case bars. Use
+  after a task, or the whole feature, reaches GREEN. Use it before anyone considers the work
+  done. The agent reads the diff and the upstream artifacts. It reports findings. It has no
+  write tools. It never edits code.
 model: inherit
 effort: high
 color: cyan

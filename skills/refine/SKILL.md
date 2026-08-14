@@ -4,17 +4,18 @@ model: inherit
 effort: high
 agents: [explorer]
 description: >
-  Use to run a second iteration over a written task plan — re-analyzes the codebase deeper
-  than /sdd:tasks did, surfaces gaps (missing tasks, vague DoD, wrong dependencies, duplicates,
-  out-of-scope gold-plating), and applies approved fixes to BOTH tasks/*.md AND tasks.json
-  atomically. Optionally (+check) validates each finding through a fresh-context subagent before
-  anything is applied. Triggers on "refine {slug}", "improve the plan for {slug}",
-  "second pass on tasks {slug}", "plan refinement {slug}", "/sdd:refine {slug}", "покращ план {slug}",
-  "друга ітерація задач {slug}", "перевір план {slug}". Reads tasks.json + tasks/* + spec.md §5 +
-  sad.md §6/§9 + Accepted ADRs + (if present) data-model.md / contracts/openapi.yaml, dispatches
-  a clean-context validator when +check is set, then writes back atomically. Hard-refuses if
-  tasks.json is missing. Optional stage (never auto-runs); offered as the ↳ or alternative in
-  tasks' handoff.
+  Use to run a second iteration over a written task plan. The skill re-analyzes the codebase
+  deeper than /sdd:tasks did. It surfaces gaps: missing tasks, vague DoD, wrong dependencies,
+  duplicates, out-of-scope gold-plating. It applies approved fixes to BOTH tasks/*.md AND
+  tasks.json atomically. With +check it validates each finding through a fresh-context
+  subagent before it applies anything. Triggers on "refine {slug}", "improve the plan for
+  {slug}", "second pass on tasks {slug}", "plan refinement {slug}", "/sdd:refine {slug}",
+  "покращ план {slug}", "друга ітерація задач {slug}", "перевір план {slug}". It reads
+  tasks.json + tasks/* + spec.md §5 + sad.md §6/§9 + Accepted ADRs. It also reads
+  data-model.md / contracts/openapi.yaml if present. It dispatches a clean-context validator
+  when +check is set. It then writes back atomically. It hard-refuses if tasks.json is
+  missing. This stage is optional. It never auto-runs. The tasks handoff offers it as the ↳
+  or alternative.
 ---
 
 # Skill: refine

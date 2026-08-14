@@ -4,16 +4,17 @@ model: inherit
 effort: high
 agents: [critic, researcher, strategist, analyst, devils-advocate]
 description: >
-  Use to turn a raw feature idea into a reviewed spec.md — a lightweight Socratic interview
-  front (capture the idea, deep-dive the problem) merged with a full product spec (context,
-  goals, user stories, acceptance criteria, NFRs, KPIs). Triggers on "specify {slug}",
-  "spec for {slug}", "write the spec", "capture this idea", "draft requirements for {slug}",
-  "/sdd:specify {slug}", "напиши специфікацію {slug}", "опиши вимоги", "зафіксуй ідею".
-  Opens by setting the interview-depth dial (easy/medium/hard), drafts from templates/spec.md,
-  validates each acceptance criterion Socratically, runs a clean-context critic, then writes
-  docs/features/{slug}/spec.md. The ideation analyses (competitive research, strategic approaches,
-  multi-perspective review, devil's-advocate) run as named subagents gated by the depth dial —
-  easy skips them, hard runs the full suite.
+  Use to turn a raw feature idea into a reviewed spec.md. The skill merges a lightweight
+  Socratic interview front (capture the idea, deep-dive the problem) with a full product spec
+  (context, goals, user stories, acceptance criteria, NFRs, KPIs). Triggers on "specify
+  {slug}", "spec for {slug}", "write the spec", "capture this idea", "draft requirements for
+  {slug}", "/sdd:specify {slug}", "напиши специфікацію {slug}", "опиши вимоги", "зафіксуй
+  ідею". It opens by setting the interview-depth dial (easy/medium/hard). It drafts from
+  templates/spec.md. It validates each acceptance criterion Socratically. It runs a
+  clean-context critic. It then writes docs/features/{slug}/spec.md. The ideation analyses
+  (competitive research, strategic approaches, multi-perspective review, devil's-advocate)
+  run as named subagents. The depth dial gates them. Easy skips them. Hard runs the full
+  suite.
 ---
 
 # Skill: specify

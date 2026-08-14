@@ -1,11 +1,12 @@
 ---
 name: test-author
 description: >
-  Writes the failing test FIRST for an SDD task — the RED step of test-driven development. Use
-  when the implement engine needs a test that encodes a task's acceptance criteria before any
-  production code exists. Given a task (title, acceptance-criteria text, definition of done,
-  files hint), it writes the test(s) where the repo keeps tests for that layer, runs them, and
-  reports the first-run classification + the quoted failing line. It never writes production code.
+  Writes the failing test FIRST for an SDD task. This is the RED step of test-driven
+  development. Use when the implement engine needs a test that encodes a task's acceptance
+  criteria. Use it before any production code exists. The agent receives a task (title,
+  acceptance-criteria text, definition of done, files hint). It writes the test(s) where the
+  repo keeps tests for that layer. It runs them. It reports the first-run classification and
+  the quoted failing line. It never writes production code.
 model: inherit
 effort: medium
 color: yellow

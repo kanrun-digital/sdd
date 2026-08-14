@@ -4,16 +4,18 @@ model: inherit
 effort: high
 agents: [explorer, critic]
 description: >
-  Use to produce a Software Architecture Document for a feature — Arc42 12 sections + C4 L1/L2
-  inline + ADRs spawned on a blast-radius gate — once spec.md exists. Triggers on
-  "design {slug}", "architecture for {slug}", "SAD for {slug}", "arc42 for {slug}",
-  "C4 context+container for {slug}", "/sdd:design {slug}", "спроектуй архітектуру {slug}",
-  "SAD для {slug}", "архітектурний документ {slug}". Drafts §1–§12 in-memory, batch-validates each
-  section Socratically (4-state machine), spawns an ADR only when a decision crosses the
-  blast-radius threshold (irreversible / multi-module / has legitimate alternatives), writes each
-  resolved section + its ADRs atomically, then runs a clean-context critic before finalizing.
-  Brownfield: dispatches an Explore subagent to map the repo first. Hard-refuse if spec.md
-  is missing; CONTEXT.md is optional (when present its Glossary is canonical).
+  Use to produce a Software Architecture Document for a feature once spec.md exists.
+  The document holds Arc42 12 sections, inline C4 L1/L2, and ADRs spawned on a
+  blast-radius gate. Triggers on "design {slug}", "architecture for {slug}",
+  "SAD for {slug}", "arc42 for {slug}", "C4 context+container for {slug}",
+  "/sdd:design {slug}", "спроектуй архітектуру {slug}", "SAD для {slug}",
+  "архітектурний документ {slug}". Drafts §1–§12 in-memory. Batch-validates each
+  section Socratically (4-state machine). Spawns an ADR only when a decision crosses
+  the blast-radius threshold (irreversible / multi-module / has legitimate
+  alternatives). Writes each resolved section + its ADRs atomically. Then runs a
+  clean-context critic before finalizing. On brownfield, dispatches an Explore
+  subagent to map the repo first. Hard-refuse if spec.md is missing. CONTEXT.md is
+  optional. When present, its Glossary is canonical.
 ---
 
 # Skill: design
