@@ -62,7 +62,7 @@ PLAN
 
 **Output:** per-rule verdict (pass/fail/warn/info) + an aggregate score (passed/total, weighted by `weight`) + the `passed` boolean (score ≥ threshold). Stored in `run.json.evaluation` (compact: score, passed, failed rule ids, warn rule ids). Append `evaluation_done` to `history.jsonl` with the score + passed/failed in the payload.
 
-**Dispatch (the SDD-native core):** EVALUATE dispatches the [`critic`](../../agents/critic.md) agent — `subagent_type: "sdd:critic"` (clean context, Read itself) — probing the artifact against F1–F6 from [`../../_shared/critic.md`](../../_shared/critic.md), with an **F6 specialization** for the artifact type:
+**Dispatch (the SDD-native core):** EVALUATE dispatches the [`critic`](../../../agents/critic.md) agent — `subagent_type: "sdd:critic"` (clean context, Read itself) — probing the artifact against F1–F6 from [`../../_shared/critic.md`](../../_shared/critic.md), with an **F6 specialization** for the artifact type:
 - `spec.md` / `sad.md` — the critic's native F6 (implementation-detail leakage into AC; quality scenarios citing absent NFR numbers; strawman ADR options).
 - `api` / `openapi.yaml` — F6 = contract drift (endpoints not traced to spec §5 AC; status codes violating the api drift-check matrix; missing idempotency on writes).
 - `tasks.json` — F6 = the `tasks` step-12 self-check (acyclic deps, AC coverage, testable-verb dod, J5 lint).

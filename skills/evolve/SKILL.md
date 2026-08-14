@@ -28,7 +28,7 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
 
 ## Inputs
 
-- Optional `<skill>` — evolve only that skill (`fix`, `implement`, `tasks`, …); accepts bare name, `sdd-`-prefixed, or `/sdd-`-prefixed (normalized). If absent or `all` → evolve every installed skill that has new evidence.
+- Optional `<skill>` — evolve only that skill (`fix`, `implement`, `tasks`, …). Accept the bare name or a name with the `sdd-` prefix. Remove any leading slash before you resolve the name. If absent or `all` → evolve every installed skill that has new evidence.
 - `.claude/sdd.local.md` — for `artifact_language` (report prose) + `judgment_model`.
 - `docs/architecture-map.md` — the repo's architecture (tech stack, conventions, migration tooling) — the convention source for tech-stack gaps.
 - **Evidence sources (SDD-native, read-only):**
