@@ -2,6 +2,7 @@
 interview_depth: medium    # easy | medium | hard — plugin-wide default for specify/clarify/design (see _shared/interview-depth.md)
 artifact_language: uk      # en | uk (any language tag) — language pipeline DOCUMENTS are written in; headings + machine tokens stay English (see _shared/artifact-language.md)
 conversation_language: uk  # uk | en (any language tag) — language the SKILL TALKS TO YOU in (AskUserQuestion text); independent of artifact_language (see _shared/ask-style.md)
+executor_tier: balanced    # cheap | balanced | judgment — capability of whoever EXECUTES the plan; read by tasks/refine (see _shared/executor-tier.md)
 tdd: true                  # enforce red→green→refactor
 team_mode: false           # true → agent team via TeamCreate
 workflow_mode: auto        # auto → dynamic Workflow; off → never

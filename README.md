@@ -445,10 +445,22 @@ those questions are asked in. The rest of the keys configure the `implement` eng
 > frontmatter, or any machine token — those are always English. Phrasing contract →
 > [`skills/_shared/ask-style.md`](./skills/_shared/ask-style.md).
 
+> **`executor_tier` — the one dial about the *executor*, not the work.** The others describe the
+> job: `.size` how big the feature is, `.route` which stages run, `interview_depth` how much you
+> are asked. This one describes **who will write the code from the plan**. On `cheap` (a small
+> model, or a contributor with no context) `tasks` and `refine` make the plan finer and more
+> literal — half-day tasks, `files_hint` naming files rather than directories, a named precedent
+> file to model on, numbered steps, no open choice left to the executor, and a DoD that names the
+> verification command. It never copies upstream prose into a task: precision, not duplication —
+> a copy drifts, a link does not. AC coverage and the dependency graph are identical at every
+> tier. Default `balanced` = today's behaviour. Full semantics →
+> [`skills/_shared/executor-tier.md`](./skills/_shared/executor-tier.md).
+
 ```yaml
 interview_depth: medium    # easy | medium | hard — default depth for specify/clarify/design
 artifact_language: en      # en | uk — the language pipeline documents are written in (headings + machine tokens stay English)
 conversation_language: uk  # uk | en — the language the skills ASK you questions in (independent of artifact_language)
+executor_tier: balanced    # cheap | balanced | judgment — how capable the plan's executor is; tasks/refine calibrate granularity to it
 tdd: true                  # enforce red→green→refactor
 team_mode: false           # true → agent team via TeamCreate
 workflow_mode: auto        # auto → dynamic Workflow; off → never
