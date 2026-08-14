@@ -9,10 +9,11 @@
 Хто яку модель отримує — вирішує **тип роботи**, не смак. Судження (спека, дизайн, рев'ю,
 критика, стратегія) → найсильніша модель (`opus`, effort `high`); виконання (тести, код) →
 збалансована (`sonnet`, `medium` з ескалацією до `high`); пошук/скан → найдешевша (`haiku`,
-`low`). Прецеденс оверрайдів: env > invocation > `model_<role>` > `judgment_model` > frontmatter >
-session. На L/XL-фічах критичні верифікації (reviewer у `review`, critic у `design`/`specify`)
-піднімаються до effort `xhigh`. Кожен спавнений агент працює в **чистому контексті** (не бачив
-розмови), сам читає свої входи з диска і повертає лише **цитовані** знахідки.
+`low`). Для Claude прецеденс: env > invocation > settings > frontmatter > session. Для Codex
+значення, зафіксоване в TOML агента, найвище; далі spawn > `[agents]` > parent. На L/XL-фічах критичні верифікації (reviewer у `review`, critic у `design`/`specify`)
+піднімаються до effort `xhigh`. Для незалежних ролей **чистий контекст** є явною політикою
+диспетчеризації, а не автоматичною гарантією кожного хоста: у Codex не успадковуй історію
+батьківського чату. Агент сам читає входи з диска і повертає лише **цитовані** знахідки.
 
 ---
 
@@ -68,34 +69,64 @@ Everything it must know arrives in the prompt. Include the **async report-delive
 ### Cross-tool dispatch
 
 The `subagent_type: "sdd:<name>"` form is **Claude Code-only**. It is the id the plugin loader
-registers. Under **Codex CLI / Cursor** the installer generates a custom agent named `sdd-<name>`
-(into `.codex/agents/` / `.cursor/agents/`). Dispatch that agent. When the host has no agent
-mechanism in reach, run the agent file's instructions **inline** in the current context. Same
+registers. Under **Codex / Cursor** the installer generates a custom agent named `sdd-<name>`
+(into `.codex/agents/` / `.cursor/agents/`). Ask the host to delegate to that named agent. In
+Codex, `/agent` only inspects or switches an already spawned agent thread; it is not a spawn
+command. When the host has no custom-agent mechanism in reach, use a built-in agent with the same
+prompt or run the agent file's instructions **inline** in the current context. Same
 degrade-don't-block rule and the full mapping table: [`tool-adapters.md`](./tool-adapters.md).
 
+Codex custom-agent TOML has no source-style `tools:` allow-list. `install.sh` maps agents that
+declare `Write`/`Edit` to `sandbox_mode = "workspace-write"` and every other agent to `read-only`;
+the instructions remain a behavioral boundary. A parent session's live permission override can
+still supersede an agent-file sandbox. Do not deliberately broaden a judgment agent and then claim
+it was technically unable to write.
+
 ## Override precedence (highest wins)
+
+Claude Code and Codex resolve runtime configuration differently. Do not treat the Claude env chain
+as a Codex configuration contract.
+
+**Claude Code:**
 
 ```
 env var  >  per-invocation (the Agent call)  >  model_<role>  >  judgment_model  >  frontmatter  >  session
 ```
 
+**Codex:** a value pinned in `.codex/agents/<agent>.toml` wins. Otherwise an explicit spawn value
+wins, then `[agents].default_subagent_model` / `default_subagent_reasoning_effort`, then the parent
+session value. The installer leaves `model` unset and maps the source `effort:` to
+`model_reasoning_effort`, so the SDD effort baseline is preserved while model choice remains under
+Codex/session control. A skill may pass a size- or role-specific **model** override explicitly.
+It cannot override the same named agent's pinned effort. When a requested effort differs from that
+baseline, dispatch a built-in agent with the same role prompt plus an explicit effort, or use a
+separately configured custom-agent variant. Never report a file-pinned value as overridden.
+Project `.claude/sdd.local.md` remains an SDD artifact that the skill reads; Codex does not load it
+as native host configuration.
+
+On Codex, treat `haiku` / `sonnet` / `opus` / `fable` values from that historical settings file as
+portable tier labels, not model IDs. Do not pass them to the spawn API. Leave the model unset so
+Codex inherits/resolves it, unless the user configured a full model ID supported by the active
+Codex build.
+
 **`judgment_model`** (`.claude/sdd.local.md`, default `opus`) is the one-switch
 tier for the **judgment agents** — `reviewer` / `critic` / `devils-advocate` / `strategist` /
 `analyst`. Accepts: an Anthropic alias (`opus` — the default, `fable` for the Mythos tier) **or a
-full model ID** (`claude-opus-5`, `kimi-k2`, `glm-4`, `gpt-4o`, …). On a non-Anthropic host, set
+full model ID** (`claude-opus-5`, `gpt-5.6`, …). On a non-Anthropic host, set
 it to that host's judgment-tier model. Setting it raises all five without touching `agents/*.md`
 (their frontmatter is `model: inherit` — the session model). A per-role `model_<role>` key still
 wins for its role. It never applies to execution (`test-author` / `implementer`) or
 gathering (`explorer` / `researcher`) roles. See the settings doc:
 [`../implement/references/settings.md`](../implement/references/settings.md).
 
-- **`model`** env: `CLAUDE_CODE_SUBAGENT_MODEL`. Values: `haiku|sonnet|opus|fable|inherit|<full-model-id>` (the env already accepts a full model ID — this is the portable lever on any host).
+- **`model`** env: `CLAUDE_CODE_SUBAGENT_MODEL`. Values: `haiku|sonnet|opus|fable|inherit|<full-model-id>` (Claude accepts a full model ID; non-Claude hosts ignore this variable).
 - **`effort`** env: `CLAUDE_CODE_EFFORT_LEVEL`. Values: `low|medium|high|xhigh|max|<number>` (`xhigh`/`max` only on Opus 4.8 / 4.7).
-- The `CLAUDE_CODE_*` env vars are **Claude Code-only** levers. Codex CLI / Cursor ignore them.
-  Pick the model in the host's own settings there.
+- The `CLAUDE_CODE_*` env vars are **Claude Code-only** levers. Codex / Cursor ignore them.
+  In Codex, use the custom-agent TOML, `[agents]` defaults, or an explicit spawn override subject
+  to the file-pinned precedence above.
 - Per-project overrides live in `.claude/sdd.local.md` as `model_<role>` / `effort_<role>` keys
   (see the implement settings). On a non-Anthropic host, set `model_<role>` or `judgment_model`
-  to a **full model ID** (e.g. `kimi-k2`, `glm-4`, `gpt-4o`). The Anthropic aliases
+  to a **full model ID** (e.g. `gpt-5.6` in current Codex builds). The Anthropic aliases
   (`haiku`/`sonnet`/`opus`/`fable`) are Anthropic-only.
 
 > **Caveat (verify on your build).** Some Claude Code builds report the `effort:` *frontmatter*
@@ -111,20 +142,23 @@ Default effort/model scale with the feature `.size` (see [`size-matrix.md`](./si
 - **M** → roster defaults. Escalation handles the hard tasks.
 - **L/XL** → bump execution effort to `high`. **The critical verifications go to `xhigh`**. The
   `reviewer` (dispatched by `review`) and the `critic` (dispatched by `design` / `specify`) run
-  at `effort: xhigh` via `CLAUDE_CODE_EFFORT_LEVEL` (the reliable lever — see the caveat above).
-  The other judgment agents stay `high`. A cross-module change is where reasoning depth pays
-  off. The final review/critique is where it pays off most.
+  at `effort: xhigh`. Claude uses `CLAUDE_CODE_EFFORT_LEVEL` (the reliable lever — see the caveat
+  above). On Codex, do not select the pinned-`high` `sdd-reviewer`/`sdd-critic` and pretend an
+  explicit `xhigh` won; use a built-in agent with the same role prompt plus explicit `xhigh`, or a
+  separately configured variant. The other judgment agents stay `high`. A cross-module change is
+  where reasoning depth pays off. The final review/critique is where it pays off most.
 
 A skill/engine that knows the size applies this before dispatch and says so in its banner.
 
 ## The shared agent contract (every spawned agent)
 
-1. **Clean, isolated context by default.** A spawned agent does **not** see the parent
-   conversation, tool results, system prompt, invoked skills, or files already read. The **only
-   channel is the Agent prompt string**. The dispatching skill must therefore inline paths, the
-   draft/diff, and decisions explicitly. The agent re-reads upstream artifacts itself. Only the
-   agent's final message returns. This isolation *is* the "fork" for independent review/critique —
-   fresh eyes are the point.
+1. **Clean, isolated context is a dispatch requirement for independent roles, not a universal host
+   default.** A host may inherit the parent conversation when it spawns an agent. For `reviewer`,
+   `critic`, and `devils-advocate`, explicitly request a clean/no-history spawn when the host exposes
+   that option (in Codex, use a no-inherited-turns spawn). Do not fork the parent conversation into
+   those roles. The dispatching skill must inline paths, the draft/diff, and decisions explicitly.
+   The agent re-reads upstream artifacts itself and its final message is the deliverable. This
+   isolation is what gives independent review/critique fresh eyes.
    - **Fork mode** (`CLAUDE_CODE_FORK_SUBAGENT`, experimental) inherits the full conversation +
      shares the prompt cache. Use it **only** for a live side-task that genuinely needs the
      running context. Never use it for `reviewer` / `critic` / `devils-advocate`. Their value is
@@ -136,7 +170,9 @@ A skill/engine that knows the size applies this before dispatch and says so in i
    through the host's messaging channel before it proceeds.
 3. **Worker preamble.** When an orchestrator (the implement team/workflow) delegates, it wraps
    the task: «execute directly, do not spawn sub-agents, use tools directly, report results with
-   absolute file paths». A subagent cannot spawn subagents. The lead therefore owns fan-out.
+   absolute file paths». Some hosts, including current Codex builds, support nested delegation;
+   SDD workers deliberately must not use it. The lead owns fan-out so TDD dependencies and file
+   ownership remain explicit.
 4. **Verify before claiming done.** Before saying "done / fixed / passing": IDENTIFY the command
    that proves it → RUN it → READ the output → only then claim, with the evidence. Words like
    "should / probably / seems" are a red flag that verification hasn't run.

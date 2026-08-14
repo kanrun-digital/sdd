@@ -1,12 +1,23 @@
 # Dynamic-workflow execution (`workflow_mode: auto`)
 
-When the decision tree selects the workflow, the engine **generates a `Workflow` script** from the DAG and runs it. This is the unattended, maximally-parallel mode. Each independent task flows through its own pipeline. A failure drops only that task's subtree. Other branches keep going.
+When the decision tree selects the workflow, the engine runs the task DAG through the strongest
+host-native orchestration available. On Claude Code with `Workflow`, it generates and runs the
+script below. On Codex, the parent walks the same Kahn layers and orchestrates native subagent
+threads; it does **not** pretend a Claude `Workflow` runtime exists. This is the unattended,
+maximally-parallel logical mode. Each independent task flows through its own pipeline. A failure
+drops only that task's subtree. Other branches keep going.
 
 ## Why a generated workflow (not a fixed one)
 
-The shape of the work is `tasks.json`. It differs every feature. The engine emits a script tailored to this DAG: validate → layer → fan-out → per-task pipeline. The tasks array drives the script as data. The engine fills it in and invokes `Workflow`.
+The shape of the work is `tasks.json`. It differs every feature. The engine derives a run-plan
+tailored to this DAG: validate → layer → fan-out → per-task pipeline. The tasks array drives the
+plan as data. A native `Workflow` host receives the generated script; Codex keeps the same plan in
+the parent and performs bounded spawn/wait/steer operations.
 
 ## Generated script shape
+
+This JavaScript is the Claude `Workflow` realization. Under Codex it is pseudocode for the parent
+orchestrator, not a file to generate or execute.
 
 ```js
 export const meta = {
@@ -46,6 +57,19 @@ The same lanes as the team apply. `layer: migration` tasks are forced into a sin
 - The `commit` step of each pipeline produces commits. The engine batches them after the workflow returns if `auto_commit: per_phase`. Commits carry `SDD-Task`/`SDD-AC` trailers. They are serialized in dependency order.
 - The integration tier follows `require_integration`. In CI (Docker present) the integration RED→GREEN runs inside the verify stage. Locally under `auto` with no Docker it is NON-red. The proving run then relies on CI for the integration green.
 
+## Codex realization
+
+- Use the installed `sdd-test-author`, `sdd-implementer`, and `sdd-reviewer` custom agents. If the
+  marketplace-only install has no custom agents, use built-in agents with the same bounded prompts.
+- Keep RED → GREEN → review dependencies sequential within one task. Parallelize only independent
+  DAG tasks and only with separate worktrees.
+- Request the same structured verdict fields in each agent prompt. The parent validates them before
+  advancing the ledger; an idle/completion signal without the final report is not a verdict.
+- Use clean/no-history spawns for the independent reviewer and other judgment roles.
+
 ## Graceful fallback
 
-If the `Workflow` tool is **not available** at runtime, the decision-tree guard skips this whole mode. The engine continues with the team (if eligible) or with sequential single-agent TDD. The generated script is never a hard dependency.
+Absence of the Claude `Workflow` tool alone is not a reason to downgrade on Codex. Use the native
+subagent-DAG realization above. Downgrade to sequential single-agent TDD only when the host exposes
+neither a workflow runtime nor subagent orchestration. The generated script is never a hard
+dependency.

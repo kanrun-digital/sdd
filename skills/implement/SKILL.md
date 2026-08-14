@@ -10,8 +10,8 @@ description: >
   {slug}", "/sdd:implement {slug}", "імплементуй {slug}", "реалізуй фічу {slug}",
   "напиши код за задачами". Reads docs/features/{slug}/tasks.json + the upstream
   artifacts. Detects the repo's test/lint/vet commands stack-agnostically. Builds a
-  dependency DAG. Runs one of three modes: sequential single-agent TDD, an agent team
-  (TeamCreate), or a dynamic Workflow. The skill selects the mode from settings + DAG
+  dependency DAG. Runs one of three logical modes: sequential single-agent TDD, an agent team
+  (TeamCreate or native Codex subagents), or a dynamic workflow/DAG. The skill selects the mode from settings + DAG
   shape, with graceful fallback. Hard-refuse if tasks.json is missing.
 ---
 
@@ -40,7 +40,7 @@ Tech Lead drives. The engine runs the cycle. The three subagents ship with the p
 3. **Detect commands.** Run the stack-agnostic cascade (settings override → Makefile → package scripts → language manifests → Docker probe for the integration tier) to resolve unit / integration / lint / vet commands. Print what was detected. → [`./references/command-detection.md`](./references/command-detection.md).
 4. **Build the DAG.** Parse `tasks.json`, validate `deps` is acyclic, topologically sort into phases (Kahn). Compute `task_count`, `longest_chain`, `parallel_width`. Mark serialization lanes (`layer: migration`, tasks with overlapping `files_hint`).
 5. **Pick the mode.** Run the decision tree (below. Full form → [`./references/decision-tree.md`](./references/decision-tree.md)). Apply the guards.
-6. **Generate the run-plan.** Sequential → an ordered task list. Team → a shared TaskList with the full task text in each body. Workflow → a generated `Workflow` script (DAG → Kahn phases → fan-out pipeline). → [`./references/team-exec.md`](./references/team-exec.md) / [`./references/workflow-exec.md`](./references/workflow-exec.md).
+6. **Generate the run-plan.** Sequential → an ordered task list. Team → a shared task plan with the full task text in each body. Workflow → a native `Workflow` script when that runtime exists; under Codex, the parent orchestrates the same Kahn phases with native subagents. → [`./references/team-exec.md`](./references/team-exec.md) / [`./references/workflow-exec.md`](./references/workflow-exec.md).
 7. **Banner.** Print the active mode and the settings that drove it: `mode=<…> tdd=<…> isolation=<…> parallel=<n> integration=<…>`. The user sees exactly how the engine will behave before it acts.
 8. **Execute** in the chosen mode. Every task runs the TDD cycle → [`./references/tdd-loop.md`](./references/tdd-loop.md). A `layer: migration` task first **promotes** its staged migration(s) (`docs/features/<slug>/migrations/<NN>_*`) into the live `migrations/` tree — assigning the real sequence number / timestamp per the repo's convention, in ordinal order — *then* applies + reverts them. Detail → [`./references/inputs.md`](./references/inputs.md).
 9. **Per-task gate + commit.** After GREEN+REFACTOR: unit + (integration if available) + lint + vet must be clean, then commit task-scoped with trailers `SDD-Task: <id>` and `SDD-AC: <id>` (one per satisfied AC). Tasks in one **compile-coupled lane** (shared contract file in `files_hint`) pass one shared gate and one commit carrying every task's trailers — the sanctioned exception in [`./references/tdd-loop.md`](./references/tdd-loop.md) §COMMIT. Update `tracker.md` → `done`.
@@ -52,12 +52,15 @@ Tech Lead drives. The engine runs the cycle. The three subagents ship with the p
 parallel_eligible := isolation==worktree AND max_parallel>1 AND parallel_width>=2
                      AND (size in {M,L,XL} OR task_count>=4)
 
-if team_mode AND parallel_eligible:                          → AGENT TEAM (TeamCreate) over the DAG
-elif workflow_mode=="auto" AND parallel_eligible AND Workflow-available: → DYNAMIC WORKFLOW
-else:                                                        → SEQUENTIAL single-agent TDD (topo order)
+team_runtime := TeamCreate-available OR native-subagents-available
+workflow_runtime := Workflow-available OR native-subagents-available
+
+if team_mode AND parallel_eligible AND team_runtime:           → AGENT TEAM over the DAG
+elif workflow_mode=="auto" AND parallel_eligible AND workflow_runtime: → DYNAMIC / SUBAGENT DAG
+else:                                                           → SEQUENTIAL single-agent TDD (topo order)
 ```
 
-**Guards (apply before dispatch):** `team_mode` but not eligible → warn + downgrade to the next mode. `max_parallel>1` with `isolation: inplace` → clamp parallel to 1 (no two agents edit one tree). `workflow_mode: off` → never generate a Workflow. `tdd: false` → skip RED (warn loudly — you lose the safety net). `require_integration: always` but Docker absent → **BLOCK** before dispatch. `auto` → run unit-only and mark integration NON-red. `never` → skip the integration tier. Full table → [`./references/decision-tree.md`](./references/decision-tree.md). Graceful degrade: if `Workflow`/`TeamCreate` is unavailable at runtime, fall through to sequential.
+**Guards (apply before dispatch):** `team_mode` but not eligible → warn + downgrade to the next mode. `max_parallel>1` with `isolation: inplace` → clamp parallel to 1 (no two agents edit one tree). `workflow_mode: off` → never run the workflow-equivalent branch. `tdd: false` → skip RED (warn loudly — you lose the safety net). `require_integration: always` but Docker absent → **BLOCK** before dispatch. `auto` → run unit-only and mark integration NON-red. `never` → skip the integration tier. Full table → [`./references/decision-tree.md`](./references/decision-tree.md). Graceful degrade: fall through to sequential only when neither the host-native workflow nor native subagents are available.
 
 ## TDD cycle (per task)
 

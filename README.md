@@ -1,6 +1,6 @@
-# SDD — Spec-Driven Development for Claude Code
+# SDD — Spec-Driven Development for Claude Code, Codex, and Cursor
 
-A self-contained Claude Code plugin. It takes a feature from a one-line idea to
+A cross-tool Agent Skills package and Claude Code / Codex plugin. It takes a feature from a one-line idea to
 **reviewed, verified, shipped** code. It does this through **22 atomic, stack-agnostic skills**
 and a **TDD implementation engine**. A living roadmap sits above the per-feature flow. A
 repo-level learning loop (`evolve`) feeds what you fixed back into the skills.
@@ -23,35 +23,76 @@ The dial also sets how much it interrogates you with trade-offs.
 
 After you update to a new release, re-run `/plugin install sdd@sdd`. Then run `/reload-plugins`.
 
-**Codex CLI** — change to your project directory first. The script installs into the **current
-directory** (`.agents/skills/` + `.codex/agents/`). Add `--global` after `codex` to install under
-`~`. Add `--prefix DIR` to install under an arbitrary directory. That form is useful for a
-sandbox test:
+### Codex — full install (skills + custom agents)
+
+Use the script path when you want all 22 prefixed skills **and** the 9 named custom agents. Change
+to the repository root first. By default the install is project-scoped:
+
+- skills → `.agents/skills/sdd/`
+- custom agents → `.codex/agents/sdd-*.toml`
+
+Re-run the same command to update; the installer stages the replacement and restores the previous
+complete install if the update fails. Use `--global` to install user-wide under `$HOME`; when
+`CODEX_HOME` is set, global custom agents go to `$CODEX_HOME/agents/`. Python 3 is needed to
+generate the custom-agent TOML files. Without it the skills still install and named-agent dispatch
+falls back inline. For a reproducible/pinned install, clone or check out the desired commit and run
+`./install.sh codex --src /path/to/sdd` instead of executing the moving `main` branch.
 
 ```sh
 cd your-project
-curl -fsSL https://raw.githubusercontent.com/kanrun-digital/sdd/main/install.sh | bash -s -- codex
+curl -fsSL https://raw.githubusercontent.com/kanrun-digital/sdd/main/install.sh \
+  | bash -s -- codex
 ```
 
-Then restart codex. Skills are discovered at session start. Type `$sdd-specify`.
+For a user-wide install, append `--global`. For an isolated test, append `--prefix DIR`. Use the
+same scope flag — and the same `CODEX_HOME` value, if set — for updates and removal:
 
-Alternative: the plugin marketplace. Note that `add` only **registers** the marketplace.
-It installs nothing by itself:
+```sh
+# project-scoped uninstall; add --global if that is how you installed it
+curl -fsSL https://raw.githubusercontent.com/kanrun-digital/sdd/main/install.sh \
+  | bash -s -- codex --uninstall
+```
 
-```text
+Start a new Codex session after installation. Run `/skills` (or type `$`) and select
+`$sdd-specify`. Ask Codex to delegate to a custom agent by name, for example
+“use `sdd-explorer` to map this repository.” `/agent` only inspects or switches existing agent
+threads; it is not the command that starts a custom agent. Codex normally detects skill changes
+automatically; restart the client if the new entries do not appear.
+
+The visual dashboard is currently Claude Code-only: its MCP server uses Claude's live channel
+protocol. Codex still discovers the `start` skill because the same skills tree is shared, but that
+skill exits with a compatibility note and does not touch Claude state. The other 21 workflow skills
+are unaffected.
+
+### Codex — plugin marketplace (skills only)
+
+This is the native distribution path on Codex builds that expose `codex plugin`. Registering a
+marketplace and installing a plugin are two separate commands:
+
+```sh
 codex plugin marketplace add kanrun-digital/sdd
+codex plugin add sdd@sdd
 ```
 
-Then run `/plugins` **inside codex**. Switch to the `sdd` marketplace tab. Pick
-**Install plugin**. One naming nuance: the marketplace install registers the **original** skill
-names (`$specify`). The installer script prefixes them — `$sdd-specify`. Bare names like
-`review` / `design` / `api` collide with generic skills. **Pick one of the two paths, not
-both.** The two paths register different names for the same skills. If you run both, every
-skill shows twice. To undo the script install, re-run `install.sh codex --uninstall` from the
-same directory. Use the same `--global` / `--prefix`. To undo the marketplace install, open
-`/plugins` → the sdd tab → uninstall. You can also remove the `[plugins."sdd@…"]` entry from
-`~/.codex/config.toml`. The script warns when it detects an already-registered marketplace
-install.
+You can do the same through `/plugins` inside Codex. The marketplace manifest currently bundles
+the skills only. Codex custom-agent TOML files are a separate local configuration surface and are
+not plugin resources, and the Claude-channel dashboard is intentionally not declared as a Codex
+MCP server. Therefore this path has no installed `sdd-*` custom agents or dashboard; the skills use
+their documented built-in-agent/inline fallback. It also keeps the original skill names
+(`$specify`), while the script path deliberately prefixes them (`$sdd-specify`) to avoid collisions
+with generic names such as `review`, `design`, and `api`.
+
+**Pick one Codex path, not both.** If both are enabled, the same workflow appears twice under
+different names. The script warns when it detects `[plugins."sdd@…"]` in the active Codex config.
+To remove the marketplace install, run `codex plugin remove sdd@sdd`; remove the source itself with
+`codex plugin marketplace remove sdd`. To refresh a Git marketplace, run
+`codex plugin marketplace upgrade sdd`, then re-run `codex plugin add sdd@sdd` when a newer version
+is listed.
+
+Codex references: [skill discovery and locations](https://developers.openai.com/codex/skills),
+[custom agents and precedence](https://developers.openai.com/codex/subagents),
+[plugin resources](https://developers.openai.com/plugins/build/plugins), and
+[developer/slash commands](https://developers.openai.com/codex/cli/slash-commands).
 
 > **Windows note.** The installer is a bash script. Run it from Git Bash or WSL. It writes the
 > directories `.agents/`, `.codex/`, `.cursor/`. These start with a dot. Explorer hides them by
@@ -79,6 +120,10 @@ One table shows how each Claude-specific mechanism maps to Codex / Cursor. The m
 
 The flow is a straight line. **Each stage writes a file the next one reads.** Run the stages
 in order. The diagram + table are just below.
+
+The pipeline examples below use Claude Code's `/sdd:<name>` spelling. With the Codex script
+install, use `$sdd-<name>`; with the Codex marketplace install, use the bare `$<name>`. The installed
+skill adapts the handoff to the active host.
 
 ```text
 /sdd:survey                         ← once per repo: map an existing codebase, OR bootstrap an empty one
@@ -214,9 +259,9 @@ open PR. Merging to main stays your call.
   CRITIQUE → REFINE. It runs until a quality gate passes or the iteration / stagnation limit
   trips. State persists to disk, so it survives `/clear`. Every backbone skill already runs
   mini-loops (Socratic loop + critic + self-check) — reach for `loop` when those were not enough.
-- **start** — opens the [visual dashboard](#the-visual-dashboard-opt-in) (opt-in; needs
-  `dashboard_enabled: true` + Bun). It prints the loopback URL with this session's capability
-  token.
+- **start** — opens the [visual dashboard](#the-visual-dashboard-opt-in) on Claude Code (opt-in;
+  needs `dashboard_enabled: true` + Bun). On Codex/Cursor it prints the explicit compatibility
+  boundary and stops.
 - **roadmap** — the portfolio layer above the per-feature flow: one living `docs/roadmap.md`
   with Now / Next / Later / Shipped. Run it to capture, prioritise or re-render the board.
   `specify` and `ship` update it on their own, so it rarely needs a manual run — full detail in
@@ -368,8 +413,9 @@ Fallback is graceful:
 - **Sequential single-agent TDD** — the default and the floor everything degrades to.
 - **Agent team** (`team_mode: true`) — `test-author` → `implementer` → `reviewer`
   over the DAG, coordinated through a shared task list, one git worktree per agent.
-- **Dynamic workflow** (`workflow_mode: auto`) — a generated `Workflow` pipeline that runs
-  independent tasks in parallel, up to a parallelism cap.
+- **Dynamic workflow** (`workflow_mode: auto`) — a generated `Workflow` pipeline on Claude Code,
+  or a parent-orchestrated native subagent DAG on Codex. Independent tasks run in parallel up to
+  the same cap.
 
 ## Models, effort & agents
 
@@ -387,9 +433,11 @@ agents: [critic]   # the agents this skill spawns
 makes SDD host-portable: the skill runs on whatever model your session already uses. The policy
 below is expressed in **portable tier-labels** (`cheap` / `balanced` / `judgment`) rather than
 hard-coded model names. On Anthropic hosts the tiers map to `haiku` / `sonnet` / `opus` (or
-`fable` for the Mythos tier). On non-Anthropic backends — Kimi, GLM, ChatGPT — the host's own
-model settings resolve each tier. You pick the tier with `judgment_model` / `model_<role>` in
-`.claude/sdd.local.md`, or with the host's config; you never edit a skill's frontmatter.
+`fable` for the Mythos tier). On non-Anthropic backends — including Codex — the host's own model
+settings resolve each tier. You pick the tier with `judgment_model` / `model_<role>` in
+`.claude/sdd.local.md`, or with the host's config; you never edit a skill's frontmatter. Under
+Codex, Anthropic aliases in that historical settings file are tier labels and are not passed as
+invalid Codex model IDs; set a supported full model ID only when you want to pin one.
 
 The **kind of work** sets the tier, not taste:
 
@@ -404,23 +452,25 @@ The nine agents live in `agents/`: **explorer** (brownfield scan), **test-author
 tests), **implementer** (makes them pass), **reviewer** (independent review), **critic**
 (coherence critique), **devils-advocate** (ambiguity + failure-mode hunt), **researcher**
 (competitive / web research), **strategist** (three strategic approaches), **analyst**
-(multi-perspective review). The read-only ones run in **clean isolated context** (fresh eyes).
+(multi-perspective review). The read-only judgment agents are explicitly dispatched with
+**clean isolated context** (fresh eyes); this is policy, not an assumption about every host.
 They emit only cited findings. The last three are the **ideation analyses**. `specify`
 dispatches them. The depth dial gates them. Easy skips them. Hard runs the full suite.
 
-Two policy levers sit on top of the table. **`judgment_model`** (`.claude/sdd.local.md`,
-values `opus | fable`) raises **all** judgment agents (`reviewer` / `critic` / `devils-advocate` /
-`strategist` / `analyst`) to the Mythos-tier model in one switch. `agents/*.md` keep their
-tier-alias defaults. A per-role `model_<role>` key still wins. And on **L/XL** features the
-critical verifications run at **`effort: xhigh`** (via `CLAUDE_CODE_EFFORT_LEVEL`). The
-critical verifications are the `reviewer` in `review` and the `critic` in `design`/`specify`.
-The rest of the judgment work stays `high`.
+Two policy levers sit on top of the table. **`judgment_model`** (`.claude/sdd.local.md`, values
+`opus | fable | <full-model-id>`) selects all judgment agents (`reviewer` / `critic` /
+`devils-advocate` / `strategist` / `analyst`) in one switch. A per-role `model_<role>` key still
+wins. On Claude, **L/XL** critical verifications run at `effort: xhigh` through
+`CLAUDE_CODE_EFFORT_LEVEL`. The Codex installer instead pins each custom agent's source effort in
+`model_reasoning_effort`; Codex gives that file value highest precedence. If an SDD run needs a
+different one-off effort (for example `xhigh`), it must use a built-in agent with the same role
+prompt and an explicit effort, or a separately configured custom-agent variant. It must not claim
+that a pinned `sdd-*` agent was overridden.
 
-The full policy lives in one place:
-[`skills/_shared/agent-roster.md`](./skills/_shared/agent-roster.md). It covers the override
-precedence (`env > invocation > model_<role> > judgment_model > frontmatter > session`), the
-`.size` scaling, and the env-var fallback for the `effort:` no-op some builds have.
-Short version: if a run feels under-reasoned, set `CLAUDE_CODE_EFFORT_LEVEL`.
+The full host-specific policy lives in one place:
+[`skills/_shared/agent-roster.md`](./skills/_shared/agent-roster.md). It covers Claude and Codex
+precedence separately, `.size` scaling, custom-agent sandbox limits, and the Claude env-var
+fallback. `CLAUDE_CODE_*` variables are never presented as Codex controls.
 
 ### Configuration — `.claude/sdd.local.md`
 
@@ -429,6 +479,8 @@ The pipeline **auto-creates** this per-project settings file (YAML frontmatter).
 start. It also adds the file to `.gitignore`. The file is per-developer. The file is
 **self-documenting**: every key carries its default, its allowed values, and a one-line
 explanation inline. Edit it to change behaviour. Three keys are **plugin-wide**.
+The `.claude/` name is retained for backward compatibility; under Codex this is ordinary
+repo-relative SDD data, not native Codex configuration.
 `interview_depth` is read by the Q&A skills (`specify` / `clarify` / `design`) to
 pre-select the depth dial. `artifact_language` is read by every artifact-writing skill.
 It sets the language pipeline documents are written in. It changes prose only. Section
@@ -462,8 +514,8 @@ artifact_language: en      # en | uk — the language pipeline documents are wri
 conversation_language: uk  # uk | en — the language the skills ASK you questions in (independent of artifact_language)
 executor_tier: balanced    # cheap | balanced | judgment — how capable the plan's executor is; tasks/refine calibrate granularity to it
 tdd: true                  # enforce red→green→refactor
-team_mode: false           # true → agent team via TeamCreate
-workflow_mode: auto        # auto → dynamic Workflow; off → never
+team_mode: false           # true → TeamCreate on Claude; native custom subagents on Codex
+workflow_mode: auto        # auto → Workflow or host subagent-DAG equivalent; off → never
 max_parallel_agents: 3
 isolation: worktree        # worktree | inplace (parallel>1 ⇒ forces worktree)
 stop_on_red: true
@@ -477,14 +529,14 @@ cmd_test_unit: ""          # empty = autodetect (escape hatch)
 cmd_test_integration: ""
 cmd_lint: ""
 cmd_vet: ""
-model_test_author: sonnet  # per-role model + effort (see Models, effort & agents)
+model_test_author: sonnet  # Claude alias; Codex inherits unless this is a supported full model ID
 model_implementer: sonnet
 model_reviewer: opus
-judgment_model: opus       # opus | fable — one switch for all judgment agents (reviewer/critic/devils-advocate/strategist/analyst)
+judgment_model: opus       # Claude alias or full host model ID; one switch for all judgment agents
 effort_test_author: medium # raised to high on escalation / for L-XL features
 effort_implementer: medium
 effort_reviewer: high
-dashboard_enabled: false   # true → opt into the visual dashboard (needs Bun); see The visual dashboard
+dashboard_enabled: false   # Claude Code only: true → opt into the visual dashboard (needs Bun)
 dashboard_port: 4178       # integer — loopback port the dashboard binds (scans upward if busy)
 ```
 
@@ -625,6 +677,10 @@ Directions under consideration — not promises, no dates:
 **Shipped:** ~~MCP exposure~~ → see **[The visual dashboard](#the-visual-dashboard-opt-in)** below.
 
 ## The visual dashboard (opt-in)
+
+> **Claude Code-only today.** The dashboard's inbound session channel is Claude-specific. Codex
+> and Cursor install the shared `start` skill, but it stops with a compatibility note and never
+> starts or fabricates this MCP integration.
 
 The roadmap's *"MCP exposure — pipeline state served over MCP so external tools and dashboards can
 read where every feature stands"* has shipped. It also gained a control surface. The plugin

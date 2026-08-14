@@ -2,9 +2,17 @@
 
 When the decision tree selects the team, the engine becomes a **lead**. The lead coordinates three roles through a shared task list. Each agent gets one git worktree. The lead serializes commits. Use this mode for features with genuine parallel width that want an independent review pass.
 
+Claude Code may realize this contract with `TeamCreate` / `TaskList`. Codex realizes it with its
+native subagent workflow: the parent spawns the installed `sdd-*` custom agents, waits/steers them,
+and owns the task ledger. `/agent` is only for inspecting or switching spawned threads. The logical
+contract below is the same on both hosts; the Claude tool names are not availability gates.
+
 ## Roles (the shipped subagents)
 
-Spawn each agent by its plugin-namespaced `subagent_type`: `sdd:test-author`, `sdd:implementer`, `sdd:reviewer` (see [`../../_shared/agent-roster.md`](../../_shared/agent-roster.md) §Dispatching).
+Claude Code uses plugin-namespaced `subagent_type` values: `sdd:test-author`, `sdd:implementer`,
+`sdd:reviewer`. Codex asks for the generated custom agents `sdd-test-author`, `sdd-implementer`,
+`sdd-reviewer` by name. See [`../../_shared/agent-roster.md`](../../_shared/agent-roster.md)
+§Dispatching.
 
 - **[`test-author`](../../../agents/test-author.md)** (`sdd:test-author`) — RED only. Writes the failing test(s) for a task's `acs`. Runs them. Classifies the first run (GOOD/BAD/false-pass/NON-red per [`tdd-loop.md`](./tdd-loop.md)). Hands over the quoted failing line. Never writes production code.
 - **[`implementer`](../../../agents/implementer.md)** — GREEN + REFACTOR + GATE. Takes a task with its red test. Writes the minimal code to pass. Refactors while green. Runs the per-task gate. Never weakens the test.
@@ -12,9 +20,17 @@ Spawn each agent by its plugin-namespaced `subagent_type`: `sdd:test-author`, `s
 
 ## Setup
 
-1. Create the team (`TeamCreate`). Seed a shared **TaskList** from `tasks.json`. **The full task text goes in each task body**: title, `acs` text pulled from spec §5, `dod`, `files_hint`. Teammates do NOT read the plan or the conversation. The task body is their whole brief.
+1. Create the host's team/subagent workflow. On Claude, use `TeamCreate` and seed a shared
+   **TaskList**. On Codex, keep the ledger in the parent and spawn/steer agent threads from it.
+   **The full task text goes in each task body/prompt**: title, `acs` text pulled from spec §5,
+   `dod`, `files_hint`. Independent roles get a no-history spawn and read upstream files directly.
 2. Give each agent its own git **worktree** under `.worktrees/<agent>`. `isolation: worktree` is required for the team. The guard enforces it. No two agents share a tree.
-3. Set per-role **model + effort** from `model_*` / `effort_*` + the `.size` scaling. Export the env vars for the dispatch. Follow [`../../_shared/agent-roster.md`](../../_shared/agent-roster.md) for all of this. Roster defaults: test-author/implementer `sonnet`+`medium`, reviewer `opus`+`high`. Print the resolved per-role model+effort in the banner.
+3. Set per-role **model + effort** from `model_*` / `effort_*` + the `.size` scaling. Claude
+   exports its env vars. Codex can pass a supported model explicitly because the generated TOML
+   leaves `model` unset; its pinned effort wins. When the required effort differs, use a built-in
+   agent with the same role prompt plus explicit effort, or a separately configured variant.
+   Follow [`../../_shared/agent-roster.md`](../../_shared/agent-roster.md). Print the actually
+   resolved per-role model+effort in the banner.
 
 ## Flow per task
 
