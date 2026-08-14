@@ -41,6 +41,7 @@ Tech Lead (they own the repo's engineering conventions). They approve which rule
   - `docs/features/*/adr/NNNN-*.md` — Accepted ADRs (architectural constraints a skill must respect).
 - `docs/.skill-context/sdd-<skill>/SKILL.md` — the previously-accumulated rules (read for stale-rule detection + gap analysis). Created by `evolve` on first run per skill.
 - `docs/.loop/evolve-cursor.json` — incremental processing cursor.
+- (Optional, project-level override) `docs/.skill-context/sdd-evolve/SKILL.md` — if it exists, read it and apply its rules to all outputs. On conflict, the overrides win → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Critical: never edit built-in skills directly
 

@@ -36,6 +36,7 @@ The owner of the artifact in the loop (PM for spec, Tech Lead/Architect for sad/
 - Optional: a task prompt — what the ideal result looks like (free text). If absent, the target is the artifact's current state + its owning-skill DoD.
 - Optional: success criteria — explicit rules/thresholds. If absent, derive them from the artifact type. A spec → zero §8 open questions + every §5 AC testable. A `tasks.json` → acyclic DAG + every `dod` testable + AC coverage. A `sad.md` → all 12 Arc42 sections present + ADR gate closed. Always ask for confirmation (step 2). Never infer it silently.
 - `.claude/sdd.local.md` — for `judgment_model` (the critic/reviewer tier).
+- (Optional, project-level override) `docs/.skill-context/sdd-loop/SKILL.md` — if it exists, read it and apply its rules to all outputs. On conflict, the overrides win → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Persistence contract
 

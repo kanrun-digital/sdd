@@ -38,6 +38,7 @@ Tech Lead (the planner who owns task decomposition). They approve which findings
 - **Gate (hard refuse):** `docs/features/<slug>/tasks.json` AND `docs/features/<slug>/tasks/`. Missing → STOP and point: «run `/sdd:tasks <slug>` first — refine sharpens an existing plan, it does not write one».
 - Read directly (not via an index): `tasks.json`, every `tasks/*.md`, `spec.md` §5 AC + §1, `sad.md` §5 module boundaries + §6 runtime + §9 ADR index, each Accepted ADR, and — if present — `data-model.md` and `contracts/openapi.yaml` (so the J3 contract-presence findings land correctly).
 - `.size` / `.route` (read for context: route-aware skip behaviour, risk-weighting depth — never refuse on absence).
+- (Optional, project-level override) `docs/.skill-context/sdd-refine/SKILL.md` — if it exists, read it and apply its rules to all outputs. On conflict, the overrides win → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
 
 ## Protocol
 

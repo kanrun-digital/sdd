@@ -315,6 +315,59 @@ def main() -> int:
               f"skill '{base}' SKILL.md never says 'structural self-check' — every skill must run "
               f"the checklist (or map its heavy verifier) per _shared/self-check.md")
 
+    # --- skill-context pointer: every skill's Inputs section names its project override ---
+    # _shared/skill-context.md is the consumer contract: each skill carries ONE bullet in its
+    # ## Inputs section (a skill with no such section uses its first section instead, e.g.
+    # interview's «Depth dial») pointing at docs/.skill-context/sdd-<name>/SKILL.md — present
+    # even when no skill-context exists yet. The literal path is the greppable evidence; a
+    # rewrite that drops the bullet silently disconnects the skill from `evolve`'s project-level
+    # overrides (the start rewrite did exactly that and the validator still passed).
+    print("== skill-context pointer ==")
+
+    def _pointer_section(text: str) -> str:
+        """The ## Inputs section body, or the first ## section when Inputs is absent."""
+        heads = list(re.finditer(r"^## .*$", text, re.M))
+        if not heads:
+            return ""
+        idx = next((i for i, h in enumerate(heads) if h.group(0).startswith("## Inputs")), 0)
+        end = heads[idx + 1].start() if idx + 1 < len(heads) else len(text)
+        return text[heads[idx].end():end]
+
+    for skill_md in skill_specs:
+        base = skill_md.parent.name
+        pointer = f"docs/.skill-context/sdd-{base}/SKILL.md"
+        check(pointer in _pointer_section(skill_md.read_text()),
+              f"skill '{base}' Inputs carries the skill-context pointer",
+              f"skill '{base}' SKILL.md is missing the `{pointer}` pointer bullet in its ## Inputs "
+              f"section (or first section) — required by _shared/skill-context.md even when no "
+              f"skill-context exists yet")
+
+    # --- dashboard state dir: docs name the SAME ~/.claude/<dir> the server writes ---
+    # server/server.ts owns the state dir (join(homedir(), '.claude', '…')) and skills/start
+    # documents it as the ~/.claude/<dir>/current.url read path. The start skill once said
+    # ~/.claude/dashboard/ while the server wrote ~/.claude/sdd-dashboard/ — the documented
+    # path pointed at a file that never exists. Every ~/.claude/<dir> a doc mentions must be
+    # a dir the server source actually uses.
+    print("== state dir ==")
+    server_src = "".join((ROOT / rel).read_text()
+                         for rel in ("server/server.ts", "server/paths.ts") if (ROOT / rel).exists())
+    server_dirs = set(re.findall(r"join\(homedir\(\),\s*['\"]\.claude['\"],\s*['\"]([^'\"]+)['\"]", server_src))
+    check(bool(server_dirs),
+          f"server declares its ~/.claude state dir ({', '.join(sorted(server_dirs))})",
+          "no join(homedir(), '.claude', …) in server/server.ts|paths.ts — the state-dir check has no source of truth")
+    STATE_DIR_RE = re.compile(r"~/\.claude/([A-Za-z0-9._-]+)|\$HOME/\.claude/([A-Za-z0-9._-]+)")
+    stale_dirs: list[str] = []
+    for f in link_files:
+        for i, line in enumerate(f.read_text().splitlines(), 1):
+            for m in STATE_DIR_RE.finditer(line):
+                seg = m.group(1) or m.group(2)
+                if seg not in server_dirs:
+                    stale_dirs.append(f"{f.relative_to(ROOT)}:{i} → ~/.claude/{seg}")
+    check(not stale_dirs,
+          f"every ~/.claude/<dir> mention matches the server state dir ({', '.join(sorted(server_dirs))})",
+          "docs mention a ~/.claude/<dir> the server never writes (stale state-dir path): "
+          + ", ".join(stale_dirs))
+
     # --- skill dir names are BRE-safe (install.sh interpolates them into a sed pattern) ---
     print("== skill dir names ==")
     DIRNAME_RE = re.compile(r"^[a-z0-9-]+$")
