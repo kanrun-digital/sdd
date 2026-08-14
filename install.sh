@@ -238,6 +238,21 @@ mkdir -p "$STAGED_SDD" "$STAGED_AGENTS"
 cp -R "$SRC/skills" "$STAGED_SDD/skills"
 cp -R "$SRC/agents" "$STAGED_SDD/agents"
 
+# --- dashboard payload --------------------------------------------------------------------
+# The read half of the dashboard never needed Claude: the server reads docs/ off disk. Only
+# the DRIVE half was host-specific, and that now lives behind server/driver.ts (Claude
+# channel · codex exec · codex app-server · copy-to-clipboard). So ship it here too and let
+# the driver decide what a click can do. It rides the same staged swap + rollback as skills/,
+# and costs nothing until the user opts in with dashboard_enabled + registers the MCP server.
+DASHBOARD_SHIPPED=0
+if [ -d "$SRC/server" ] && [ -d "$SRC/dashboard" ]; then
+  cp -R "$SRC/server" "$STAGED_SDD/server"
+  cp -R "$SRC/dashboard" "$STAGED_SDD/dashboard"
+  # node_modules from a dev checkout must never travel — `bun run start` installs on boot.
+  rm -rf "$STAGED_SDD/server/node_modules"
+  DASHBOARD_SHIPPED=1
+fi
+
 # --- rename pass: frontmatter `name: <base>` → `name: sdd-<base>` ------------------------
 # The repo validator guarantees the exact line `name: <dirname>` AND that every skill dir name
 # matches [a-z0-9-]+ (no BRE metacharacters), so interpolating $base into the sed pattern is
@@ -370,12 +385,27 @@ if [ "$n_agents" -gt 0 ]; then
   log "  agents  → $AGENTS_DIR  (${n_agents} agents, sdd-* prefixed)"
 fi
 case "$TOOL" in
-  codex)
-    log "  invoke  → type \$sdd-… in codex, e.g. \$sdd-specify <slug>"
-    log "  dashboard → not installed (its live channel is Claude Code-only)"
-    ;;
+  codex)  log "  invoke  → type \$sdd-… in codex, e.g. \$sdd-specify <slug>" ;;
   cursor) log "  invoke  → type / in the chat and pick sdd-…, e.g. sdd-specify" ;;
 esac
+if [ "$DASHBOARD_SHIPPED" = 1 ]; then
+  log "  dashboard → $SKILLS_ROOT/sdd/server  (opt-in; needs Bun)"
+  log "              1. dashboard_enabled: true in <project>/.claude/sdd.local.md"
+  # Registering an MCP server rewrites host config — the installer prints it, never does it.
+  case "$TOOL" in
+    codex)
+      log "              2. codex mcp add sdd-dashboard -- bun run --cwd $SKILLS_ROOT/sdd/server --silent start"
+      log "              3. drive: \`codex\` on PATH → each click runs a headless \`codex exec\`."
+      log "                 Set dashboard_drive: copy for a read-only panel that copies the command instead."
+      ;;
+    cursor)
+      log "              2. add to .cursor/mcp.json:"
+      log "                 \"sdd-dashboard\": { \"command\": \"bun\", \"args\": [\"run\",\"--cwd\",\"$SKILLS_ROOT/sdd/server\",\"--silent\",\"start\"] }"
+      log "              3. drive: Cursor exposes no control surface — the panel is read-only and"
+      log "                 Run buttons copy the \$sdd-… command to your clipboard."
+      ;;
+  esac
+fi
 log "  mapping → $SKILLS_ROOT/sdd/skills/_shared/tool-adapters.md"
 log "  update  → re-run with the same scope; replacement is staged and rolled back on failure"
 log "  remove  → re-run with --uninstall and the same --global / --prefix scope (and CODEX_HOME)"

@@ -19,7 +19,9 @@
 інструкції інлайн; `TeamCreate`/`Workflow` → нативний subagent workflow Codex із залежностями TDD,
 а за відсутності custom agents — built-in агенти з тими самими промптами, потім послідовний floor;
 `/clear` → нативний `/clear` у Codex (`/new` теж створює новий чат). Механізм недоступний → **graceful-деградація до інлайн-еквівалента,
-ніколи не блокувати стадію**.
+ніколи не блокувати стадію**. Дашборд працює скрізь: читання йде з диска й від хоста не залежить,
+а спосіб «драйву» обирає `dashboard_drive` (Claude-канал · headless `codex exec` · live-тред
+Codex через app-server · копіювання команди в буфер).
 
 ---
 
@@ -56,10 +58,32 @@ files: custom agents are a separate local configuration surface, not a plugin re
 script install for named `sdd-*` agents. With the marketplace path, follow the same prompts through
 built-in subagents or the inline fallback.
 
-The visual dashboard is also Claude Code-only today. Its server uses the Claude channel protocol,
-and the Codex manifest intentionally does not declare that `.mcp.json`. On Codex/Cursor, `start`
-must print the compatibility note and stop before reading `~/.claude/sdd-dashboard/` or calling a
-dashboard tool.
+## The visual dashboard
+
+The dashboard runs on every host. It used to be Claude-only because its one inbound path was
+`notifications/claude/channel`. That path is now one driver among four, and the half that
+matters most never needed a host at all: the server derives each feature from `docs/` on disk,
+so the pipeline view, the artifacts, the diagrams and the `fs.watch` live refresh are identical
+under Claude Code, Codex and Cursor.
+
+Only **driving** differs, and `dashboard_drive` in `.claude/sdd.local.md` selects it:
+
+| Host | `auto` resolves to | A click then… |
+|---|---|---|
+| Claude Code | `claude-channel` | queues `/sdd:<skill> <slug>` into the live session; runs when it is idle |
+| Codex (with `codex` on PATH) | `codex-exec` | starts a **headless `codex exec` run** — its own context, its own approvals, streamed into the activity pane. Not your terminal session. |
+| Codex, opted in | `codex-appserver` | `turn/start` on the live thread over the app-server control socket. **Experimental** on Codex's side and only reachable once remote control is paired. |
+| Cursor, or anything else | `copy` | nothing is delivered — the browser copies `$sdd-<skill> <slug>` to the clipboard and says so |
+
+Two invariants hold across all four. A driver that cannot deliver **degrades to `copy` with the
+reason shown**, never a silent no-op. And the command is spelled for the host that will run it:
+`/sdd:design <slug>` on Claude, `$sdd-design <slug>` where the installer applied the `sdd-`
+prefix.
+
+Install: on Claude Code the plugin's `.mcp.json` declares the server. On Codex/Cursor,
+`install.sh` copies `server/` + `dashboard/` next to the skills and **prints** the one-line MCP
+registration (`codex mcp add …` / the `.cursor/mcp.json` entry) — registering an MCP server
+rewrites host config, so the installer never does it for you.
 
 ## The rule
 

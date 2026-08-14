@@ -6,10 +6,24 @@ a `/sdd:<skill> <slug>` command back into your live Claude Code session, which r
 streams progress back to the browser. It never edits artifact text — all writes happen through the
 pipeline in the terminal.
 
-The whole thing is one Bun process (`server/`) that auto-starts as an MCP server when a Claude Code
-session opens. It holds the MCP channel to Claude **and** an embedded `Bun.serve()` HTTP+WS listener on
-`127.0.0.1`. The browser tab is just another channel — the same mechanism the official Telegram plugin
-uses to message a session, re-skinned as a dashboard.
+The whole thing is one Bun process (`server/`) that runs as an MCP server: auto-started on Claude Code
+(the plugin's `.mcp.json`), hand-registered on Codex/Cursor. It holds the MCP connection to the host
+**and** an embedded `Bun.serve()` HTTP+WS listener on `127.0.0.1`.
+
+**Reading needs no host at all** — every feature is derived from `docs/` on disk, so the pipeline view,
+the artifacts and the `fs.watch` refresh are identical everywhere. Only *driving* is host-shaped, and
+that lives behind one interface in [`driver.ts`](./driver.ts):
+
+| Driver | Where a click goes |
+|---|---|
+| `claude-channel` | queued into the live Claude Code session (`notifications/claude/channel` — the mechanism the official Telegram plugin uses) |
+| `codex-exec` | a fresh headless `codex exec` run, streamed into the activity pane. Its own context and approvals — **not** your terminal session |
+| `codex-appserver` | `turn/start` on the live Codex thread over the app-server control socket. Experimental; needs remote control paired |
+| `copy` | nowhere — the browser copies the command and says nothing ran |
+
+`dashboard_drive` selects one (`auto` picks by host). Two invariants: a driver that cannot deliver
+**degrades to `copy` with the reason shown**, never a silent no-op; and the command is spelled for the
+host that will run it (`/sdd:design x` vs `$sdd-design x`).
 
 > **Pure-markdown users are unaffected.** Nothing binds, nothing opens, until you opt in.
 
@@ -32,11 +46,15 @@ dashboard_enabled: true    # opt in
 dashboard_port: 4178       # optional — the loopback port (scans upward if busy)
 ```
 
-**3. Open a Claude Code session in your project and run:**
+**3. Register the server** — Claude Code does it for you via the plugin's `.mcp.json`. On Codex:
 
+```bash
+codex mcp add sdd-dashboard -- bun run --cwd <skills-root>/sdd/server --silent start
 ```
-/sdd:start
-```
+
+On Cursor, add the equivalent entry to `.cursor/mcp.json`. `install.sh` prints the exact line.
+
+**4. Open a session in your project and run** `/sdd:start` (`$sdd-start` on Codex):
 
 It hands the server your project directory, confirms the channel works both ways, and prints the URL:
 

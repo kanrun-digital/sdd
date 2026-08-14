@@ -59,10 +59,11 @@ Start a new Codex session after installation. Run `/skills` (or type `$`) and se
 threads; it is not the command that starts a custom agent. Codex normally detects skill changes
 automatically; restart the client if the new entries do not appear.
 
-The visual dashboard is currently Claude Code-only: its MCP server uses Claude's live channel
-protocol. Codex still discovers the `start` skill because the same skills tree is shared, but that
-skill exits with a compatibility note and does not touch Claude state. The other 21 workflow skills
-are unaffected.
+The script install also ships the **visual dashboard** (`server/` + `dashboard/`) next to the
+skills and prints the one-line `codex mcp add …` registration — it never edits your Codex config
+itself. Reading is host-independent; a click drives a headless `codex exec` run by default, or the
+live thread over Codex's experimental app-server socket if you opt in
+([detail](#the-visual-dashboard-opt-in)).
 
 ### Codex — plugin marketplace (skills only)
 
@@ -76,9 +77,10 @@ codex plugin add sdd@sdd
 
 You can do the same through `/plugins` inside Codex. The marketplace manifest currently bundles
 the skills only. Codex custom-agent TOML files are a separate local configuration surface and are
-not plugin resources, and the Claude-channel dashboard is intentionally not declared as a Codex
-MCP server. Therefore this path has no installed `sdd-*` custom agents or dashboard; the skills use
-their documented built-in-agent/inline fallback. It also keeps the original skill names
+not plugin resources, and the dashboard is intentionally not declared as a Codex MCP server —
+registering one rewrites host config. Therefore this path has no installed `sdd-*` custom agents
+or dashboard; the skills use their documented built-in-agent/inline fallback, and the dashboard
+comes from the script install above. It also keeps the original skill names
 (`$specify`), while the script path deliberately prefixes them (`$sdd-specify`) to avoid collisions
 with generic names such as `review`, `design`, and `api`.
 
@@ -536,8 +538,9 @@ judgment_model: opus       # Claude alias or full host model ID; one switch for 
 effort_test_author: medium # raised to high on escalation / for L-XL features
 effort_implementer: medium
 effort_reviewer: high
-dashboard_enabled: false   # Claude Code only: true → opt into the visual dashboard (needs Bun)
+dashboard_enabled: false   # true → opt into the visual dashboard (any host; needs Bun)
 dashboard_port: 4178       # integer — loopback port the dashboard binds (scans upward if busy)
+dashboard_drive: auto      # auto | claude | codex-exec | codex-appserver | copy — how a click reaches an agent
 ```
 
 Command detection is a stack-agnostic cascade: settings override → Makefile targets →
@@ -678,14 +681,17 @@ Directions under consideration — not promises, no dates:
 
 ## The visual dashboard (opt-in)
 
-> **Claude Code-only today.** The dashboard's inbound session channel is Claude-specific. Codex
-> and Cursor install the shared `start` skill, but it stops with a compatibility note and never
-> starts or fabricates this MCP integration.
+> **Every host, two halves.** *Reading* is host-independent — the server derives every feature
+> from `docs/` on disk. *Driving* goes through a driver picked by `dashboard_drive`: the Claude
+> channel, a headless `codex exec` run, Codex's live thread (experimental), or `copy` — where the
+> command lands on your clipboard and the panel says nothing ran. No driver ever drops a click
+> silently.
 
 The roadmap's *"MCP exposure — pipeline state served over MCP so external tools and dashboards can
 read where every feature stands"* has shipped. It also gained a control surface. The plugin
-carries an **`sdd-dashboard` MCP server** (`server/`, Bun + TypeScript). It auto-starts with
-every Claude Code session (declared in `.mcp.json`). When enabled, it serves a **local
+carries an **`sdd-dashboard` MCP server** (`server/`, Bun + TypeScript). On Claude Code it
+auto-starts with every session (declared in `.mcp.json`); on Codex/Cursor `install.sh` ships it
+and prints the one-line MCP registration. When enabled, it serves a **local
 browser dashboard** (`dashboard/`) on `127.0.0.1`. It reads every feature off disk
 (`docs/features/<slug>/`). It shows its pipeline as a per-step checklist — `done` / `skipped`
 / `pending` / `blocked`. It renders each artifact (markdown + **mermaid** diagrams from vendored libs, fully
@@ -700,7 +706,7 @@ opt in are unaffected. Nothing binds. Nothing opens.
    uses the same dependency: `curl -fsSL https://bun.sh/install | bash` or `brew install bun`.
 2. Set `dashboard_enabled: true` in your project's `.claude/sdd.local.md`
    (see [Configuration](#configuration--claudesddlocalmd)).
-3. Run **`/sdd:start`** in your Claude Code session. The server is already running. It
+3. Run **`/sdd:start`** in your session (`$sdd-start` on Codex). The server is already running. It
    auto-started with the session. This step just hands it your project directory. It binds
    the port if needed. It prints the URL:
    `http://127.0.0.1:<port>/?session=<id>&token=<capability-token>`. Open that exact URL
@@ -732,9 +738,14 @@ Four buttons drive your live session: **▶ Run next stage**, per-stage **run**,
 **asynchronous**:
 
 - A click sends the request to the server. The server builds a validated `/sdd:<skill> <slug>`
-  command from a strict server-side allowlist. It **queues** the command into your Claude
-  session. It uses the same channel mechanism the official Telegram plugin uses
-  (`notifications/claude/channel`).
+  command (`$sdd-<skill>` where the installer prefixed the skills) from a strict server-side
+  allowlist, then hands it to the host's **driver**. On Claude Code that queues it into your live
+  session over the same channel mechanism the official Telegram plugin uses
+  (`notifications/claude/channel`). On Codex it starts a headless `codex exec` run, or — opted
+  in — a `turn/start` on the live thread over Codex's experimental app-server socket. On Cursor,
+  or anywhere with no reachable agent, the command goes to your **clipboard** and the panel says
+  so. A driver that cannot deliver degrades to copy **with the reason shown**, never a silent
+  no-op. Which one is active is in the topbar and in `dashboard_drive`.
 - The session consumes a queued command **only while idle at the prompt**. If Claude is
   mid-task, the command waits. Every queued command gets its own `queued → running → done`
   status line. The UI never fakes synchronous execution.

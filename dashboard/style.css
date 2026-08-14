@@ -68,6 +68,9 @@ button { font-family: var(--mono); cursor: pointer; }
 .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
 .dot.off { background: var(--red); }
 .session { color: var(--border-2); font-size: 11px; }
+.driver { font-size: 11px; letter-spacing: 0.03em; color: var(--muted); }
+.driver.on { color: var(--green); }
+.driver.off { color: var(--amber); }
 
 /* layout */
 .layout {
@@ -153,6 +156,7 @@ button { font-family: var(--mono); cursor: pointer; }
 .run-status .run-line.queued { color: var(--amber); }
 .run-status .run-line.running { color: var(--green); }
 .run-status .run-line.done { color: var(--green); opacity: 0.65; }
+.run-status .run-line.handoff { color: var(--amber); }
 
 /* depth selector (topbar) */
 .depth-label { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 5px; }

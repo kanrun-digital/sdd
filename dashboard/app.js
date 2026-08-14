@@ -14,6 +14,7 @@ const state = {
   detail: null,
   artifact: null, // {path, kind, label, raw, mtime}
   runs: new Map(), // request_id -> {slug, command, phase: queued|running|done, verdict}
+  driver: null, // {kind, label, drives} from /api/meta — null until it loads
 };
 
 // ---- api -------------------------------------------------------------------
@@ -147,6 +148,7 @@ function renderRuns() {
     line.className = 'run-line ' + r.phase;
     line.textContent =
       r.phase === 'queued' ? `queued: ${r.command} — runs when the session is idle at the prompt`
+      : r.phase === 'running' && r.spawned ? `running ${r.command} as a headless run…`
       : r.phase === 'running' ? `running ${r.command} in the session…`
       : `done ${r.command}${r.verdict ? ' — ' + r.verdict : ''}`;
     el.appendChild(line);
@@ -179,6 +181,35 @@ function finishRun(slug, verdict) {
   setTimeout(() => { state.runs.delete(entry[0]); renderRuns(); }, 60_000);
 }
 
+// ---- host driver (what a click can actually do here) ------------------------
+
+async function loadMeta() {
+  try {
+    const res = await api('/api/meta');
+    const meta = await res.json();
+    state.driver = meta.driver || null;
+  } catch {
+    state.driver = null;
+  }
+  renderDriver();
+}
+
+function renderDriver() {
+  const el = document.getElementById('driver');
+  if (!el) return;
+  const d = state.driver;
+  if (!d) { el.textContent = ''; el.className = 'driver'; return; }
+  el.textContent = d.drives ? d.kind : 'copy-only';
+  el.className = 'driver ' + (d.drives ? 'on' : 'off');
+  el.title = d.label + (d.drives ? '' : ' — Run buttons copy the command instead of running it');
+  if (!d.drives) {
+    for (const id of ['run-next', 'run-fix']) {
+      const b = document.getElementById(id);
+      if (b) b.title = 'Copy the command — this host has no way to drive a session';
+    }
+  }
+}
+
 function currentDepth() {
   const el = document.getElementById('depth');
   return el && el.value ? el.value : 'easy';
@@ -192,11 +223,49 @@ async function runCommand(slug, command) {
     });
     const data = await res.json();
     if (!res.ok) { logLine('error', `command rejected: ${data.error || res.status}`); return; }
-    state.runs.set(data.request_id, { slug, command: data.command, phase: 'queued' });
+    // Three outcomes, and the UI never blurs them: handed to a live session,
+    // started as a fresh headless run, or not delivered at all (this host has
+    // no driver — the command goes to the clipboard instead).
+    if (data.status === 'copy') { await handOff(data.command, data.detail); return; }
+    state.runs.set(data.request_id, {
+      slug,
+      command: data.command,
+      phase: data.status === 'spawned' ? 'running' : 'queued',
+      spawned: data.status === 'spawned',
+    });
+    if (data.status === 'spawned' && data.detail) logLine('system', data.detail);
     renderRuns();
   } catch (e) {
     logLine('error', `command failed: ${e.message}`);
   }
+}
+
+// No driver on this host. Put the command where the user can use it and say
+// plainly that nothing ran — a button that quietly does nothing is worse than
+// no button.
+async function handOff(command, reason) {
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(command);
+    copied = true;
+  } catch {
+    copied = false;
+  }
+  logLine('command', copied ? `copied to clipboard: ${command}` : `run this yourself: ${command}`);
+  if (reason) logLine('system', reason);
+  showHandoff(command, copied);
+}
+
+function showHandoff(command, copied) {
+  const el = document.getElementById('run-status');
+  el.className = 'run-status';
+  el.innerHTML = '';
+  const line = document.createElement('div');
+  line.className = 'run-line handoff';
+  line.textContent = copied
+    ? `${command} — copied. Paste it into your agent; nothing ran from here.`
+    : `${command} — copy this into your agent; nothing ran from here.`;
+  el.appendChild(line);
 }
 
 // ---- decision questions (dashboard_ask → option click → /api/answer) --------
@@ -235,6 +304,11 @@ async function answerAsk(askId, option) {
     const data = await res.json();
     if (!res.ok) { logLine('error', `answer rejected: ${data.error || res.status}`); return; }
     markAskAnswered(askId, option);
+    // Same honesty rule as a command: on a copy-only host the pick reached
+    // nobody, so say so instead of leaving a dead "answered" card.
+    if (data.status === 'copy') {
+      logLine('error', `nothing to resume — ${data.detail || 'this host has no live session to answer into'}`);
+    }
   } catch (e) {
     logLine('error', `answer failed: ${e.message}`);
   }
@@ -671,6 +745,7 @@ function init() {
     return;
   }
   setConn(false, 'connecting…');
+  loadMeta();
   loadFeatures();
   connectWs();
 }

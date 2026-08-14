@@ -4,10 +4,14 @@
  * with a plain fetch handler + a fake ctx (no MCP/stdio boot required).
  *
  * The API is READ-ONLY over docs/ (features, artifacts, roadmap) plus exactly
- * two mutating routes, neither of which touches disk: POST /api/command relays
- * a server-built, allowlisted /sdd: line into the live session; POST
- * /api/answer relays the picked option of a pending dashboard_ask question
- * (option label text authored by Claude itself — never browser free text).
+ * two mutating routes, neither of which touches disk: POST /api/command hands a
+ * server-built, allowlisted command to the host's driver; POST /api/answer does
+ * the same for the picked option of a pending dashboard_ask question (option
+ * label text authored by the agent itself — never browser free text).
+ *
+ * Where that command actually goes is `driver.ts`'s problem, not this file's.
+ * On a host with no driver it goes nowhere and the response says `copy`, which
+ * the browser turns into a clipboard hand-off.
  */
 
 import { readFileSync, statSync } from 'fs'
@@ -21,6 +25,7 @@ import {
 } from './paths.ts'
 import { listFeatures, getFeatureDetail, getRoadmap } from './state.ts'
 import { buildCommand, type Frame, type AskRegistry } from './channel.ts'
+import type { Driver } from './driver.ts'
 
 export interface HttpCtx {
   token: string
@@ -29,8 +34,9 @@ export interface HttpCtx {
   boundPort: () => number | null
   readConfig: () => { enabled: boolean; port: number }
   broadcast: (frame: Frame) => void
-  /** Push an inbound channel notification to the live session (MCP). */
-  notify: (params: { content: string; meta: Record<string, unknown> }) => void
+  /** How a command reaches an agent on this host — resolved late, because the
+   *  MCP peer identifies itself after the listener is already up. */
+  driver: () => Driver
   /** Random id for command correlation (injected for determinism in tests). */
   requestId: () => string
   /** Pending dashboard_ask questions (registered by the MCP tool handler). */
@@ -110,11 +116,15 @@ async function handleApi(ctx: HttpCtx, req: Request, url: URL, path: string): Pr
   // GET /api/meta — connection sanity (project resolved? session?)
   if (path === '/api/meta' && req.method === 'GET') {
     const cfg = ctx.readConfig()
+    const driver = ctx.driver()
     return json({
       session_id: ctx.sessionId,
       project: getProjectDir(),
       enabled: cfg.enabled,
       port: ctx.boundPort(),
+      // The UI needs this before it renders a single Run button: a host with no
+      // driver gets copy-to-clipboard, not a button that silently does nothing.
+      driver: { kind: driver.kind, label: driver.label, drives: driver.drives },
     })
   }
 
@@ -166,10 +176,14 @@ async function handleApi(ctx: HttpCtx, req: Request, url: URL, path: string): Pr
     if (!loopbackOk(req)) return json({ error: 'forbidden origin' }, 403)
     requireProjectDir()
     const body = (await req.json()) as { slug?: string; command?: string; depth?: 'easy' | 'medium' | 'hard' }
-    const built = buildCommand(String(body.command ?? ''), String(body.slug ?? ''), { depth: body.depth })
+    const driver = ctx.driver()
+    const built = buildCommand(String(body.command ?? ''), String(body.slug ?? ''), {
+      depth: body.depth,
+      form: driver.commandForm,
+    })
     const requestId = ctx.requestId()
     const ts = new Date().toISOString()
-    ctx.notify({
+    const result = await driver.deliver({
       content: built.content,
       meta: {
         source: 'sdd-dashboard',
@@ -186,9 +200,23 @@ async function handleApi(ctx: HttpCtx, req: Request, url: URL, path: string): Pr
       stage: built.skill,
       command: built.content,
       request_id: requestId,
-      status: 'queued',
+      status: result.status,
+      driver: driver.kind,
+      detail: result.detail ?? null,
     })
-    return json({ ok: true, queued: true, request_id: requestId, command: built.content }, 202)
+    return json(
+      {
+        ok: true,
+        // Kept for older tabs that only understood the Claude path.
+        queued: result.status === 'queued',
+        status: result.status,
+        driver: driver.kind,
+        detail: result.detail ?? null,
+        request_id: requestId,
+        command: built.content,
+      },
+      202,
+    )
   }
 
   // POST /api/answer  { ask_id, option }  → the user's pick for a dashboard_ask
@@ -207,7 +235,8 @@ async function handleApi(ctx: HttpCtx, req: Request, url: URL, path: string): Pr
     }
     const picked = ask.options[idx]
     const where = ask.slug ? ` (${ask.stage ?? 'stage'} ${ask.slug})` : ''
-    ctx.notify({
+    const driver = ctx.driver()
+    const result = await driver.deliver({
       content:
         `Dashboard answer to question ${ask.id}${where}: "${picked.label}" — ` +
         `continue the paused run with this decision.`,
@@ -222,8 +251,19 @@ async function handleApi(ctx: HttpCtx, req: Request, url: URL, path: string): Pr
         ts: new Date().toISOString(),
       },
     })
-    ctx.broadcast({ type: 'answer', ask_id: ask.id, option: idx, label: picked.label })
-    return json({ ok: true, ask_id: ask.id, option: idx }, 202)
+    ctx.broadcast({
+      type: 'answer',
+      ask_id: ask.id,
+      option: idx,
+      label: picked.label,
+      status: result.status,
+      driver: driver.kind,
+      detail: result.detail ?? null,
+    })
+    return json(
+      { ok: true, ask_id: ask.id, option: idx, status: result.status, driver: driver.kind, detail: result.detail ?? null },
+      202,
+    )
   }
 
   return json({ error: 'not found' }, 404)

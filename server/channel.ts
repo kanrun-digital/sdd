@@ -50,7 +50,7 @@ export interface BuiltCommand {
 export function buildCommand(
   command: string,
   slug: string,
-  opts: { depth?: 'easy' | 'medium' | 'hard' } = {},
+  opts: { depth?: 'easy' | 'medium' | 'hard'; form?: 'claude' | 'codex' } = {},
 ): BuiltCommand {
   const skill = String(command || '').trim()
   if (!SKILL_NAMES.has(skill)) {
@@ -66,7 +66,11 @@ export function buildCommand(
   if (!DEPTHS.has(depth)) throw new Error(`invalid depth: ${depth}`)
   // roadmap/survey are repo-wide — they still take the slug as a hint argument,
   // which the skills tolerate; keeping one shape simple beats special-casing.
-  const content = `/sdd:${skill} ${s} --depth=${depth}`
+  // The spelling is host-shaped: Claude Code invokes `/sdd:design`, while the
+  // Codex/Cursor installs prefix every skill with `sdd-` (bare `design`/`review`
+  // would collide with generic names) → `$sdd-design`.
+  const content =
+    opts.form === 'codex' ? `$sdd-${skill} ${s} --depth=${depth}` : `/sdd:${skill} ${s} --depth=${depth}`
   return { content, skill, slug: s }
 }
 
