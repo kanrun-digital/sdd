@@ -291,6 +291,49 @@ def main() -> int:
           "invocation form is namespaced /sdd:<name> everywhere (no hyphenated /sdd-)",
           "found the stale hyphenated /sdd- form (use /sdd:<name>) at: " + ", ".join(offenders))
 
+    # --- instruction language: agent-facing text is English ---
+    # The boundary rule: Ukrainian (or any non-English) belongs in what a HUMAN reads or is asked;
+    # every instruction an AGENT loads is English. Cyrillic prose inside an instruction nudges the
+    # model to mirror that language into its reasoning, file writes and commits — the leak the
+    # `artifact_language` / `conversation_language` switches exist to control. Exemptions:
+    #   1. Frontmatter `description:` — trigger phrases are quoted USER utterances (matching data
+    #      for «розбий на задачі {slug}»), not instructions. Multi-language is the point.
+    #   2. The `## TL;DR (українською)` block (heading → its closing `---`) — the deliberate,
+    #      delimited human-facing summary the «ua tldr» group enforces.
+    #   3. ask-style.md — carries the `conversation_language: uk` sample renderings + the verbatim
+    #      user feedback its rules were derived from. Both are labelled as such in-file.
+    #   4. interview/SKILL.md — localized user-utterance detection («досить» = «move on»), the
+    #      body-resident cousin of exemption 1.
+    print("== instruction language ==")
+    CYRILLIC = re.compile(r"[Ѐ-ӿ]")
+    LANG_EXEMPT = {"skills/_shared/ask-style.md", "skills/interview/SKILL.md"}
+    TLDR_HEAD = "## TL;DR (українською)"
+    lang_offenders: list[str] = []
+    for f in sorted(set(skill_glob + sorted((ROOT / "agents").glob("*.md")))):
+        rel = f.relative_to(ROOT).as_posix()
+        if rel in LANG_EXEMPT:
+            continue
+        text = f.read_text()
+        # drop the YAML frontmatter block (exemption 1)
+        body = text.split("\n---\n", 1)[1] if text.startswith("---\n") else text
+        offset = len(text.splitlines()) - len(body.splitlines())
+        in_tldr = False
+        for i, line in enumerate(body.splitlines(), 1 + offset):
+            if line.strip() == TLDR_HEAD:
+                in_tldr = True
+                continue
+            if in_tldr and line.strip() == "---":
+                in_tldr = False
+                continue
+            if not in_tldr and CYRILLIC.search(line):
+                lang_offenders.append(f"{rel}:{i}")
+    check(not lang_offenders,
+          "agent-facing instruction text is English (frontmatter triggers, TL;DR blocks and "
+          f"{len(LANG_EXEMPT)} labelled sample files exempt)",
+          "non-English text in agent-facing instructions — move it into the TL;DR block, a "
+          "human-facing doc, or translate it (see _shared/ask-style.md § Language): "
+          + ", ".join(lang_offenders))
+
     # --- every stage ends with the handoff block (the v1.8.1 output contract) ---
     # The phrase «stage-handoff block» is the contract wording every spine's final step uses;
     # a bare `handoff.md` substring (e.g. in a passing mention) is not enough to prove the
@@ -336,11 +379,28 @@ def main() -> int:
     for skill_md in skill_specs:
         base = skill_md.parent.name
         pointer = f"docs/.skill-context/sdd-{base}/SKILL.md"
-        check(pointer in _pointer_section(skill_md.read_text()),
+        text = skill_md.read_text()
+        check(pointer in _pointer_section(text),
               f"skill '{base}' Inputs carries the skill-context pointer",
               f"skill '{base}' SKILL.md is missing the `{pointer}` pointer bullet in its ## Inputs "
               f"section (or first section) — required by _shared/skill-context.md even when no "
               f"skill-context exists yet")
+        # The pointer is always a SINGLE-line bullet, so the line right after it must start
+        # something new (blank, a new bullet, a heading). An indented non-bullet line there can
+        # only be a continuation of a multi-line bullet the insertion split in half — the exact
+        # corruption the start rewrite fixed (the dashboard_handshake bullet lost its second line
+        # to the pointer and both entries read as garbage).
+        lines = text.splitlines()
+        split = [f"line {i + 2}" for i, l in enumerate(lines)
+                 if "(Optional, project-level override)" in l
+                 and i + 1 < len(lines)
+                 and lines[i + 1].startswith((" ", "\t"))
+                 and not lines[i + 1].lstrip().startswith(("-", "*", "#"))]
+        check(not split,
+              f"skill '{base}' skill-context pointer doesn't split a neighbouring bullet",
+              f"skill '{base}': the skill-context pointer bullet is followed by an orphaned "
+              f"continuation line ({', '.join(split)}) — the insertion split a multi-line bullet; "
+              "move the pointer after the bullet it landed inside")
 
     # --- dashboard state dir: docs name the SAME ~/.claude/<dir> the server writes ---
     # server/server.ts owns the state dir (join(homedir(), '.claude', '…')) and skills/start

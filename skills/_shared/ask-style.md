@@ -1,9 +1,15 @@
-# Ask-style — junior-friendly bilingual `AskUserQuestion`
+# Ask-style — junior-friendly `AskUserQuestion`
 
 > **Reference-only.** Not a skill. Every skill that calls `AskUserQuestion` reads this for the
 > canonical shape of questions and options. The rule: an **option label is the next mechanical
 > step the skill takes**, not just a name. The **description explains, in plain words, what will
 > happen**. Write it so a first-year junior can pick correctly without a senior beside them.
+
+> **This file is agent-facing; the questions it produces are not.** Everything here is instruction
+> *to the skill*. The language the skill *speaks* is the `conversation_language` setting
+> (§ Language). The TL;DR below and the Ukrainian passages further down are **human-facing text and
+> sample output** for `conversation_language: uk`, never rules — don't mirror their language into
+> your reasoning, your file writes, or your commits.
 
 > **Volume vs. style.** The **number** of questions a Q&A skill asks scales with the
 > interview-depth dial (easy asks few, hard asks all — see
@@ -77,38 +83,75 @@ beats less here** — a long, clear description is a feature, not bloat.
 
 ## Language
 
-- **Ukrainian throughout** — labels + descriptions. Technical identifiers stay in their original
-  form (ADR, JSONB, JWT, UUID, FK, OpenAPI) — they are names. The *actions* are Ukrainian
-  («Прийняти», «Відредагувати», «Винести у §11 OQ», «Видалити»).
-- Glossary roles and domain-invariant **names** (natural-language phrases like «no published
-  lessons») are allowed — they are business terms.
-- This section governs **conversation** (question + option text) only. The language of written
-  documents is a separate per-project switch: `artifact_language` in `.claude/sdd.local.md` →
-  [`artifact-language.md`](./artifact-language.md).
+The language of the **conversation** is the `conversation_language` key in `.claude/sdd.local.md`
+(`uk | en`, any language tag; **default `uk`** — documented in
+[`../implement/references/settings.md`](../implement/references/settings.md)). Resolve it once at
+the top of the run, the same way you resolve the depth dial. Write **every** `question`, `label`
+and `description` in it.
+
+- **Two independent switches, never conflated.** `conversation_language` = what the skill *says to
+  you*. `artifact_language` = what the skill *writes into documents*
+  ([`artifact-language.md`](./artifact-language.md)). An interview in Ukrainian with the spec
+  written in English is a legitimate, supported combination — do not let one leak into the other.
+- **Never switches with the setting** — in any language: technical identifiers (ADR, JSONB, JWT,
+  UUID, FK, OpenAPI), file paths, `/sdd:…` commands, and every machine token on the never-translate
+  list. They are *names*. So are glossary roles and domain-invariant phrases (e.g. «no published
+  lessons») — business terms, quoted as authored.
+- **The action semantics never change** — only their surface wording. Approve / Edit / Save as open
+  question / Drop mean exactly the same four transitions in every language
+  ([`socratic-loop.md`](./socratic-loop.md)).
+- **The explanatory rule above is language-independent.** Switching to `en` is not a licence to
+  produce the terse labels this file exists to forbid. An English question is held to the same
+  gloss-every-term, name-the-trade-off standard as a Ukrainian one.
 
 ## Forbidden
 
-- Terse English labels («Approve», «Edit», «Drop», «Reword»).
+- **Terse one-word labels that name a state instead of an action** — a bare `Approve` / `Edit` /
+  `Drop` / `Reword` with nothing about what the skill will actually do next. (The failure is
+  terseness, not the language: `Approve as written` and «Прийняти як є» are both fine.)
 - One-line descriptions.
 - Technical terms without a gloss (UNION, backfill, GIN, cursor, idempotent, transactional…).
 - Trade-offs hidden in a follow-up («if you pick this I'll later ask about X, which has complexity
   Y»).
+- **Mixing languages inside one question set** — pick the resolved `conversation_language` and stay
+  in it for every option of that question.
 
 ## Counter-example (deprecated) vs correct
+
+The failure below is **terseness**, not English — the DON'T stays wrong when translated.
 
 ```
 # DON'T — opaque next step, no gloss
 - label: "Approve"
   description: "Apply decision."
 
-# DO — action-form label, description names the concrete step + glossed trade-off
+# DO (conversation_language: en) — action-form label, concrete step + glossed trade-off
+- label: "Store the blocks in one JSONB column (→ spawn ADR-0002)"
+  description: "A single `body` column of type jsonb holds the whole block array as JSON. PROS: editing a lesson is one UPDATE; a new block type needs no schema migration. CONS: block validation moves to the app layer (the DB doesn't know the types); searching inside `body` needs a GIN index — a special Postgres index for searching within JSON, costing 3–5× the space and slower writes. NEXT STEP: I spawn ADR-0002 with the 3 options considered, add a row to §9, and the schema is locked for the data-model stage. HIDDEN: only pays off if block types really do keep changing — for a fixed set of three, plain columns stay simpler."
+
+# DO (conversation_language: uk) — the same option, same structure, Ukrainian surface
 - label: "Прийняти JSONB-колонку (→ spawn ADR-0002)"
   description: "Одна колонка `body` типу jsonb зберігає весь масив блоків як JSON. ПЛЮСИ: редагування уроку одним UPDATE; новий тип блоку не потребує schema-migration. МІНУСИ: валідація блоків лягає на app-layer (БД не знає типів); пошук всередині body потребує GIN-індексу (спеціальний індекс Postgres для пошуку в JSON — у 3–5× більше місця, повільніший запис). НАСЛІДОК: спавню ADR-0002 з 3 розглянутими варіантами, додаю рядок у §9, схема фіксується для stage data-model."
 ```
 
 ## The 4-state actions, phrased this way (canonical set)
 
+Same four transitions in both renderings — the semantics are fixed, only the surface wording moves
+with `conversation_language`. Use the block matching the resolved language; for any other language
+tag, translate the `en` set and keep the identifiers as-is.
+
 ```
+# conversation_language: en
+- label: "Approve as written"
+  description: "I keep the decision verbatim and run the next check (the section's gate, if it has one)."
+- label: "Let me reword it"
+  description: "You give me new wording or a new value; I regenerate the decision under that constraint and ask once more (single round — your second answer is final)."
+- label: "Park it as an open question"
+  description: "I take the decision out of the section and add a row to the Open-Questions table with an owner + due date (I ask for both next). Without both it becomes a Drop."
+- label: "Drop it"
+  description: "I remove the decision. If it's mandatory I reframe the options and ask again; if it's optional I leave it out with no replacement."
+
+# conversation_language: uk
 - label: "Прийняти як є"
   description: "Лишаю рішення дослівно, запускаю наступну перевірку (gate, якщо є для цієї секції)."
 - label: "Виправити"
@@ -120,6 +163,9 @@ beats less here** — a long, clear description is a feature, not bloat.
 ```
 
 ## Dry → explanatory (worked rewrite)
+
+Rendered here in English (`conversation_language: en`); the *structure* — context, why it matters,
+glossed terms, the cost of each option — is what carries over to any language.
 
 ```
 # TOO DRY (jargon-dense, no context — the failure to avoid):
@@ -153,7 +199,8 @@ in the act of asking. It makes the trade-off obvious.
 
 ## Why (feedback, 2026-05-23 + reinforced 2026-05-29)
 
-The user is a PM, methodist, or junior dev who opens the repo for the first time. Terse English
+*Source feedback, quoted verbatim in the language it was given — evidence, not an instruction to
+answer in that language.* The user is a PM, methodist, or junior dev who opens the repo for the first time. Terse English
 questions give them neither the substance of the decision nor the difference between options.
 Verbatim (2026-05-23): «Треба щоб пояснення були ще більш зрозумілими для людей котрі буквально
 джуни в розробці». Reinforced (2026-05-29): «при опитуваннях треба більш explanatory запитання і

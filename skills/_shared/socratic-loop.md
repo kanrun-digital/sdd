@@ -37,8 +37,10 @@ On-disk artifacts are **not touched** until step 5. Everything before that is in
 
 ## The 4-state machine (uniform across every decision-type)
 
-> **UA-перифраза.** 4 дії з кожним рішенням: **Прийняти** (Approve) / **Виправити** (Edit) /
-> **Винести у відкрите питання** (Save as OQ) / **Викинути** (Drop). `Cancel` і `Reject` — синоніми Drop.
+> **Naming.** These four names are the **canonical semantics**, used in every skill, log entry and
+> gate. Their *surface wording in the question* is rendered in `conversation_language`
+> ([ask-style.md](./ask-style.md) carries both the `en` and `uk` renderings) — the transitions
+> themselves never change. `Cancel` and `Reject` are synonyms of Drop.
 
 - **`Approve`** → keep the decision verbatim. No edits-log entry (Approved is the baseline). Run
   the per-skill gate if any. Move on.

@@ -4,7 +4,9 @@
 > for the `artifact_language` key in `.claude/sdd.local.md` (defined in
 > [`../implement/references/settings.md`](../implement/references/settings.md), default `en`).
 > The rule: **prose switches language, structure stays English.** Conversation language (questions +
-> option text) is a separate concern → [`ask-style.md`](./ask-style.md).
+> option text) is a **separate, independently-set** concern — the `conversation_language` key,
+> owned by [`ask-style.md`](./ask-style.md). Never derive one from the other: a project can be
+> interviewed in one language and documented in another, and that is a supported combination.
 
 ## TL;DR (українською)
 

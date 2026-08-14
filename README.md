@@ -2,7 +2,8 @@
 
 A self-contained Claude Code plugin. It takes a feature from a one-line idea to
 **reviewed, verified, shipped** code. It does this through **22 atomic, stack-agnostic skills**
-and a **TDD implementation engine**. A living roadmap sits above the per-feature flow.
+and a **TDD implementation engine**. A living roadmap sits above the per-feature flow. A
+repo-level learning loop (`evolve`) feeds what you fixed back into the skills.
 
 Every skill is Socratic. It walks decisions with you. It does not dump a wall of output.
 Every skill is gated. A stage hard-refuses when its prerequisite artifact is missing.
@@ -16,7 +17,7 @@ The dial also sets how much it interrogates you with trade-offs.
 **Claude Code** — native plugin:
 
 ```text
-/plugin marketplace add genkovich/sdd
+/plugin marketplace add kanrun-digital/sdd
 /plugin install sdd@sdd
 ```
 
@@ -29,7 +30,7 @@ sandbox test:
 
 ```sh
 cd your-project
-curl -fsSL https://raw.githubusercontent.com/genkovich/sdd/main/install.sh | bash -s -- codex
+curl -fsSL https://raw.githubusercontent.com/kanrun-digital/sdd/main/install.sh | bash -s -- codex
 ```
 
 Then restart codex. Skills are discovered at session start. Type `$sdd-specify`.
@@ -38,7 +39,7 @@ Alternative: the plugin marketplace. Note that `add` only **registers** the mark
 It installs nothing by itself:
 
 ```text
-codex plugin marketplace add genkovich/sdd
+codex plugin marketplace add kanrun-digital/sdd
 ```
 
 Then run `/plugins` **inside codex**. Switch to the `sdd` marketplace tab. Pick
@@ -62,7 +63,7 @@ install.
 
 ```sh
 cd your-project
-curl -fsSL https://raw.githubusercontent.com/genkovich/sdd/main/install.sh | bash -s -- cursor
+curl -fsSL https://raw.githubusercontent.com/kanrun-digital/sdd/main/install.sh | bash -s -- cursor
 ```
 
 Then restart Cursor. Or run **Developer: Reload Window**. Invoke a stage this way: type `/` in
@@ -124,7 +125,8 @@ stay in context to iterate. Utilities make `/clear` optional.) It looks like thi
 
 There are three kinds of skill. Most of your time is the **backbone**. The backbone is a
 straight line you walk in order. A few skills are **utilities**. You call them whenever you
-need them. Two skills **close the loop** after the code is written.
+need them. Two skills **close the loop** after the code is written. One skill (`evolve`)
+**feeds what you learned back into the skills**.
 
 ```mermaid
 flowchart LR
@@ -134,14 +136,20 @@ flowchart LR
         S[specify] --> CL[clarify] --> D[design] --> SQ[sequences] --> DM[data-model] --> API[api] --> T[tasks] --> PT[plan-tests] --> IM[implement]
     end
     IM --> RV[review] --> SH[ship]
+    T -.-> RF[refine<br/>optional 2nd pass] -.-> PT
     subgraph util["UTILITIES — call anytime"]
         CS[classify-size]
         GL[glossary]
         ADR[decide-adr]
         FX[fix]
+        LP[loop]
+        ST[start]
     end
     CL -.-> GL -.-> D
     SH --> done([shipped: PR + changelog])
+    FX -.-> EV[evolve<br/>repo-level learning]
+    RV -.-> EV
+    EV -.-> backbone
 ```
 
 ### Step 0 — survey (once per repo, before the backbone)
@@ -161,6 +169,7 @@ flowchart LR
 | 5 | **data-model** | Designs the schema and writes the actual forward+rollback migrations — **staged** under the feature folder, not the live tree (`implement` promotes them) | `spec.md`, `sad.md`, sequences → `data-model.md`, staged `migrations/*.up/down.sql` |
 | 6 | **api** | Derives the OpenAPI contract from the data model (or the existing schema on the fast lane) + sequences + spec | `data-model.md`, sequences, `spec.md` → `contracts/openapi.yaml` |
 | 7 | **tasks** | Breaks the work into atomic ≤1-day tasks + a `tasks.json` dependency DAG | all of the above → `tasks/*`, **`tasks.json`** |
+| 7b | **refine** *(optional)* | A **second pass over the written plan**. It re-reads the codebase deeper than `tasks` did. It surfaces missing tasks, vague DoD, wrong deps, duplicates, and gold-plating. It applies approved fixes to `tasks/*.md` **and** `tasks.json` atomically. Add `+check` to validate every finding through a fresh-context subagent first. The `tasks` handoff offers it as the `↳ or …` alternative. It never auto-runs. | `tasks.json` + `tasks/*` + upstream artifacts → corrected `tasks/*`, `tasks.json` |
 | 8 | **plan-tests** | Maps every acceptance criterion to ≥1 test (inline in the spec for XS/S) | `spec.md`, `data-model.md` → `test-plan.md` (M+) or an inline `## Test plan` in `spec.md` (XS/S) |
 | 9 | **implement** | The TDD engine: writes a failing test, makes it pass, gates, commits — per task. It **promotes** each staged migration into the live `migrations/` as it builds | `tasks.json` + all artifacts → code + tests + promoted migrations, committed |
 
@@ -199,6 +208,28 @@ open PR. Merging to main stays your call.
   with a failing test. It applies the minimal fix through the same gate `implement` runs. It
   then patches the spec and writes a fix record under `_fixes/`. It works on a repo with no
   specs at all. There it fixes code-first and recommends `survey`.
+- **loop** — a **dedicated polish loop over one artifact** (`spec.md`, `sad.md`, `openapi.yaml`,
+  `tasks.json`, any feature doc). Six phases per iteration: PLAN → PRODUCE ‖ PREPARE → EVALUATE →
+  CRITIQUE → REFINE. It runs until a quality gate passes or the iteration / stagnation limit
+  trips. State persists to disk, so it survives `/clear`. Every backbone skill already runs
+  mini-loops (Socratic loop + critic + self-check) — reach for `loop` when those were not enough.
+- **start** — opens the [visual dashboard](#the-visual-dashboard-opt-in) (opt-in; needs
+  `dashboard_enabled: true` + Bun). It prints the loopback URL with this session's capability
+  token.
+
+### Close the outer loop — evolve (repo-level learning)
+
+- **evolve** — mines the pipeline's own byproducts (`_fixes/` records from `fix`, `_review/`
+  records from `review`, SAD §9 Risks, Accepted ADRs) for **recurring prevention points**. It
+  writes compact project-specific rules to `docs/.skill-context/sdd-<skill>/SKILL.md`. Every
+  skill reads its own file at startup and treats those rules as a **project-level override** —
+  on conflict the project rule wins, the same precedence a nested `CLAUDE.md` gets
+  ([`skills/_shared/skill-context.md`](./skills/_shared/skill-context.md)). Processing is
+  cursor-based and incremental (only evidence added since the last run, plus a tail-5 overlap
+  window). It **never edits the installed skills** — a re-install would overwrite them, so all
+  learning lands in the project-owned override tree. It is repo-level, like `survey` / `roadmap`:
+  run it after 5–10 fixes or a review cycle. Rules are always written in **English** regardless
+  of `artifact_language` — agents across sessions consume them.
 
 ## Interview depth (easy / medium / hard)
 
@@ -392,9 +423,18 @@ headings, frontmatter and machine tokens stay English (full rule →
 [`skills/_shared/artifact-language.md`](./skills/_shared/artifact-language.md)). The rest
 of the keys configure the `implement` engine:
 
+> **Two language switches, deliberately independent.** `conversation_language` is what the
+> pipeline **talks to you in** (every `AskUserQuestion` — its question text and option
+> labels/descriptions). `artifact_language` is what it **writes into documents**. An interview
+> in Ukrainian with the spec written in English is a supported combination, and so is the
+> reverse. Neither switch touches code, tests, commit messages, branch names, section headings,
+> frontmatter, or any machine token — those are always English. Phrasing contract →
+> [`skills/_shared/ask-style.md`](./skills/_shared/ask-style.md).
+
 ```yaml
 interview_depth: medium    # easy | medium | hard — default depth for specify/clarify/design
 artifact_language: en      # en | uk — the language pipeline documents are written in (headings + machine tokens stay English)
+conversation_language: uk  # uk | en — the language the skills ASK you questions in (independent of artifact_language)
 tdd: true                  # enforce red→green→refactor
 team_mode: false           # true → agent team via TeamCreate
 workflow_mode: auto        # auto → dynamic Workflow; off → never
@@ -519,7 +559,7 @@ was skipped. The ones you're most likely to meet:
 install.sh        Codex CLI / Cursor installer — copies the subtree, prefixes skill names, generates functional agents
 agents/           explorer, test-author, implementer, reviewer, critic, devils-advocate, researcher, strategist, analyst
 scripts/          validate_plugin.py (CI gate: manifests + skill/agent frontmatter + the consistency invariants — links resolve, /sdd: form, handoff block, single-source taxonomy, no _shared orphans)
-skills/_shared/   canonical socratic-loop / critic / size-matrix / ask-style / interview-depth / diagram-presentation / surfaces / handoff / tool-adapters (referenced, not duplicated)
+skills/_shared/   canonical socratic-loop / critic / size-matrix / ask-style / interview-depth / diagram-presentation / surfaces / handoff / self-check / agent-roster / mermaid-check / artifact-language / skill-context / tool-adapters (referenced, not duplicated)
 skills/<name>/    SKILL.md spine + references/ (heavy detail) + templates/ (output scaffolds)
 .mcp.json         declares the sdd-dashboard MCP server (auto-starts at session open; opt-in via dashboard_enabled)
 server/           the dashboard MCP server (Bun + TypeScript): server.ts (MCP stdio + Bun.serve HTTP/WS), http.ts (routing + gating, testable), state.ts (disk→pipeline derivation), channel.ts (dashboard_* tools + command allowlist), paths.ts (docs/ scoping), frontmatter.ts (shared parser) + tests/ (bun test)

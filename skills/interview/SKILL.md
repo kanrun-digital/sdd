@@ -33,7 +33,7 @@ The depth dial and the Socratic posture are SDD-wide:
 
 Ask one `AskUserQuestion`, then commit (**default medium**). The dial is SDD-wide. The `interview` delta is the question budget per level — **3–4 / 6–10 / 10–15** — and each level's posture. It is the canonical `interview` row in [`../_shared/interview-depth.md`](../_shared/interview-depth.md) (no table duplicated here).
 
-The adversarial triggers (grill / rip apart / розʼєби / погрилити) imply **hard** unless the user says otherwise. State the depth in one line. Then start.
+The adversarial triggers imply **hard** unless the user says otherwise. Match on *intent*, in whatever language the user wrote it — «grill», «rip this apart», «poke holes», and their Ukrainian equivalents («розʼєби», «погрилити») are the same signal. State the depth in one line. Then start.
 
 ## Hard rules
 
@@ -44,7 +44,7 @@ The adversarial triggers (grill / rip apart / розʼєби / погрилит�
 
 ## Phases
 
-Use **1-3 questions per phase**. Target the count from the depth dial. Move on from a phase when answers repeat. Move on when the user says "next" / "хватить". Move on when the latest answer added nothing.
+Use **1-3 questions per phase**. Target the count from the depth dial. Move on from a phase when answers repeat. Move on when the user signals «move on» in any language («next», «досить»). Move on when the latest answer added nothing.
 
 ### Phase 1 — Understand the idea
 If the idea is not stated in one sentence yet, ask for it in plain text (no AskUserQuestion). Then unpack three points: who suffers without this · what success concretely looks like · whether it is new or a refinement. Do not ask what is already obvious.
@@ -54,7 +54,7 @@ This phase is the core. Hunt **hidden assumptions** ("this assumes X — what if
 
 **Probing frames** are internal lenses (premortem · second-order · naive listener · inversion · cost of waiting · the other person). Pick what fits. Mix them. Do not name the frame to the user. Worked before/after examples per lens → [`references/probing-frames.md`](references/probing-frames.md).
 
-**Intensity dial.** The default tone is Socratic. The adversarial triggers escalate phrasing ("Why do you think X is even true?"). The user dials back with "ease up" / "помʼякши".
+**Intensity dial.** The default tone is Socratic. The adversarial triggers escalate phrasing ("Why do you think X is even true?"). The user dials it back with any «ease up» signal («ease up», «помʼякши»).
 
 **Drill vs move on.** Drill the same dimension when an answer surfaced a new assumption. Move on once the position is clear and the tradeoff is named.
 
@@ -106,7 +106,7 @@ interview writes **no files**. It sharpens the idea in the user's head. The fina
 - **Idea is for someone else** — re-route: ask "what would they say to question X?"
 
 ### Stuck protocol
-If the user picks **Other twice in a row** OR writes "I don't know" / "не знаю", switch to a single open text question ("In your own words — what's bugging you most about this right now?"). Once the user answers, resume AskUserQuestion with a new angle.
+If the user picks **Other twice in a row** OR signals «I don't know» in any language («I don't know», «не знаю»), switch to a single open text question ("In your own words — what's bugging you most about this right now?"). Once the user answers, resume AskUserQuestion with a new angle.
 
 ## References
 
