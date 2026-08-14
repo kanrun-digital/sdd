@@ -8,13 +8,13 @@
 > rule everywhere (same principle as `agent-roster.md` tying model/effort policy together). This
 > file exists for that reason.
 
-## TL;DR (короткий вступ українською)
+## TL;DR (українською)
 
 `evolve` пише проєктні правила у `docs/.skill-context/sdd-<skill>/SKILL.md`. Кожен скіл **на
 старті читає свій файл** (якщо він є) і застосовує ці правила як **project-level override** —
 конфлікт → skill-context виграє (як nested CLAUDE.md). Відсутній файл → скіл працює за дефолтами
 (безоплатно, backwards-compatible). Після генерації output'а — верифікує його проти всіх
-правил; порушення → фікс до handoff, ніколи мовчки. Одна точка правди, не 19 розколотих копій.
+правил; порушення → фікс до handoff, ніколи мовчки. Одна точка правди, не 22 розколоті копії.
 
 ---
 

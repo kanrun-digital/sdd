@@ -476,6 +476,31 @@ def main() -> int:
               f"_shared/{sf.name} is referenced by {len(referrers)} file(s)",
               f"_shared/{sf.name} is an orphan — nothing under skills/ or agents/ points to it")
 
+    # --- Ukrainian TL;DR — one uniform block per reference file ---
+    # Every _shared reference (plus the two long design references) opens with a human-facing
+    # Ukrainian TL;DR under the exact heading `## TL;DR (українською)` — the one place Ukrainian
+    # prose lives inside agent-loaded files, clearly delimited by the heading and a closing `---`.
+    # Uniformity is the point: two heading styles existed before (an H2 «короткий вступ» form and
+    # a `> **TL;DR (UA).**` blockquote), which made the blocks unfindable programmatically and
+    # inconsistent for the reader. Exactly one block per file, exact heading, closed by a rule.
+    print("== ua tldr ==")
+    TLDR_H = "## TL;DR (українською)"
+    tldr_files = sorted((ROOT / "skills" / "_shared").glob("*.md")) + [
+        ROOT / "skills" / "design" / "references" / "blast-radius.md",
+        ROOT / "skills" / "design" / "references" / "c4-mermaid-syntax.md",
+    ]
+    for tf in tldr_files:
+        rel = tf.relative_to(ROOT)
+        text = tf.read_text()
+        n = text.count(TLDR_H)
+        stale = "TL;DR (короткий вступ" in text or "**TL;DR (UA).**" in text
+        closed = n == 1 and "\n---" in text.split(TLDR_H, 1)[1]
+        check(n == 1 and not stale and closed,
+              f"{rel} carries one uniform Ukrainian TL;DR block",
+              f"{rel}: expected exactly one '{TLDR_H}' block closed by '---' "
+              f"(found {n} heading(s){', plus a stale-style TL;DR' if stale else ''}"
+              f"{'' if n != 1 or closed else ', not closed by ---'})")
+
     # === dashboard: .mcp.json + server/ + dashboard/ + the `start` handshake skill ===
     # The visual dashboard (the shipped "MCP exposure" feature) is opt-in but its files must
     # stay structurally sound: the MCP server is declared correctly, the server/dashboard

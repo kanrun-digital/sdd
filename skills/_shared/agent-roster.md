@@ -4,6 +4,18 @@
 > matrix, the override precedence, and the contract every spawned agent follows. The canonical
 > agent definitions live in `agents/*.md`. This file is the policy that ties them together.
 
+## TL;DR (українською)
+
+Хто яку модель отримує — вирішує **тип роботи**, не смак. Судження (спека, дизайн, рев'ю,
+критика, стратегія) → найсильніша модель (`opus`, effort `high`); виконання (тести, код) →
+збалансована (`sonnet`, `medium` з ескалацією до `high`); пошук/скан → найдешевша (`haiku`,
+`low`). Прецеденс оверрайдів: env > invocation > `model_<role>` > `judgment_model` > frontmatter >
+session. На L/XL-фічах критичні верифікації (reviewer у `review`, critic у `design`/`specify`)
+піднімаються до effort `xhigh`. Кожен спавнений агент працює в **чистому контексті** (не бачив
+розмови), сам читає свої входи з диска і повертає лише **цитовані** знахідки.
+
+---
+
 ## The roster (model + effort by role)
 
 The **kind of work** chooses the model, not taste. Judgment gets the strongest model. Execution

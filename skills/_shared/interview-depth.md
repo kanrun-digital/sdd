@@ -7,7 +7,7 @@
 > summarize. It does **not** tune *completeness*. Every acceptance criterion is still covered at every
 > level (see the coverage floor below).
 
-## TL;DR (короткий вступ українською)
+## TL;DR (українською)
 
 «Депт-діал» — один регулятор на запуск скіла: **easy / medium / hard**.
 

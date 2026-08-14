@@ -4,6 +4,18 @@
 > other skill reads it. The matrix decides how much of its artifact each skill produces (MVP vs
 > Full). It also decides how deep the Socratic pass runs.
 
+## TL;DR (українською)
+
+`classify-size` класифікує фічу **XS/S/M/L/XL** за чотирма сигналами (кількість PR / час / нові
+модуль-API-міграція / breaking changes) і пише два файли-токени: `.size` та маршрут `.route`
+(`quick`/`standard`/`full`; дефолт XS/S→quick, M→standard, L/XL→full — підтверджується одним
+питанням). Розмір вирішує, MVP чи Full версію артефакту продукує кожен скіл; маршрут — як хендофи
+трактують необов'язкові стадії (авто-скіп із названою причиною / запропонувати вибір / все
+запускати). Умови пропуску — це **N/A-умови, не дефолти розміру**: XS-фіча з міграцією все одно
+проходить `data-model`, на будь-якому маршруті.
+
+---
+
 ## How to classify size
 
 The four signals (`classify-size` asks one `AskUserQuestion` per signal):

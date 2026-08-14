@@ -4,7 +4,7 @@
 > that run a Socratic validation pass (`specify`, `design`) read this file for the canonical
 > machine. They keep only a short **delta** of their own decision-types and section list.
 
-## TL;DR (короткий вступ українською)
+## TL;DR (українською)
 
 «Сократичний цикл» — діалог із користувачем по кожній **секції/групі** артефакту. Логіка:
 

@@ -5,6 +5,15 @@
 > `sequences` §6, `data-model` ER, `survey` C4, `tasks` `_epic` flowchart. The rule: a diagram that
 > doesn't parse must never be committed. Broken Mermaid renders as a red error box for the reader.
 
+## TL;DR (українською)
+
+Кожна написана Mermaid-діаграма **перевіряється на парсинг до коміту** — зламана діаграма
+рендериться читачеві червоною помилкою. Каскад перевірок: рендер через `mmdc`, якщо він є →
+структурний лінт за списком типових синтаксичних помилок, якщо нема. Помилка → виправити й
+перевірити ще раз; не вдалося — чесно сказати користувачу і не комітити мовчки.
+
+---
+
 ## Procedure
 
 1. **Write** the diagram into its file.

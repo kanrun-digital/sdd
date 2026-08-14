@@ -6,6 +6,17 @@
 > The rule: **prose switches language, structure stays English.** Conversation language (questions +
 > option text) is a separate concern → [`ask-style.md`](./ask-style.md).
 
+## TL;DR (українською)
+
+Один перемикач `artifact_language` (`.claude/sdd.local.md`, дефолт `en`): **проза** документів
+пайплайна пишеться обраною мовою, **структура — завжди англійською**: заголовки секцій дослівно з
+шаблону, frontmatter (ключі і значення), вердикти (`PASS` / `CHANGES REQUESTED`), стани трекера,
+Mermaid-ключові слова, machine-поля `tasks.json` / OpenAPI. Пріоритет: мова вже наявного файлу
+перемагає налаштування; новий файл наслідує мову сусідів по фічі; ретро-переклад заборонено.
+Код, тести, коміти й гілки — **завжди англійською**, незалежно від перемикача.
+
+---
+
 ## The rule
 
 Write the **prose** of every pipeline document in the configured language. Keep the **structure**

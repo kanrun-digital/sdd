@@ -8,6 +8,17 @@
 > of what it shows. The source itself lands in the file (where Obsidian renders it). If a renderer
 > is available, the source also lands in an image.
 
+## TL;DR (українською)
+
+Діаграму **ніколи не підтверджують сирим Mermaid-кодом у терміналі** — за рядками
+`participant A as …` користувач не може оцінити потік. Підтвердження йде **прозою**: короткий
+переказ, що діаграма показує — учасники, головний потік, відгалуження. Сам код пишеться у файл
+(там його рендерять GitHub/Obsidian), а якщо встановлений `mmdc` — рендериться й картинка.
+Скільки питань ставити про діаграму — вирішує depth-діал; правило «жодного сирого дампу» діє на
+кожному рівні.
+
+---
+
 ## Why
 
 A dogfood run pasted raw `sequenceDiagram` blocks as the confirmation prompt. The user cannot read arrows-as-text. They approve blind or get frustrated. The fix separates two concerns. The **source** goes where it renders: the `.md` file, or an optional image. The **question** is asked in prose. The user can evaluate prose.

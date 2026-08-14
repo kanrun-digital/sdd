@@ -9,7 +9,7 @@
 Do you run under Codex CLI or Cursor? The `/clear` and `/sdd:<next>` forms map to the host tool's
 equivalents per [`tool-adapters.md`](./tool-adapters.md).
 
-## TL;DR (короткий вступ українською)
+## TL;DR (українською)
 
 Кожен крок (skill) наприкінці **завжди** друкує однаковий хендоф-блок із трьох секцій:
 

@@ -4,6 +4,16 @@
 > They read this file for the canonical dispatch and failure-class skeleton. They keep only a short
 > **delta**. The delta names their artifact, upstream files, and any F6 specialization.
 
+## TL;DR (українською)
+
+Окремий критик у **чистому контексті**: агент, який не бачив розмови, сам читає чернетку +
+upstream-артефакти і шукає те, чого посекційний Сократів прохід бачити не може — дрейф і
+протиріччя **між** секціями (класи збоїв F1–F6). Диспатчиться після проходу (`specify`,
+`design`), повертає лише цитовані знахідки (`file:line` / секція); знахідка без цитати
+відкидається. Кожну знахідку скіл вирішує з користувачем — критик не редагує нічого сам.
+
+---
+
 ## Why a separate critic
 
 The Socratic loop ([socratic-loop.md](./socratic-loop.md)) covers one section at a time. It never returns to a written section. So it **cannot** see cross-section drift that later edits introduce. It also cannot see structural gaps that the author missed during self-editing. The critic is one `Agent` (`subagent_type: "general-purpose"`, **clean context** — it never saw the conversation). It reads the upstream artifacts itself. This prevents paraphrase poisoning. It probes the draft against the edits-log.

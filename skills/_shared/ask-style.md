@@ -11,6 +11,17 @@
 > unchanged at every depth**. Even a single easy-level question is glossed and explained in full.
 > Depth tunes the count. It never licenses a dry question.
 
+## TL;DR (українською)
+
+Головне правило: **ніколи не питати сухо**. Кожен технічний термін глосується прямо в питанні
+(просте пояснення в дужках при першому вживанні), а слова витрачаються на «чому» і trade-off, не
+на переказ конфігурації. `label` опції = **наступний механічний крок** скіла (1–5 слів);
+`description` = 3–5 речень із чотирма обов'язковими елементами: що технічно станеться → що
+виграєш / що втратиш (з глосами) → наступний крок скіла → прихований підступ. Кількість питань
+регулює depth-діал; стиль — ні: навіть єдине easy-питання пояснюється повністю.
+
+---
+
 ## The one rule that matters most
 
 **Never ask dryly.** The most common failure is a terse, jargon-dense question. It has a few words

@@ -7,13 +7,15 @@
 > In both cases, the SKILL.md names the phrase **structural self-check** where the contract is
 > satisfied. That name is the greppable evidence. The validator enforces it.
 
-## TL;DR (короткий вступ українською)
+## TL;DR (українською)
 
 Кожен скіл перед хендофом перевіряє власний артефакт **з диска** за іменованим чеклістом.
 Знайшов проблему → виправив і перевірив ще раз (максимум 2 цикли). Не зміг виправити →
 чесно каже користувачу, ніколи мовчки. Результат — один рядок у хендофі: «self-check: 6/6 pass».
 Скіли з важкими верифікаторами (critic, reviewer, drift-check, mermaid-check, GATE) не дублюють
 роботу — їхній верифікатор і **є** self-check; вони додають лише структурні пункти, які він не покриває.
+
+---
 
 ## The contract (five steps)
 

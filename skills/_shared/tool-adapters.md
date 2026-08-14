@@ -8,6 +8,19 @@
 > `sdd-` prefix. Reason: the bare `review` / `design` / `api` names would collide with generic
 > names. The Claude form `/sdd:specify` therefore keeps its mapping: `sdd-specify`.
 
+## TL;DR (українською)
+
+Ті самі SKILL.md працюють у **Codex CLI** та **Cursor** без змін — `install.sh` копіює дерево
+дослівно і лише додає префікс `sdd-` до імен (bare-імена `review`/`design`/`api` конфліктували б
+із загальними скілами). Кожен Claude-механізм має відповідник: `/sdd:specify` → `$sdd-specify`
+(Codex) / вибір `sdd-specify` через `/` (Cursor); `AskUserQuestion` → нумеровані питання плейн
+текстом (зупинись і чекай відповіді); субагенти → встановлені `sdd-*` агенти або інлайн-виконання
+інструкцій; `TeamCreate`/`Workflow` → послідовний одно-агентний TDD (документований floor);
+`/clear` → `/new` / новий чат. Механізм недоступний → **graceful-деградація до інлайн-еквівалента,
+ніколи не блокувати стадію**.
+
+---
+
 ## The mapping
 
 | Mechanism (as written in the skills) | Claude Code | Codex CLI | Cursor |
