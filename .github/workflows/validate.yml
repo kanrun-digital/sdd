@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0   # check_version_bump.py diffs against the base ref
 
       - uses: actions/setup-python@v6
         with:
@@ -17,6 +19,16 @@ jobs:
 
       - name: Validate plugin (name / version / description + skill & agent frontmatter)
         run: python3 scripts/validate_plugin.py
+
+      - name: Version bump accompanies a skills/agents change
+        run: |
+          # On a PR the base is the target branch; on a push to main it is the previous commit.
+          if [ -n "${{ github.base_ref }}" ]; then
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+            python3 scripts/check_version_bump.py "origin/${{ github.base_ref }}"
+          else
+            python3 scripts/check_version_bump.py
+          fi
 
       - name: No references to excluded legacy dirs
         run: |
