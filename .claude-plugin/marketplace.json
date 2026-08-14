@@ -9,7 +9,7 @@
     {
       "name": "sdd",
       "source": "./",
-      "version": "1.18.2",
+      "version": "1.18.3",
       "description": "Spec-Driven Development pipeline: 22 atomic Socratic skills (survey → spec → design → data-model → api → tasks → tests → implement → review → ship). A living Now/Next/Later roadmap sits above the per-feature flow. 9 subagents are included, plus a TDD implementation engine with agent-team and dynamic-workflow modes. The Q&A skills are depth-tunable (easy/medium/hard). The ideation analyses (researcher/strategist/analyst/devil's-advocate) run as named subagents, gated by that dial. Diagrams are confirmed in prose. Every acceptance criterion is covered end-to-end. Surface-aware: declare target surfaces at design (backend/web/mobile/desktop/CLI/worker/library, as C4 containers). Downstream stages gate the `ui` task layer, UI-driven flows, frontend test tiers, and `ui` reuse of the repo's design system (components / tokens / styling). Every stage prints a copy-ready handoff: what changed + files to review + `/clear` + the next command. Three skills close the outer loops: `refine` (an optional second pass that re-analyzes the codebase and corrects tasks/*.md + tasks.json atomically), `loop` (a gated, resumable six-phase polish loop over a single artifact), and `evolve` (mines _fixes/ + _review/ records for recurring prevention points and writes project-specific rules to docs/.skill-context/sdd-<skill>/SKILL.md that every skill reads at startup as a project-level override, without ever editing the installed skills).",
       "category": "workflow",
       "tags": [

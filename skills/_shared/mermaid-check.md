@@ -8,8 +8,9 @@
 ## TL;DR (українською)
 
 Кожна написана Mermaid-діаграма **перевіряється на парсинг до коміту** — зламана діаграма
-рендериться читачеві червоною помилкою. Каскад перевірок: рендер через `mmdc`, якщо він є →
-структурний лінт за списком типових синтаксичних помилок, якщо нема. Помилка → виправити й
+рендериться читачеві червоною помилкою. Каскад: рендер через `mmdc` — **обовʼязковий**, якщо
+його взагалі можна дістати (немає в PATH → поставити через `npx`); структурний лінт лише коли
+завантажити не вдалося. У хендофі назвати, яка саме ступінь відпрацювала. Помилка → виправити й
 перевірити ще раз; не вдалося — чесно сказати користувачу і не комітити мовчки.
 
 ---
@@ -25,14 +26,19 @@
 
 ## Detection cascade (first available wins)
 
-1. **`mmdc` (mermaid-cli)** — the real parser. On PATH, or `npx -y @mermaid-js/mermaid-cli`. Run it
-   over the file that contains the diagrams. It extracts and renders every ```mermaid block. Direct
-   the output to a throwaway file. Then check the exit code:
+1. **`mmdc` (mermaid-cli)** — the real parser, and the **required** rung whenever it can be
+   obtained. On PATH, else install it for this run: `npx -y @mermaid-js/mermaid-cli`. **A missing
+   binary is not a reason to drop to the lint** — only a failed fetch (offline, blocked registry)
+   is. Run it over the file that contains the diagrams. It extracts and renders every ```mermaid
+   block. Direct the output to a throwaway file. Then check the exit code:
    ```bash
    mmdc -i docs/features/<slug>/sad.md -o /tmp/_mmd_check.md 2>&1   # exit != 0 → a block failed; stderr names it
    ```
    A non-zero exit means at least one block is invalid. The stderr names the diagram + the syntax
    error. Delete the throwaway output afterwards.
+   **Name the rung that actually ran in the handoff** — `mermaid: mmdc, 22/22 parse` vs.
+   `mermaid: lint only — mmdc fetch failed`. A self-check line that doesn't say which rung ran is
+   not evidence that anything parsed.
 2. **Project mermaid dep** — if `node_modules/mermaid` exists, run a tiny `mermaid.parse(src)` per
    extracted block. Parse-only, no render. This path is enough and fast.
 3. **Obsidian vault** — if the docs live in an Obsidian vault, the obsidian-cli render/error-capture
@@ -44,11 +50,25 @@
    - **every node/participant referenced by an edge/`Rel` is declared first**
    - no leftover template `<placeholder>` substrings
    - balanced brackets/parens/quotes
-   - no known typos (see below)
-   The lint catches the common breakages. Recommend installing `mmdc` for a real parse when it's
-   not present.
+   - balanced `alt`/`else`/`end`, `loop`/`end`, `opt`/`end`, `par`/`end` inside a `sequenceDiagram`
+   - **no `;` outside quotes in a `sequenceDiagram`** — mermaid ends the statement there and parses
+     the remainder as a broken one
+   - no Unicode arrow (`→`, `⇒`, `←`) anywhere inside a block
+   - no trailing inline `%%` on a message/edge line (`%%` must open its own line)
+   - no `PK_FK` in an `erDiagram`; no `Container_Bondary` in a C4 block
+   Every item on this list is **mechanical** — grep it, don't eyeball it. Anything in **Per-type
+   gotchas** below that can be written as a pattern belongs on this list too; the rest of that
+   section is guidance for *writing* a diagram, not for checking one.
+   **The lint is a floor, not a parser.** It cannot see a type-specific grammar violation, so a
+   block can pass every item here and still fail `mmdc` — that is exactly how the `;` class shipped
+   before this list carried it (15 blocks in one `sad.md`, all six original criteria green). When
+   this rung is what ran, say `lint only` in the handoff and recommend installing `mmdc`.
 
 ## Per-type gotchas (the usual render failures)
+
+> The pattern-shaped ones here (`;`, Unicode arrows, trailing `%%`, `PK_FK`, `Container_Bondary`)
+> are **also lint items** — they are listed in rung 4 above so a no-renderer run actually checks
+> them. This section explains *why* each breaks; rung 4 is where they get enforced.
 
 - **C4** (`C4Context` / `C4Container`): use `Container_Boundary` / `System_Boundary` (NOT `Container_Bondary`). Declare every `Person(...)` / `System(...)` / `Container(...)` / `ContainerDb(...)` **before** any `Rel(from, to, "label")` that uses its id. Ids have no spaces. `Rel` needs the quoted label arg.
 - **sequenceDiagram**: declare `participant X as Display Name`, then refer to `X`. Keep `alt … else … end` / `loop … end` / `opt … end` balanced. Use `Note over X,Y: text`. Actors with spaces need an alias. **No `;` in message/Note text.** Mermaid treats `;` as a statement separator. So `Note over R,DB: commit; any error rolls back` parses the part after `;` as a broken new message (a real bug this check caught). Avoid **Unicode arrows (`→`)** in text. Use words or `-->` instead. Put **no trailing `%%` inline comment** on a message line (`%%` must start its own line).
