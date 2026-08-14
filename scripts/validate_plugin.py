@@ -151,6 +151,13 @@ def main() -> int:
               ".agents marketplace 'sdd' source is the git url form (root-local './' is uninstallable in codex)",
               f".agents marketplace 'sdd' source must be {{'source': 'url', 'url': 'https://github.com/…'}} — "
               f"codex silently skips a root-local './' plugin; got {cm_src!r}")
+        cm_policy = (cm_entry or {}).get("policy", {})
+        check(cm_policy.get("installation") == "AVAILABLE"
+              and cm_policy.get("authentication") == "ON_INSTALL"
+              and bool((cm_entry or {}).get("category")),
+              ".agents marketplace declares installation/authentication policy and category",
+              ".agents marketplace entries must declare policy.installation=AVAILABLE, "
+              "policy.authentication=ON_INSTALL, and category for current Codex install surfaces")
 
     installer = ROOT / "install.sh"
     installer_text = installer.read_text() if installer.exists() else ""
@@ -163,6 +170,28 @@ def main() -> int:
           "install.sh removes the legacy flat sdd-* layout on install and uninstall",
           "install.sh must clean the pre-v1.9.0 flat <skills-root>/sdd-<name>/ dirs "
           "(clean_legacy_flat_layout + legacy_is_ours) — otherwise upgrading leaves every skill registered twice")
+    check("STAGED_SDD" in installer_text and "SWAP_STARTED" in installer_text
+          and "backup/sdd" in installer_text,
+          "install.sh stages replacements and can restore the previous complete install",
+          "install.sh must stage the replacement and back up the live sdd tree before swapping — "
+          "a failed update must not erase the working install")
+    check("model_reasoning_effort" in installer_text,
+          "install.sh maps agent effort to Codex model_reasoning_effort",
+          "install.sh must emit model_reasoning_effort in generated .codex/agents/*.toml files")
+    check('CODEX_HOME:-$HOME/.codex' in installer_text and '$CODEX_HOME/agents' in installer_text,
+          "install.sh respects CODEX_HOME for Codex config and global custom agents",
+          "install.sh must resolve Codex config/global agents through CODEX_HOME when it is set")
+    check("sed -n '2,22p' \"$0\"" not in installer_text,
+          "install.sh help works when piped to bash -s",
+          "install.sh usage must not read $0: under `curl … | bash -s`, $0 is `bash`, not the script")
+
+    start_text = (ROOT / "skills/start/SKILL.md").read_text()
+    check("Gate on host before any file/tool access" in start_text
+          and "read/create `.claude/sdd.local.md`" in start_text
+          and "do not call a dashboard MCP tool" in start_text,
+          "start skill fails closed on Codex/Cursor before touching Claude dashboard state",
+          "skills/start must explicitly stop on non-Claude hosts before reading/creating Claude "
+          "state or calling the Claude-channel dashboard MCP")
 
     VALID_MODELS = {"haiku", "sonnet", "opus", "fable", "inherit"}
     VALID_EFFORTS = {"low", "medium", "high", "xhigh", "max"}

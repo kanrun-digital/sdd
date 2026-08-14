@@ -6,8 +6,9 @@
 > *Review* / *next command*. This file exists because a bare «Next: …» line is hard to act on. The
 > user cannot tell what changed, which files to open, or what to run next without scrolling back.
 
-Do you run under Codex CLI or Cursor? The `/clear` and `/sdd:<next>` forms map to the host tool's
-equivalents per [`tool-adapters.md`](./tool-adapters.md).
+Do you run under Codex CLI or Cursor? Current Codex supports `/clear` directly; only the
+`/sdd:<next>` invocation changes (`$sdd-<next>` for the script install, `$<next>` for the
+marketplace). Cursor maps both forms per [`tool-adapters.md`](./tool-adapters.md).
 
 ## TL;DR (українською)
 
@@ -125,7 +126,7 @@ Rules for filling it:
 | `refine` | `tasks/` + `tasks.json` (corrected in lockstep) | route-resolved: `/sdd:plan-tests <slug>` ↳ or `/sdd:implement <slug>` |
 | `loop` | `.loop/<alias>/artifact.md` + `run.json` + `history.jsonl` | resume the owning skill's flow — e.g. `/sdd:clarify <slug>` after looping a spec |
 | `evolve` | `docs/.skill-context/sdd-<skill>/SKILL.md` + `docs/.loop/evolutions/<ts>.md` | resume the backbone · or `/sdd:review <slug>` to check the new rules land |
-| `start` | **nothing on disk** — the printed dashboard URL is the output | open the dashboard · or run a backbone command here, e.g. `/sdd:specify <slug>` |
+| `start` | **nothing on disk** — Claude: printed dashboard URL; Codex/Cursor: compatibility note | Claude: open the dashboard · otherwise run a backbone command, e.g. `/sdd:specify <slug>` |
 
 The `↳ or` cells above show the `standard`-route rendering. On `quick` the stage auto-skips and the
 `↳ or` inverts. On `full` the `↳ or` line is dropped. See the *Route-resolved* variant.

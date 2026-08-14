@@ -41,6 +41,15 @@ jobs:
         run: |
           bash -n install.sh
           shellcheck install.sh
+          bash -s -- --help < install.sh | grep -q 'install.sh <codex|cursor|claude>'
+          if bash -s -- codex --prefix < install.sh 2>installer-error.txt; then
+            echo "FAIL: missing --prefix value unexpectedly succeeded"; exit 1
+          fi
+          grep -q 'error: --prefix needs a directory' installer-error.txt
+          if bash -s -- codex --prefix --global < install.sh 2>installer-error.txt; then
+            echo "FAIL: option token was accepted as a --prefix value"; exit 1
+          fi
+          grep -q "error: --prefix needs a directory" installer-error.txt
 
   # deterministic runtime tests for the dashboard MCP server (state derivation,
   # path-security boundary, command allowlist) — no network, committed fixtures.
@@ -101,8 +110,8 @@ jobs:
             test -f "$skills/sdd/agents/reviewer.md"
             if [ "$tool" = codex ]; then
               # every generated agent TOML parses; sandbox follows the tools declaration
-              python3 - "$agents" "$n_agents" <<'EOF'
-          import sys, tomllib
+              python3 - "$agents" "$n_agents" agents <<'EOF'
+          import re, sys, tomllib
           from pathlib import Path
           files = sorted(Path(sys.argv[1]).glob("sdd-*.toml"))
           assert len(files) == int(sys.argv[2]), files
@@ -111,6 +120,9 @@ jobs:
               assert d["name"] == f.stem and d["description"] and d["developer_instructions"], f
               want = "workspace-write" if f.stem in ("sdd-implementer", "sdd-test-author") else "read-only"
               assert d["sandbox_mode"] == want, (f.name, d["sandbox_mode"])
+              source = Path(sys.argv[3], f.stem.removeprefix("sdd-") + ".md").read_text()
+              effort = re.search(r"^effort:\s*(\S+)\s*$", source, re.MULTILINE).group(1)
+              assert d["model_reasoning_effort"] == effort, (f.name, d["model_reasoning_effort"], effort)
           print(f"{len(files)} agent TOMLs OK")
           EOF
             else
@@ -137,17 +149,48 @@ jobs:
             done
             grep -q '^name: sdd-specify$' "$skills/sdd/skills/specify/SKILL.md"
             rm -rf "$skills/sdd-foreign" "$skills/sdd-empty" "$skills/lazybird-api"
-            # a mid-install failure must roll back, not leave a half-copy
+            # a bad source or mid-build failure must preserve the previous complete install
+            before_skill=$(cksum "$skills/sdd/skills/specify/SKILL.md")
+            if ./install.sh "$tool" --src "$prefix/does-not-exist" --prefix "$prefix"; then
+              echo "FAIL: install.sh succeeded on a missing source"; exit 1
+            fi
+            test "$(cksum "$skills/sdd/skills/specify/SKILL.md")" = "$before_skill" \
+              || { echo "FAIL: source validation failure damaged the working install"; exit 1; }
             mkdir "$prefix/broken-src" && cp -R skills agents "$prefix/broken-src/"
             sed_i() { if sed --version >/dev/null 2>&1; then sed -i "$@"; else sed -i '' "$@"; fi; }
             sed_i 's/^name: design$/name: broken-on-purpose/' "$prefix/broken-src/skills/design/SKILL.md"
             if ./install.sh "$tool" --src "$prefix/broken-src" --prefix "$prefix"; then
               echo "FAIL: install.sh succeeded on a broken source"; exit 1
             fi
-            test ! -e "$skills/sdd" || { echo "FAIL: partial install left behind"; exit 1; }
-            # reinstall the good tree, then uninstall leaves the prefix clean
+            test "$(cksum "$skills/sdd/skills/specify/SKILL.md")" = "$before_skill" \
+              || { echo "FAIL: failed replacement did not preserve the previous install"; exit 1; }
+            # a fresh prefix still stays empty on failure
+            empty_prefix=$(mktemp -d)
+            if ./install.sh "$tool" --src "$prefix/broken-src" --prefix "$empty_prefix"; then
+              echo "FAIL: broken source installed into a fresh prefix"; exit 1
+            fi
+            case "$tool" in
+              codex)  test ! -e "$empty_prefix/.agents/skills/sdd" ;;
+              cursor) test ! -e "$empty_prefix/.cursor/skills/sdd" ;;
+            esac
+            # re-run the good tree, then uninstall leaves the prefix clean
             ./install.sh "$tool" --src . --prefix "$prefix"
             ./install.sh "$tool" --prefix "$prefix" --uninstall
             test ! -e "$skills/sdd"
             if ls "$agents"/sdd-* 2>/dev/null; then echo "FAIL: agents not removed"; exit 1; fi
           done
+
+          # Global Codex installs keep user skills in ~/.agents/skills, while custom
+          # agents follow CODEX_HOME when it is explicitly redirected.
+          global_home=$(mktemp -d)
+          custom_codex_home=$(mktemp -d)
+          HOME="$global_home" CODEX_HOME="$custom_codex_home" \
+            ./install.sh codex --src . --global
+          test -f "$global_home/.agents/skills/sdd/skills/specify/SKILL.md"
+          test -f "$custom_codex_home/agents/sdd-reviewer.toml"
+          HOME="$global_home" CODEX_HOME="$custom_codex_home" \
+            ./install.sh codex --global --uninstall
+          test ! -e "$global_home/.agents/skills/sdd"
+          if ls "$custom_codex_home"/agents/sdd-* 2>/dev/null; then
+            echo "FAIL: CODEX_HOME agents not removed"; exit 1
+          fi

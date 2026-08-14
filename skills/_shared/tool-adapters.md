@@ -1,8 +1,8 @@
-# Tool adapters — running SDD under Codex CLI / Cursor (the cross-tool mapping)
+# Tool adapters — running SDD under Codex / Cursor (the cross-tool mapping)
 
 > **Reference-only.** Not a skill. The skills are written against Claude Code's mechanisms
 > (`/sdd:<name>` invocation, `AskUserQuestion`, named subagents, `TeamCreate` / `Workflow`,
-> `/clear`). SKILL.md is the open Agent Skills format. So Codex CLI and Cursor run the **same
+> `/clear`). SKILL.md is the open Agent Skills format. So Codex and Cursor run the **same
 > files unchanged**. `install.sh` copies the repo subtree verbatim. Each Claude-specific mechanism
 > maps to the host tool's equivalent per the table below. At install time, every skill name gets an
 > `sdd-` prefix. Reason: the bare `review` / `design` / `api` names would collide with generic
@@ -10,32 +10,56 @@
 
 ## TL;DR (українською)
 
-Ті самі SKILL.md працюють у **Codex CLI** та **Cursor** без змін — `install.sh` копіює дерево
+Ті самі SKILL.md працюють у **Codex** та **Cursor** без змін — `install.sh` копіює дерево
 дослівно і лише додає префікс `sdd-` до імен (bare-імена `review`/`design`/`api` конфліктували б
 із загальними скілами). Кожен Claude-механізм має відповідник: `/sdd:specify` → `$sdd-specify`
 (Codex) / вибір `sdd-specify` через `/` (Cursor); `AskUserQuestion` → нумеровані питання плейн
-текстом (зупинись і чекай відповіді); субагенти → встановлені `sdd-*` агенти або інлайн-виконання
-інструкцій; `TeamCreate`/`Workflow` → послідовний одно-агентний TDD (документований floor);
-`/clear` → `/new` / новий чат. Механізм недоступний → **graceful-деградація до інлайн-еквівалента,
+текстом (зупинись і чекай відповіді); субагенти → попроси Codex делегувати встановленому
+`sdd-*` агенту за ім'ям (`/agent` лише переглядає/перемикає вже створені треди) або виконай
+інструкції інлайн; `TeamCreate`/`Workflow` → нативний subagent workflow Codex із залежностями TDD,
+а за відсутності custom agents — built-in агенти з тими самими промптами, потім послідовний floor;
+`/clear` → нативний `/clear` у Codex (`/new` теж створює новий чат). Механізм недоступний → **graceful-деградація до інлайн-еквівалента,
 ніколи не блокувати стадію**.
 
 ---
 
 ## The mapping
 
-| Mechanism (as written in the skills) | Claude Code | Codex CLI | Cursor |
+| Mechanism (as written in the skills) | Claude Code | Codex | Cursor |
 |---|---|---|---|
-| Invoke a stage | `/sdd:specify <slug>` | `$sdd-specify <slug>` | type `/`, pick `sdd-specify` |
+| Invoke a stage | `/sdd:specify <slug>` | script install: `$sdd-specify <slug>`; marketplace: `$specify <slug>` | type `/`, pick `sdd-specify` |
 | Ask the user (`AskUserQuestion`) | the native tool | numbered questions in plain text — **stop and wait** for the answer, never assume one | same as Codex |
-| Spawn a subagent (`subagent_type: "sdd:researcher"`) | the named plugin agent | custom agent `sdd-researcher` installed into `.codex/agents/` (dispatch via `/agent`), or run the agent file's instructions inline | subagent `sdd-researcher` installed into `.cursor/agents/`, or inline |
-| `TeamCreate` / `Workflow` (the `implement` engine modes) | native | sequential single-agent TDD — already the documented fallback floor | same as Codex |
-| Fresh context between stages | `/clear` | `/new` | start a new chat |
-| `model:` / `effort:` frontmatter | honored | advisory — the installer rewrites the generated agents' `model:` to `inherit`. The frontmatter in the verbatim skill/agent copies stays as documentation | same as Codex |
+| Spawn a subagent (`subagent_type: "sdd:researcher"`) | the named plugin agent | ask Codex to delegate to custom agent `sdd-researcher`; use `/agent` only to inspect/switch the spawned thread. If the agent is not installed, use a built-in agent with the same prompt or run the instructions inline | subagent `sdd-researcher` installed into `.cursor/agents/`, or inline |
+| `TeamCreate` / `Workflow` (the `implement` engine modes) | native | native Codex subagent workflow: parent orchestrates `sdd-test-author` → `sdd-implementer` → `sdd-reviewer` in dependency order. If custom agents are unavailable, use built-in agents or the sequential single-agent floor | host subagents when available; otherwise the sequential floor |
+| Fresh context between stages | `/clear` | `/clear` (or `/new` to keep the old transcript visible) | start a new chat |
+| `model:` / `effort:` frontmatter | honored | the script leaves `model` unset so the custom agent follows Codex's spawn/config precedence; it maps `effort:` to pinned `model_reasoning_effort` in `.codex/agents/sdd-*.toml`. A file-pinned effort wins over spawn/default/parent values. Frontmatter in the verbatim documentation copies is not runtime config | generated Cursor agents use `model: inherit`; effort support is host-dependent |
 | Shared artifacts (`.size`, `.route`, `spec.md` + the other `docs/features/<slug>/…` files, `.claude/sdd.local.md`) | repo-relative files the **model itself** reads/writes with its file tools | identical — no host involvement, so they work unchanged. `.claude/` is just a directory in the repo here, not a host config dir | same as Codex |
 
 The `CLAUDE_CODE_*` env vars the roster mentions (`CLAUDE_CODE_SUBAGENT_MODEL`,
-`CLAUDE_CODE_EFFORT_LEVEL`, `CLAUDE_CODE_FORK_SUBAGENT`) are **Claude Code-only**. Codex CLI and
-Cursor ignore them. Use the host's own model settings instead.
+`CLAUDE_CODE_EFFORT_LEVEL`, `CLAUDE_CODE_FORK_SUBAGENT`) are **Claude Code-only**. Codex and Cursor
+ignore them. Codex uses the generated custom-agent TOML plus its `[agents]` config/spawn settings.
+
+The source `tools:` list is not a Codex custom-agent allow-list. The installer maps roles that
+declare `Write`/`Edit` to `sandbox_mode = "workspace-write"` and every other role to `read-only`;
+the role instructions remain the behavioral boundary. Parent live permission overrides can still
+win, so do not deliberately widen a reviewer/critic spawn and then claim it was technically
+write-incapable.
+
+Because the generated TOML pins the source effort, a different one-off effort cannot override the
+same named custom agent. Use a built-in Codex agent with the role prompt plus an explicit effort,
+or a separately configured custom-agent variant. Model overrides remain dynamic because the
+installer deliberately leaves `model` unset. Anthropic aliases in `.claude/sdd.local.md` are tier
+labels on Codex; never pass `haiku`/`sonnet`/`opus`/`fable` as Codex model IDs.
+
+The Codex marketplace package installs skills but not the generated `.codex/agents/sdd-*.toml`
+files: custom agents are a separate local configuration surface, not a plugin resource. Use the
+script install for named `sdd-*` agents. With the marketplace path, follow the same prompts through
+built-in subagents or the inline fallback.
+
+The visual dashboard is also Claude Code-only today. Its server uses the Claude channel protocol,
+and the Codex manifest intentionally does not declare that `.mcp.json`. On Codex/Cursor, `start`
+must print the compatibility note and stop before reading `~/.claude/sdd-dashboard/` or calling a
+dashboard tool.
 
 ## The rule
 
