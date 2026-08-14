@@ -19,16 +19,11 @@ description: >
 
 # Skill: classify-size
 
-Atomic skill — classifies a feature into XS/S/M/L/XL and fixes the result in
-`docs/features/<slug>/.size`, plus the pipeline **route** (`quick` / `standard` / `full`) in
-`docs/features/<slug>/.route`. This is the single source of size- and route-aware behaviour for
-the rest of the pipeline: later skills read `.size` to decide MVP vs Full output depth, and
-their handoffs read `.route` to decide how optional-stage skips resolve (auto-skip / offered /
-never — the Routes table in [`../_shared/size-matrix.md`](../_shared/size-matrix.md)).
+Atomic skill — it classifies a feature into XS/S/M/L/XL. It fixes the result in `docs/features/<slug>/.size`. It also fixes the pipeline **route** (`quick` / `standard` / `full`) in `docs/features/<slug>/.route`. This is the single source of size- and route-aware behaviour for the rest of the pipeline. Later skills read `.size` to decide MVP vs Full output depth. Their handoffs read `.route` to decide how optional-stage skips resolve (auto-skip / offered / never — the Routes table in [`../_shared/size-matrix.md`](../_shared/size-matrix.md)).
 
-This skill is the **canonical owner of the size matrix** → [`../_shared/size-matrix.md`](../_shared/size-matrix.md). The classification rules, the MVP-vs-Full table, and the one-sentence rule all live there; this skill only runs the dialogue and writes the file.
+This skill is the **canonical owner of the size matrix** → [`../_shared/size-matrix.md`](../_shared/size-matrix.md). The classification rules, the MVP-vs-Full table, and the one-sentence rule all live there. This skill only runs the dialogue and writes the file.
 
-**Called inline by `specify`.** When `.size` is absent at the start of the backbone, `specify` step 1 runs this protocol inline (same signals, same file, folded into one bundled question) — this skill stays the standalone utility for classifying up front or **re-classifying when scope changes**; the protocol is never duplicated elsewhere.
+**Called inline by `specify`.** When `.size` is absent at the start of the backbone, `specify` step 1 runs this protocol inline (same signals, same file, folded into one bundled question). This skill stays the standalone utility for classifying up front or **re-classifying when scope changes**. The protocol is never duplicated elsewhere.
 
 ## Owner
 
@@ -38,37 +33,37 @@ PM or Tech Lead (driver of the intake phase). An architect may escalate S → M 
 
 - `<slug>` — feature slug.
 - (Optional) the idea / intake note — for a rough starting hint. The skill works without it.
-- (Optional, project-level override) `docs/.skill-context/sdd-classify-size/SKILL.md` — if it exists, read it and treat its rules as project-level overrides (conflict → they win; apply to all outputs) → [`../_shared/skill-context.md`](../_shared/skill-context.md). Absent → no-op (defaults apply).
+- (Optional, project-level override) `docs/.skill-context/sdd-classify-size/SKILL.md`. If it exists, read it and treat its rules as project-level overrides. On conflict they win. Apply them to all outputs → [`../_shared/skill-context.md`](../_shared/skill-context.md). If absent, do nothing (defaults apply).
 
 ## Protocol
 
-1. **Check existing.** `test -f docs/features/<slug>/.size` (and `.route`). If `.size` exists, read both values and ask «`.size` is currently `<X>` (route `<Y>`). Reclassify?». On «no» — STOP (suggest editing, don't overwrite silently). Re-running just to switch the route is a legal, common case — mid-flight override per the Routes table.
+1. **Check existing.** `test -f docs/features/<slug>/.size` (and `.route`). If `.size` exists, read both values and ask «`.size` is currently `<X>` (route `<Y>`). Reclassify?». On «no» — STOP (suggest editing, do not overwrite silently). Re-running just to switch the route is a legal, common case — mid-flight override per the Routes table.
 2. **Ask the four signals** — one `AskUserQuestion` each, phrased per [`../_shared/ask-style.md`](../_shared/ask-style.md):
    - **PR count** — `1` / `2–5` / `5–15` / `15+`.
    - **Time to merge the main part** — `≤1 day` / `~1 week` / `1–2 sprints` / `>1 month`.
    - **New module / new API / DB migration** — `none` / `one of three` / `two of three` / `all three`.
    - **Breaking changes for consumers** — `no` / `internal only` / `public clients`.
-3. **Map to a class** using the table in [`../_shared/size-matrix.md`](../_shared/size-matrix.md). On an edge case, name the dominant signal aloud («M because it adds a new API + 1–2 sprints, even though PR count is on the S/M border»). For an all-maximums answer, ask explicitly «needs a separate roadmap?» → yes = XL.
+3. **Map to a class** with the table in [`../_shared/size-matrix.md`](../_shared/size-matrix.md). On an edge case, name the dominant signal aloud («M because it adds a new API + 1–2 sprints, even though PR count is on the S/M border»). For an all-maximums answer, ask explicitly «needs a separate roadmap?» → yes = XL.
 4. **Confirm size + route — ONE question.** Derive the default route from the size (**XS/S → `quick`, M → `standard`, L/XL → `full`** — the Routes table in [`../_shared/size-matrix.md`](../_shared/size-matrix.md)). Then one `AskUserQuestion`: «Classifying as `<size>` (<one-line rationale>) → route `<route>` (<one-line what the route does>). Lock both in?» — options: `Yes` / `Yes, but route <other>` / `No, I want size <X>` / `Reclassify`. Never a second question just for the route.
-5. **Write `.size` + `.route`.** Each one line, plain text — `.size` only `XS`/`S`/`M`/`L`/`XL`; `.route` only `quick`/`standard`/`full` — no comments, no frontmatter. `docs/features/<slug>/.size`, `docs/features/<slug>/.route`.
-6. **Re-sync the frontmatter mirrors (`.size` is the source of truth).** `feature_size:` lives in up to three places: the `.size` file (canonical) plus the `spec.md` and `sad.md` frontmatter (human-readable mirrors). For each of the two files that exists: same value → OK; different (a reclassification, or a hand-edited mirror) → **update the frontmatter to the new `.size` value** and say so — never leave a mirror stale; missing field → suggest adding `feature_size: <size>`. If the user insists a mirror is the right value, that's a reclassification — loop back to step 4 and re-confirm, then re-sync.
-7. **Structural self-check** — per [`../_shared/self-check.md`](../_shared/self-check.md): re-read the written files from disk and verify **3 items**: (1) `.size` holds exactly one of {XS, S, M, L, XL} (one bare word, no trailing content); (2) `.route` holds exactly one of {quick, standard, full}; (3) both frontmatter mirrors (`feature_size:` in `spec.md` and `sad.md`, for whichever exists) match `.size`. Fix + re-check ≤2 cycles; surface anything unresolved.
-8. **Propose commit + handoff.** `size: <slug> classified as <size> (route <route>)` (or fold into the intake commit if a wrapper called this). Then **emit the stage-handoff block** per [`../_shared/handoff.md`](../_shared/handoff.md) (utility variant) — *What I did* (incl. «self-check: 3/3 pass») + *Review* (`.size`, `.route`) + *Run next*: resume your backbone stage (e.g. `/sdd:specify <slug>`); `/clear` optional.
+5. **Write `.size` + `.route`.** Each one line, plain text. `.size` only `XS`/`S`/`M`/`L`/`XL`. `.route` only `quick`/`standard`/`full`. No comments, no frontmatter. Paths: `docs/features/<slug>/.size`, `docs/features/<slug>/.route`.
+6. **Re-sync the frontmatter mirrors (`.size` is the source of truth).** `feature_size:` lives in up to three places: the `.size` file (canonical) plus the `spec.md` and `sad.md` frontmatter (human-readable mirrors). For each of the two files that exists: same value → OK. Different (a reclassification, or a hand-edited mirror) → **update the frontmatter to the new `.size` value** and say so — never leave a mirror stale. Missing field → suggest adding `feature_size: <size>`. If the user insists a mirror holds the right value, that is a reclassification — return to step 4, re-confirm, then re-sync.
+7. **Structural self-check** — per [`../_shared/self-check.md`](../_shared/self-check.md): re-read the written files from disk and check **3 items**. (1) `.size` holds exactly one of {XS, S, M, L, XL} (one bare word, no trailing content). (2) `.route` holds exactly one of {quick, standard, full}. (3) Both frontmatter mirrors (`feature_size:` in `spec.md` and `sad.md`, for whichever exists) match `.size`. Fix + re-check ≤2 cycles. Surface anything unresolved.
+8. **Propose commit + handoff.** `size: <slug> classified as <size> (route <route>)` (or fold into the intake commit if a wrapper called this). Then **emit the stage-handoff block** per [`../_shared/handoff.md`](../_shared/handoff.md) (utility variant) — *What I did* (incl. «self-check: 3/3 pass») + *Review* (`.size`, `.route`) + *Run next*: resume your backbone stage (e.g. `/sdd:specify <slug>`). `/clear` optional.
 
 ## Definition of Done
 
-- `docs/features/<slug>/.size` holds exactly one of XS/S/M/L/XL; `docs/features/<slug>/.route` holds exactly one of quick/standard/full.
+- `docs/features/<slug>/.size` holds exactly one of XS/S/M/L/XL. `docs/features/<slug>/.route` holds exactly one of quick/standard/full.
 - The user confirmed the classification — size AND route in one question (never silent, never two questions).
-- If `spec.md` / `sad.md` exist, their `feature_size:` mirrors match `.size` (no drift; `.size` is the source of truth).
+- If `spec.md` / `sad.md` exist, their `feature_size:` mirrors match `.size` (no drift — `.size` is the source of truth).
 
 ## Anti-patterns
 
-- **Self-classify without confirmation.** The skill proposes; the user locks it.
+- **Self-classify without confirmation.** The skill proposes. The user locks it.
 - **Optimistic «it's probably S».** Run the four questions — a week later the skipped design hurts.
 - **Skipping the module/API/migration and breaking-change questions.** They are what separates S from M.
 - **Overwriting an existing `.size` / `.route` without asking.**
 - **A multi-line `.size` / `.route` with comments.** Wrappers grep them cheaply — keep each one bare word.
-- **A second question just for the route.** Size + route confirm together; the route option rides in the same `AskUserQuestion`.
+- **A second question just for the route.** Size + route confirm together. The route option rides in the same `AskUserQuestion`.
 
 ## Example invocation
 
