@@ -334,6 +334,29 @@ def main() -> int:
           "human-facing doc, or translate it (see _shared/ask-style.md § Language): "
           + ", ".join(lang_offenders))
 
+    # --- settings keys: README's yaml block == settings.md's yaml block ---
+    # settings.md owns the documented defaults; README reprints them for the reader. The two
+    # drifted silently once already (dashboard_enabled / dashboard_port were referenced by the
+    # dashboard section but absent from README's block, so a reader who opened the config
+    # section could not find the key they were told to set). Same key set, both directions.
+    print("== settings keys ==")
+
+    def _yaml_keys(path: Path, start_marker: str) -> set[str]:
+        text = path.read_text()
+        i = text.find(start_marker)
+        if i == -1:
+            return set()
+        block = text[i:text.find("\n```", i)]
+        return set(re.findall(r"^([a-z_]+):", block, re.M))
+
+    set_keys = _yaml_keys(ROOT / "skills/implement/references/settings.md", "interview_depth: medium")
+    rd_keys = _yaml_keys(ROOT / "README.md", "interview_depth: medium")
+    check(bool(set_keys) and set_keys == rd_keys,
+          f"README documents the same {len(set_keys)} settings keys as settings.md",
+          f"README's settings block drifted from settings.md — "
+          f"missing from README: {sorted(set_keys - rd_keys) or 'none'}; "
+          f"extra in README: {sorted(rd_keys - set_keys) or 'none'}")
+
     # --- every stage ends with the handoff block (the v1.8.1 output contract) ---
     # The phrase «stage-handoff block» is the contract wording every spine's final step uses;
     # a bare `handoff.md` substring (e.g. in a passing mention) is not enough to prove the

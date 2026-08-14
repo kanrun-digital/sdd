@@ -144,6 +144,7 @@ flowchart LR
         FX[fix]
         LP[loop]
         ST[start]
+        RM[roadmap]
     end
     CL -.-> GL -.-> D
     SH --> done([shipped: PR + changelog])
@@ -216,6 +217,10 @@ open PR. Merging to main stays your call.
 - **start** — opens the [visual dashboard](#the-visual-dashboard-opt-in) (opt-in; needs
   `dashboard_enabled: true` + Bun). It prints the loopback URL with this session's capability
   token.
+- **roadmap** — the portfolio layer above the per-feature flow: one living `docs/roadmap.md`
+  with Now / Next / Later / Shipped. Run it to capture, prioritise or re-render the board.
+  `specify` and `ship` update it on their own, so it rarely needs a manual run — full detail in
+  [The roadmap](#the-roadmap-the-portfolio-layer) below.
 
 ### Close the outer loop — evolve (repo-level learning)
 
@@ -373,19 +378,27 @@ profile states which model, how much reasoning effort, and which agents it spawn
 
 ```yaml
 # a skill's frontmatter
-model: opus        # haiku | sonnet | opus | fable | inherit (fable — reachable via judgment_model / env, agents keep tier-alias defaults)
+model: inherit     # every shipped skill and agent is `inherit` — it runs on the session model
 effort: high       # low | medium | high | xhigh | max
 agents: [critic]   # the agents this skill spawns
 ```
 
-The **kind of work** sets the model, not taste:
+**Every shipped skill and agent declares `model: inherit`.** That is deliberate, and it is what
+makes SDD host-portable: the skill runs on whatever model your session already uses. The policy
+below is expressed in **portable tier-labels** (`cheap` / `balanced` / `judgment`) rather than
+hard-coded model names. On Anthropic hosts the tiers map to `haiku` / `sonnet` / `opus` (or
+`fable` for the Mythos tier). On non-Anthropic backends — Kimi, GLM, ChatGPT — the host's own
+model settings resolve each tier. You pick the tier with `judgment_model` / `model_<role>` in
+`.claude/sdd.local.md`, or with the host's config; you never edit a skill's frontmatter.
 
-| Kind of work | Model | Effort | Who |
+The **kind of work** sets the tier, not taste:
+
+| Kind of work | Tier | Effort | Who |
 |---|---|---|---|
-| Judgment (spec, design, review, critique, ambiguity, strategy) | `opus` | `high` | specify, clarify, design, review · `reviewer` / `critic` / `devils-advocate` / `strategist` / `analyst` |
-| Execution (write tests, write code) | `sonnet` | `medium` → `high` on escalation | `test-author`, `implementer` |
-| Research / gathering (+ web) | `sonnet` | `medium` | `researcher` (competitive / adjacent-solution research) |
-| Search / scan / derivation | `haiku` / `inherit` | `low` / `medium` | `explorer`, data-model, api, sequences, tasks |
+| Judgment (spec, design, review, critique, ambiguity, strategy) | `judgment` | `high` | specify, clarify, design, review · `reviewer` / `critic` / `devils-advocate` / `strategist` / `analyst` |
+| Execution (write tests, write code) | `balanced` | `medium` → `high` on escalation | `test-author`, `implementer` |
+| Research / gathering (+ web) | `balanced` | `medium` | `researcher` (competitive / adjacent-solution research) |
+| Search / scan / derivation | `cheap` | `low` / `medium` | `explorer`, data-model, api, sequences, tasks |
 
 The nine agents live in `agents/`: **explorer** (brownfield scan), **test-author** (failing
 tests), **implementer** (makes them pass), **reviewer** (independent review), **critic**
@@ -415,13 +428,14 @@ The pipeline **auto-creates** this per-project settings file (YAML frontmatter).
 **documented defaults** the first time a skill needs it. That is normally `specify` at the
 start. It also adds the file to `.gitignore`. The file is per-developer. The file is
 **self-documenting**: every key carries its default, its allowed values, and a one-line
-explanation inline. Edit it to change behaviour. Two keys are **plugin-wide**.
+explanation inline. Edit it to change behaviour. Three keys are **plugin-wide**.
 `interview_depth` is read by the Q&A skills (`specify` / `clarify` / `design`) to
 pre-select the depth dial. `artifact_language` is read by every artifact-writing skill.
 It sets the language pipeline documents are written in. It changes prose only. Section
 headings, frontmatter and machine tokens stay English (full rule →
-[`skills/_shared/artifact-language.md`](./skills/_shared/artifact-language.md)). The rest
-of the keys configure the `implement` engine:
+[`skills/_shared/artifact-language.md`](./skills/_shared/artifact-language.md)).
+`conversation_language` is read by every skill that asks a question. It sets the language
+those questions are asked in. The rest of the keys configure the `implement` engine:
 
 > **Two language switches, deliberately independent.** `conversation_language` is what the
 > pipeline **talks to you in** (every `AskUserQuestion` — its question text and option
@@ -458,6 +472,8 @@ judgment_model: opus       # opus | fable — one switch for all judgment agents
 effort_test_author: medium # raised to high on escalation / for L-XL features
 effort_implementer: medium
 effort_reviewer: high
+dashboard_enabled: false   # true → opt into the visual dashboard (needs Bun); see The visual dashboard
+dashboard_port: 4178       # integer — loopback port the dashboard binds (scans upward if busy)
 ```
 
 Command detection is a stack-agnostic cascade: settings override → Makefile targets →
@@ -484,6 +500,14 @@ files. So use the **same slug at every stage**.
 /sdd:implement     checkout-discounts
 /sdd:review        checkout-discounts   # independent review of the whole change
 /sdd:ship          checkout-discounts   # verify it runs, changelog, PR
+```
+
+Three more you call by hand when you want them — none is part of the line:
+
+```text
+/sdd:refine        checkout-discounts   # optional 2nd pass over the plan, after /sdd:tasks
+/sdd:loop          checkout-discounts   # polish one artifact until its quality gate passes
+/sdd:evolve                             # repo-level: turn _fixes/ + _review/ into skill rules
 ```
 
 > **`/clear` between stages** — each stage is gated. It re-reads its inputs from disk. It
@@ -564,6 +588,10 @@ skills/<name>/    SKILL.md spine + references/ (heavy detail) + templates/ (outp
 .mcp.json         declares the sdd-dashboard MCP server (auto-starts at session open; opt-in via dashboard_enabled)
 server/           the dashboard MCP server (Bun + TypeScript): server.ts (MCP stdio + Bun.serve HTTP/WS), http.ts (routing + gating, testable), state.ts (disk→pipeline derivation), channel.ts (dashboard_* tools + command allowlist), paths.ts (docs/ scoping), frontmatter.ts (shared parser) + tests/ (bun test)
 dashboard/        the browser UI (vanilla JS, terminal-green, read-only): index.html + app.js + style.css + vendor/ (marked, mermaid — vendored, offline; mermaid lazy-loads)
+evals/            end-to-end skill scenarios (prompt + fixture + rubric) scored by an LLM judge — run.sh, judge-prompt.md
+.github/          workflows/validate.yml — runs validate_plugin.py + the installer smoke test on Linux and macOS
+assets/           logo (svg + png)
+CONTRIBUTING.md   the per-change checklist (links resolve, invocation form, handoff block, single-source taxonomy)
 ```
 
 ## Roadmap
