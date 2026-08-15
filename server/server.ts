@@ -25,6 +25,14 @@ import { frontmatter, configValue } from './frontmatter.ts'
 import { createFetchHandler } from './http.ts'
 import { DASHBOARD_TOOLS, handleDashboardTool, createAskRegistry, type Frame } from './channel.ts'
 import { createDocsWatcher } from './watch.ts'
+import {
+  selectDriver,
+  claudeChannelDriver,
+  codexExecDriver,
+  codexAppServerDriver,
+  type Driver,
+} from './driver.ts'
+import { spawnSync } from 'child_process'
 
 // ---- identity + config -----------------------------------------------------
 
@@ -47,11 +55,13 @@ function log(msg: string): void {
 interface DashConfig {
   enabled: boolean
   port: number
+  drive: string
 }
 
 function readConfig(): DashConfig {
   let enabled = process.env.SDD_DASHBOARD_ENABLED === '1' || process.env.SDD_DASHBOARD_ENABLED === 'true'
   let port = DEFAULT_PORT
+  let drive = process.env.SDD_DASHBOARD_DRIVE || 'auto'
   const project = getProjectDir()
   if (project) {
     try {
@@ -60,13 +70,15 @@ function readConfig(): DashConfig {
       // Settings values carry inline `# comment` docs + optional quotes — normalize.
       const enabledVal = configValue(fm.dashboard_enabled ?? '')
       const portVal = configValue(fm.dashboard_port ?? '')
+      const driveVal = configValue(fm.dashboard_drive ?? '')
       if (enabledVal === 'true') enabled = true
       if (/^\d+$/.test(portVal)) port = Number(portVal)
+      if (driveVal) drive = driveVal
     } catch {
       // no settings file — fall back to env/default
     }
   }
-  return { enabled, port }
+  return { enabled, port, drive }
 }
 
 // ---- lifecycle hygiene (mirrors Telegram server.ts) ------------------------
@@ -142,6 +154,58 @@ function writeUrlFile(): void {
   } catch {}
 }
 
+// ---- driver (how a click reaches an agent) ---------------------------------
+//
+// Resolved lazily: the HTTP listener can bind before the MCP peer has told us
+// who it is, and on a non-Claude host it may never tell us at all.
+
+let codexProbe: boolean | null = null
+function hasCodex(): boolean {
+  if (codexProbe !== null) return codexProbe
+  try {
+    const r = spawnSync('codex', ['--version'], { stdio: 'ignore', timeout: 4000 })
+    codexProbe = r.status === 0
+  } catch {
+    codexProbe = false
+  }
+  return codexProbe
+}
+
+let cachedDriver: Driver | null = null
+let cachedFor = ''
+
+function resolveDriver(): Driver {
+  const setting = readConfig().drive
+  const clientName = (() => {
+    try {
+      return mcp.getClientVersion()?.name ?? null
+    } catch {
+      return null
+    }
+  })()
+  const key = `${setting}|${clientName ?? ''}`
+  if (cachedDriver && cachedFor === key) return cachedDriver
+
+  const driver = selectDriver({
+    setting,
+    clientName,
+    hasCodex: setting === 'claude' ? false : hasCodex(),
+    claude: () =>
+      claudeChannelDriver((params) => {
+        void mcp.notification({ method: 'notifications/claude/channel', params })
+      }),
+    codexExec: () =>
+      codexExecDriver({ projectDir: () => getProjectDir(), broadcast, log }),
+    codexAppServer: () => codexAppServerDriver({ broadcast, log }),
+  })
+  if (!cachedDriver || cachedDriver.kind !== driver.kind) {
+    log(`driver: ${driver.kind} — ${driver.label}`)
+  }
+  cachedDriver = driver
+  cachedFor = key
+  return driver
+}
+
 const handleHttp = createFetchHandler({
   token: TOKEN,
   sessionId: SESSION_ID,
@@ -149,9 +213,7 @@ const handleHttp = createFetchHandler({
   boundPort: () => boundPort,
   readConfig,
   broadcast,
-  notify: (params) => {
-    void mcp.notification({ method: 'notifications/claude/channel', params })
-  },
+  driver: resolveDriver,
   requestId: () => randomBytes(6).toString('hex'),
   asks,
 })

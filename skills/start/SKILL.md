@@ -15,19 +15,21 @@ description: >
   token for this session. So start only READs that file and prints the URL. The common path
   makes no MCP tool call and no channel round-trip. Opt-in: the skill requires
   dashboard_enabled: true in .claude/sdd.local.md. It also requires Bun installed. If either
-  is missing, it prints guidance and exits cleanly. The dashboard channel is Claude Code-only;
-  on Codex or Cursor this skill prints a compatibility note and stops without reading Claude
-  state or calling dashboard tools. Pure-markdown skills are unaffected.
+  is missing, it prints guidance and exits cleanly. Runs on any host: reading is host-independent,
+  and how a click drives an agent is chosen by dashboard_drive (Claude channel / headless codex exec
+  / Codex live thread / copy-to-clipboard). Pure-markdown skills are unaffected.
 ---
 
 # Skill: start
 
-Opens the **SDD visual dashboard**. It is a local, loopback-only browser UI. The `sdd-dashboard` MCP server (Bun + `Bun.serve()`) serves it, embedded in the same process that holds this session's MCP channel. The dashboard reads `docs/features/` from disk and renders every artifact. It also **drives the pipeline back into this session** — the point of it. A click in the browser sends a validated `/sdd:<skill> <slug>` command through the channel. This Claude runs it. Progress streams back to the browser live.
+Opens the **SDD visual dashboard**. It is a local, loopback-only browser UI. The `sdd-dashboard` MCP server (Bun + `Bun.serve()`) serves it, embedded in the same process that holds this session's MCP channel. The dashboard reads `docs/features/` from disk and renders every artifact. It also **drives the pipeline back into this session** — the point of it. A click in the browser sends a validated `/sdd:<skill> <slug>` command to the host's **driver**. Progress streams back to the browser live.
 
-> **Host boundary.** That live channel is implemented for Claude Code only. The shared skills tree
-> is also installed by Codex/Cursor, so this skill has an explicit non-Claude compatibility branch:
-> report that the dashboard is unavailable on this host, point to the normal markdown pipeline,
-> and stop. Do not inspect or create Claude state as a workaround.
+> **Every host, two halves.** Reading is host-independent — the server derives each feature from
+> `docs/` on disk. Driving is not, so it sits behind a driver selected by `dashboard_drive`:
+> the Claude channel into this session, a headless `codex exec` run, the live Codex thread over
+> its app-server socket, or `copy` (the browser hands you the command; nothing runs). A driver
+> that cannot deliver degrades to `copy` **with the reason shown** — never a silent no-op.
+> Report the active driver so the user knows which of those a click will do.
 
 `start` is **not** "start the server". The server auto-starts when the session opens (declared in `.mcp.json`). On boot it resolves the project from `CLAUDE_PROJECT_DIR`. It binds the HTTP listener. It **writes the dashboard URL to `~/.claude/sdd-dashboard/current.url`**. So on the common path `start` just **reads that file and prints the URL**. That is a plain file read — no MCP tool, no channel message.
 
@@ -45,14 +47,13 @@ The developer running the session. No artifact is produced — this is a connect
 
 ## Protocol
 
-0. **Gate on host before any file/tool access.** If the current host is Codex or Cursor, print:
-   «The SDD visual dashboard currently requires Claude Code's live channel protocol. It is not
-   installed or started on this host; use the normal SDD skills and artifacts instead.» Then
-   emit the utility handoff (*What I did*: reported the host boundary; *Review*: no file changed;
-   *Run next*: use the host-mapped `specify` command or resume the backbone) and **stop**. Do not
-   read/create `.claude/sdd.local.md`, do not inspect
-   `~/.claude/sdd-dashboard/current.url`, do not check Bun, and do not call a dashboard MCP tool.
-1. **Gate on opt-in (Claude Code only).** Read `.claude/sdd.local.md`.
+0. **Confirm the server is registered on this host.** Claude Code declares it in the plugin's
+   `.mcp.json` — nothing to do. On Codex/Cursor it is registered by hand: if no `sdd-dashboard`
+   MCP server is configured and `~/.claude/sdd-dashboard/current.url` is absent, print the
+   registration line `install.sh` prints (`codex mcp add sdd-dashboard -- bun run --cwd
+   <skills-root>/sdd/server --silent start`, or the equivalent `.cursor/mcp.json` entry), then
+   **stop**. Never edit the host's MCP config yourself — that is persistent host configuration.
+1. **Gate on opt-in.** Read `.claude/sdd.local.md`.
    - **Absent** → the dashboard is opt-in and off by default. Auto-create the file with the documented
      defaults per [`../implement/references/settings.md`](../implement/references/settings.md). The defaults
      include `dashboard_enabled: false` + `dashboard_port: 4178`. Then tell the user: «The dashboard is
@@ -88,19 +89,21 @@ The developer running the session. No artifact is produced — this is a connect
 
 ## Definition of Done
 
-- Non-Claude branch: the compatibility boundary was printed and the skill stopped without any
-  Claude-state read/write, Bun check, or MCP call; **or** the Claude branch below completed.
-- Claude branch: `dashboard_enabled: true` confirmed (or guidance printed + stopped).
-- Claude branch: the dashboard URL printed — read from `~/.claude/sdd-dashboard/current.url` on the common path, or (fallback only, when that file is absent) obtained from `dashboard_handshake` after a Bun check.
-- Claude branch: the queued/busy/`--depth=easy` behaviour stated so the user knows the dashboard is a driver, not a remote control.
+- The server is registered on this host (or the registration line was printed and the skill stopped).
+- `dashboard_enabled: true` confirmed (or guidance printed + stopped).
+- The dashboard URL printed — read from `~/.claude/sdd-dashboard/current.url` on the common path, or (fallback only, when that file is absent) obtained from `dashboard_handshake` after a Bun check.
+- **The active driver named**, and with it what a click actually does here: queue into this
+  session, start a headless run, or copy the command. A user who thinks a click runs a stage when
+  it only fills the clipboard has been misled by this skill.
+- The queued/busy/`--depth=easy` behaviour stated so the user knows the dashboard is a driver, not a remote control.
 - The stage-handoff block emitted (utility variant).
-- This skill writes no artifact. The DoD gates above (non-Claude fail-closed boundary, or Claude
-  opt-in + URL provenance) are its **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)).
+- This skill writes no artifact. The DoD gates above (registration, opt-in, URL provenance, driver
+  named) are its **structural self-check** ([`../_shared/self-check.md`](../_shared/self-check.md)).
 
 ## Anti-patterns
 
-- **Trying to bootstrap the Claude dashboard from Codex/Cursor.** The bundled server's inbound
-  channel is Claude-specific. Print the compatibility note and stop; never fabricate an MCP setup.
+- **Editing the host's MCP config to register the server.** Print the line; let the user run it.
+- **Reporting «the dashboard drives your session» on a copy-only host.** Name the real driver.
 - **Calling `dashboard_handshake` when `current.url` already exists.** The common path is a plain file
   read — the server is already bound. Only hand over via the tool when the URL file is absent.
 - **Treating `start` as "boot the server".** The server auto-starts via `.mcp.json`. `start` only prints
@@ -116,5 +119,5 @@ The developer running the session. No artifact is produced — this is a connect
 - [`../implement/references/settings.md`](../implement/references/settings.md) — `.claude/sdd.local.md`,
   including the `dashboard_enabled` / `dashboard_port` keys this skill gates on.
 - [`../_shared/handoff.md`](../_shared/handoff.md) — the stage-handoff block (utility variant) this skill emits.
-- [`../_shared/tool-adapters.md`](../_shared/tool-adapters.md) — Codex/Cursor mapping for the Claude-specific
-  mechanisms (the dashboard channel is Claude Code-only; non-Claude hosts use the markdown skills directly).
+- [`../_shared/tool-adapters.md`](../_shared/tool-adapters.md) — Codex/Cursor mapping, including the
+  dashboard driver table (which driver `auto` picks per host, and what a click does under each).

@@ -11,6 +11,7 @@ import { join } from 'path'
 import { setProjectDir } from '../paths.ts'
 import { createFetchHandler, tokenOk, loopbackOk, type HttpCtx } from '../http.ts'
 import { createAskRegistry, type AskRegistry, type Frame } from '../channel.ts'
+import { claudeChannelDriver } from '../driver.ts'
 
 const PROJECT_A = join(import.meta.dir, 'fixtures', 'project-a')
 const TOKEN = 'test-token'
@@ -38,7 +39,9 @@ function makeFake(): Fake {
     boundPort: () => 4178,
     readConfig: () => ({ enabled: true, port: 4178 }),
     broadcast: (f) => frames.push(f),
-    notify: (p) => notifications.push(p),
+    // The default fake host is Claude Code — the existing suite asserts the
+    // channel-notification path. driver.test.ts covers the other three.
+    driver: () => claudeChannelDriver((p) => notifications.push(p)),
     requestId: () => 'req-fixed',
     asks,
   }
@@ -206,7 +209,17 @@ describe('POST /api/answer', () => {
     expect(fake.notifications).toHaveLength(1)
     expect(fake.notifications[0].content).toContain('"GraphQL"')
     expect(fake.notifications[0].meta).toMatchObject({ kind: 'answer', ask_id: 'a1', slug: 'spec-only', option: 1 })
-    expect(fake.frames).toEqual([{ type: 'answer', ask_id: 'a1', option: 1, label: 'GraphQL' }])
+    expect(fake.frames).toEqual([
+      {
+        type: 'answer',
+        ask_id: 'a1',
+        option: 1,
+        label: 'GraphQL',
+        status: 'queued',
+        driver: 'claude-channel',
+        detail: null,
+      },
+    ])
     // single-use: a second answer finds nothing
     expect((await handle(post(`/api/answer?${T}`, { ask_id: 'a1', option: 0 })))!.status).toBe(404)
     expect(fake.notifications).toHaveLength(1)

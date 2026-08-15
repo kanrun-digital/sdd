@@ -185,13 +185,20 @@ def main() -> int:
           "install.sh help works when piped to bash -s",
           "install.sh usage must not read $0: under `curl … | bash -s`, $0 is `bash`, not the script")
 
+    # The dashboard runs on every host now (driver.ts), so the old "fail closed off Claude"
+    # rule is gone. What replaces it is the honesty contract: on a host whose driver cannot
+    # deliver, a click only fills the clipboard — the skill must say which driver is active,
+    # and it must never rewrite the host's MCP config to make itself work.
     start_text = (ROOT / "skills/start/SKILL.md").read_text()
-    check("Gate on host before any file/tool access" in start_text
-          and "read/create `.claude/sdd.local.md`" in start_text
-          and "do not call a dashboard MCP tool" in start_text,
-          "start skill fails closed on Codex/Cursor before touching Claude dashboard state",
-          "skills/start must explicitly stop on non-Claude hosts before reading/creating Claude "
-          "state or calling the Claude-channel dashboard MCP")
+    check("Confirm the server is registered on this host" in start_text
+          and "Never edit the host's MCP config yourself" in start_text,
+          "start skill prints the MCP registration instead of writing host config",
+          "skills/start must tell the user how to register the dashboard server and stop, "
+          "never edit the host's MCP configuration itself")
+    check("The active driver named" in start_text,
+          "start skill names the active driver in its DoD",
+          "skills/start must name the active driver — a user who thinks a click runs a stage "
+          "when it only copies the command has been misled")
 
     VALID_MODELS = {"haiku", "sonnet", "opus", "fable", "inherit"}
     VALID_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
@@ -705,7 +712,7 @@ def main() -> int:
     # server/ sources — the seven modules + the Bun package manifest.
     for rel in ("server/package.json", "server/server.ts", "server/state.ts",
                 "server/channel.ts", "server/paths.ts", "server/http.ts",
-                "server/frontmatter.ts", "server/watch.ts"):
+                "server/frontmatter.ts", "server/watch.ts", "server/driver.ts"):
         check((ROOT / rel).exists(), f"{rel} exists", f"{rel} is missing")
     # The server package must declare the MCP SDK dependency + a `start` script.
     spkg = ROOT / "server" / "package.json"
