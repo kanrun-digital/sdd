@@ -48,7 +48,7 @@ export interface FeatureSummary {
   specStatus: string | null
   stage: string // id of the furthest 'done' stage, or 'created'
   stages: Stage[]
-  progress: { done: number; total: number; pct: number } | null
+  progress: { done: number; total: number; blocked: number; pct: number } | null
   reviewVerdict: 'PASS' | 'CHANGES REQUESTED' | null
   surfaces: string[]
   shipped: boolean
