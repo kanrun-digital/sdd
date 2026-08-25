@@ -7,3 +7,4 @@
 | T3 | Handler | dev | in progress |
 | T4 | Wire-up | dev | todo |
 | T5 | Docs | dev | — |
+| T6 | Loyalty sync | dev | blocked(OQ-1) |
