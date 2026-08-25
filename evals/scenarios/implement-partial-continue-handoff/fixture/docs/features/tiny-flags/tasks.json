@@ -1,0 +1,32 @@
+{
+  "slug": "tiny-flags",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Implement isEnabled lookup for registered flags",
+      "layer": "domain",
+      "deps": [],
+      "acs": ["AC-01"],
+      "dod": "isEnabled returns true for a registered enabled flag, proven by a unit test",
+      "files_hint": ["src/flags.js", "src/flags.test.js"]
+    },
+    {
+      "id": "T2",
+      "title": "Count flag queries for audit",
+      "layer": "domain",
+      "deps": [],
+      "acs": ["AC-03"],
+      "dod": "every isEnabled call increments an inspectable usage count, proven by a unit test",
+      "files_hint": ["src/flags.js", "src/flags.test.js"]
+    },
+    {
+      "id": "T3",
+      "title": "Expose usage counts helper for tests",
+      "layer": "tests",
+      "deps": ["T2"],
+      "acs": ["AC-03"],
+      "dod": "a helper returns the per-flag usage count, proven by a unit test",
+      "files_hint": ["src/flags.js", "src/flags.test.js"]
+    }
+  ]
+}

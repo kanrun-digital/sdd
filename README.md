@@ -149,8 +149,10 @@ wrote, so you can check them at the gate. *Run next* gives **`/clear`** and then
 
 The `/clear` matters. Each stage is gated and **re-reads its inputs from disk**. It needs no
 carryover. Clearing keeps the context small. It also stops one stage's chatter from drifting
-into the next. (Loop-backs are the exception. When `review` bounces back to `implement`, you
-stay in context to iterate. Utilities make `/clear` optional.) It looks like this:
+into the next. (Loop-backs are the exception. When `review` bounces back to `implement` — and
+when an `implement` run halts or is interrupted with tasks remaining and continues with
+`/sdd:implement` — you stay in context to iterate. Utilities make `/clear` optional.) It looks
+like this:
 
 ```md
 ## ✅ specify — checkout-discounts
@@ -407,6 +409,10 @@ task** — `SELECT → RED → GREEN → REFACTOR → GATE → COMMIT`. It write
 It proves the failure is for the right reason. It writes the minimal code to pass. It keeps
 refactors green. It runs the gate. It commits with `SDD-Task` / `SDD-AC` trailers.
 
+The engine is **resumable**: it reads `tasks/tracker.md` at start, skips `done` tasks, treats
+`blocked(<reason-ref>)` rows as out of scope, and hands off to `review` only when no actionable
+tasks remain — a halted or interrupted run continues with `/sdd:implement`, not `review`.
+
 There are three execution modes. They are chosen automatically from settings + DAG shape.
 Fallback is graceful:
 
@@ -576,7 +582,8 @@ Three more you call by hand when you want them — none is part of the line:
 
 > **`/clear` between stages** — each stage is gated. It re-reads its inputs from disk. It
 > ends by printing the next `/sdd:…` command to copy (the handoff block). Loop-backs
-> (`review` → `implement`) stay in context. Utilities make `/clear` optional.
+> (`review` → `implement`; `implement` → `implement` on a halted/partial run) stay in context.
+> Utilities make `/clear` optional.
 
 Three notes on the first run:
 

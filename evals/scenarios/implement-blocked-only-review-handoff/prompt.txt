@@ -1,0 +1,4 @@
+/sdd:implement tiny-flags --depth=easy
+
+Headless eval run — there is NO interactive user; never call AskUserQuestion. Follow the implement
+skill's protocol exactly as written, including the resume step and the Completion rule.
