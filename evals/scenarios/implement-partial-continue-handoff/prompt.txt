@@ -1,0 +1,6 @@
+/sdd:implement tiny-flags --depth=easy
+
+Headless eval run — there is NO interactive user; never call AskUserQuestion. Budget constraint
+for this eval: implement ONLY task T2, then stop the run and emit your handoff exactly as the
+implement skill's protocol and the handoff contract prescribe for a run that ends early. Do not
+implement T3.

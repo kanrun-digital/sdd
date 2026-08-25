@@ -48,7 +48,7 @@ export interface FeatureSummary {
   specStatus: string | null
   stage: string // id of the furthest 'done' stage, or 'created'
   stages: Stage[]
-  progress: { done: number; total: number; pct: number } | null
+  progress: { done: number; total: number; blocked: number; pct: number } | null
   reviewVerdict: 'PASS' | 'CHANGES REQUESTED' | null
   surfaces: string[]
   shipped: boolean
@@ -99,6 +99,7 @@ function normState(s: string): string {
 interface Tracker {
   total: number
   done: number
+  blocked: number
   started: boolean
 }
 
@@ -106,6 +107,7 @@ function parseTracker(text: string | null): Tracker | null {
   if (!text) return null
   let total = 0
   let done = 0
+  let blocked = 0
   let started = false
   for (const line of text.split('\n')) {
     const t = line.trim()
@@ -118,12 +120,15 @@ function parseTracker(text: string | null): Tracker | null {
     if (!/^T\d+$/i.test(id)) continue // skip header + separator rows
     const status = normState(inner[inner.length - 1])
     if (!status || status === '—' || status === '-') continue
+    // `blocked(<reason-ref>)` carries its reason in the cell — classify on the base word
+    const base = status.replace(/\(.*\)$/, '')
     total++
-    if (TERMINAL_STATES.has(status)) done++
-    if (STARTED_STATES.has(status)) started = true
+    if (TERMINAL_STATES.has(base)) done++
+    if (base === 'blocked') blocked++
+    if (STARTED_STATES.has(base)) started = true
   }
   if (total === 0) return null
-  return { total, done, started }
+  return { total, done, blocked, started }
 }
 
 // ---- review verdict --------------------------------------------------------
@@ -305,6 +310,7 @@ function summarize(slug: string, shipped: Set<string>): FeatureSummary {
     ? {
         done: sig.tracker.done,
         total: sig.tracker.total,
+        blocked: sig.tracker.blocked,
         pct: Math.round((sig.tracker.done / sig.tracker.total) * 100),
       }
     : null

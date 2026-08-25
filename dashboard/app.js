@@ -296,7 +296,7 @@ function renderFeatureList() {
 
     const stage = document.createElement('div');
     stage.className = 'fi-stage';
-    stage.textContent = f.shipped ? 'shipped' : f.stage + (f.progress ? `  ${f.progress.pct}%` : '');
+    stage.textContent = f.shipped ? 'shipped' : f.stage + (f.progress ? `  ${f.progress.pct}%` + (f.progress.blocked ? ` · ${f.progress.blocked} blocked` : '') : '');
     li.appendChild(stage);
 
     const mini = document.createElement('div');

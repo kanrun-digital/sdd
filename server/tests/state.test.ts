@@ -112,9 +112,17 @@ describe('project-a', () => {
   describe('tracker parsing', () => {
     it('counts T-rows only, normalizes states, ignores the — placeholder row', () => {
       const f = bySlug(features, 'in-progress')
-      // T1 done + T2 Done = 2 done; T3 "in progress" + T4 todo counted; T5 "—" ignored
-      expect(f.progress).toEqual({ done: 2, total: 4, pct: 50 })
+      // T1 done + T2 Done = 2 done; T3 "in progress" + T4 todo counted; T5 "—" ignored;
+      // T6 blocked(OQ-1) counted in total + blocked, not done
+      expect(f.progress).toEqual({ done: 2, total: 5, blocked: 1, pct: 40 })
       expect(stageStatus(f, 'implement')).toBe('done') // started ⇒ implement detected
+    })
+
+    it('blocked(<reason-ref>) normalizes to blocked — counted separately, never as done', () => {
+      const f = bySlug(features, 'in-progress')
+      // the reason suffix is stripped before classification — blocked(OQ-1) is one blocked row
+      expect(f.progress!.blocked).toBe(1)
+      expect(f.progress!.done).toBe(2)
     })
   })
 

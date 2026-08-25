@@ -18,8 +18,8 @@ marketplace). Cursor maps both forms per [`tool-adapters.md`](./tool-adapters.md
 2. **Review before continuing** — посилання на файли, які стадія створила/змінила і які треба
    глянути на цьому геті (реальні `docs/features/<slug>/…` шляхи — клікабельні/копіювані).
 3. **Run next** — спершу `/clear` (обов'язково для forward-переходу — наступна стадія перечитує
-   все з диска), потім наступна команда `/sdd:<next> <slug>` у **fenced-блоці** (копіюється в один
-   клік) + альтернатива-пропуск, якщо вона є.
+   все з диска; loop-back/continue — **без** `/clear`), потім наступна команда `/sdd:<next> <slug>`
+   у **fenced-блоці** (копіюється в один клік) + альтернатива-пропуск, якщо вона є.
 
 Це прибирає головний біль: «погано виводить, незручно копіювати і перевіряти».
 
@@ -88,8 +88,13 @@ Rules for filling it:
   - **`full`** — normal forward handoff. **Never** print an `↳ or` skip line.
   Missing `.route` → `standard`. The route steers handoffs only. A stage invoked directly always
   runs.
-- **Loop-back** (`review → implement` on `CHANGES REQUESTED`): **no `/clear`**. You stay in context
-  to iterate. *Run next* = `/sdd:implement <slug>` (fix). Then re-review the changed surface.
+- **Loop-back** — two cases, both **no `/clear`** (you stay in context to iterate/resume):
+  - `review → implement` on `CHANGES REQUESTED`: *Run next* = `/sdd:implement <slug>` (fix). Then
+    re-review the changed surface.
+  - `implement → implement` (continue) when the run ends with **actionable tasks remaining** — a
+    `stop_on_red` halt, a pre-dispatch BLOCK, or an interruption: *Run next* =
+    `/sdd:implement <slug>` (continue). Never offer `review` here. (Actionable = tracker status not
+    `done`/`blocked(...)` and all deps `done` — the Completion rule in the implement skill.)
 - **Terminal** (`ship`): there is no `/sdd` successor. *Run next* becomes **Done**: the PR
   command/URL + «merging to main is your call». Still print *What I did* + *Review* (the changelog
   + PR).
@@ -114,7 +119,7 @@ Rules for filling it:
 | `api` | `contracts/openapi.yaml` (+ `events.md`, `api-sync-report.md`) | `/sdd:tasks <slug>` |
 | `tasks` | `tasks/` + `tasks.json` | `/sdd:plan-tests <slug>` ↳ then `/sdd:implement <slug>` |
 | `plan-tests` | `test-plan.md` (or `spec.md` `## Test plan` for XS/S) | `/sdd:implement <slug>` |
-| `implement` | the committed diff (code + tests) + `tasks/tracker.md` | `/sdd:review <slug>` |
+| `implement` | the committed diff (code + tests) + `tasks/tracker.md` | state-dependent: no actionable tasks left → `/sdd:review <slug>` · actionable tasks remain → `/sdd:implement <slug>` (continue, no `/clear`) |
 | `review` | `_review/review-<date>.md` | `/sdd:ship <slug>` (PASS) · `/sdd:implement <slug>` (CHANGES, no `/clear`) |
 | `ship` | `CHANGELOG` + the PR | **Done** — PR command/URL. Merge is your call. |
 | `classify-size` | `.size` + `.route` | resume — e.g. `/sdd:specify <slug>` |

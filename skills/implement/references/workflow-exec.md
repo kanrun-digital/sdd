@@ -45,7 +45,7 @@ for (const layer of kahnLayers(TASKS)) {              // computed from deps
 ```
 
 - **Schema-validated verdicts.** Each stage returns a structured verdict (`RED_VERDICT { class: GOOD|BAD|false_pass|NON, failing_line }`, `GATE_VERDICT { unit, integration, lint, vet, gate_green }`, `REVIEW_VERDICT { ac_satisfied, issues[] }`). The orchestrator then branches on data, not prose.
-- **Fail drops the subtree.** A stage that throws (or returns `gate_green: false` past retries) drops that task to `null`. The engine removes it from `done`. Every transitively-dependent task is then skipped (its deps never complete). Independent branches finish unaffected. This is the workflow's advantage over a team halt.
+- **Fail drops the subtree.** A stage that throws (or returns `gate_green: false` past retries) drops that task to `null`. The engine removes it from `done`. Every transitively-dependent task is then skipped (its deps never complete). Independent branches finish unaffected. This is the workflow's advantage over a team halt. Each dropped task is recorded `blocked(red:<ladder-step>)` and its skipped dependents `blocked(dep:<TaskID>)` in `tracker.md`; after the workflow returns, the engine routes the handoff per the Completion rule in the skill spine — review only when the actionable set is empty.
 - **Parallel cap.** `parallel(...)` respects `max_parallel_agents` (the workflow runtime also caps concurrency). A wide layer queues the overflow.
 
 ## Serialization inside the workflow
