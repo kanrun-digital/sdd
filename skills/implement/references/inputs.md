@@ -12,6 +12,15 @@ The loaded `tasks.json` must satisfy the shape from the `tasks` skill:
 - each task: `id` (unique), `title`, `layer`, `deps` (array of existing ids), `acs` (array), `dod` (string), `files_hint` (array).
 - `deps` forms a DAG (no cycles) — verified in step 4. A cycle is a hard error: report the cycle and stop (it is a `tasks` bug, not an `implement` one).
 
+## Resume state — `tasks/tracker.md`
+
+`docs/features/<slug>/tasks/tracker.md` is the **resume ledger**: the engine writes it per task and **reads it at start** (spine step 5). It, not the chat history, is the source of truth for what a previous run already did:
+
+- **Tracker absent** → first run: every task is `todo`.
+- **`done`** → skip the task. Never re-implement it, never silently re-verify it — the whole-feature gate re-proves composition at the end.
+- **`blocked(<reason-ref>)`** → excluded from the actionable set (Completion rule in the spine). It stays blocked until the user says the reason is resolved; then flip the row to `todo` before dispatch.
+- **Bare `blocked` with no reason-ref** → malformed (the tracker template forbids it). Warn, treat it as blocked, and write the row back as `blocked(<reason-ref>)` with a named reason the next time the tracker is updated.
+
 ## Scaffold task sets (from `survey` greenfield)
 
 A `tasks.json` with `slug: "_scaffold"` and `layer: scaffold` tasks comes from `survey`'s greenfield foundation. It does not come from `tasks`. These tasks have **no feature `acs`**. They create the project skeleton (structure, baseline module, test harness, migration tooling, CI, conventions doc). Handle them specially:
@@ -50,5 +59,5 @@ A `layer: ui` task is present only when `sad.md` frontmatter `target_surfaces` d
 
 ## Repo state
 
-- Note the current branch. If `branch_strategy: feature` and the repo is on its default branch, create or switch to a feature branch before any commit (see [`settings.md`](./settings.md)).
+- Note the current branch. If `branch_strategy: feature` and the repo is on its default branch, create or switch to a feature branch before any commit (see [`settings.md`](./settings.md)). On resume, the feature branch from the previous run is reused, not recreated.
 - Do not touch unrelated dirty changes. Work only the files each task's `files_hint` names.

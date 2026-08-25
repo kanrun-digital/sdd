@@ -14,8 +14,19 @@ A test that stays red after a normal GREEN attempt is a signal, not a nuisance. 
 
 After the ladder is exhausted on a task:
 
-- **`stop_on_red: true`** (default) → halt the run. Report the blocked task, the failing line, and where in the ladder it stalled. No half-done work is committed.
-- **`stop_on_red: false`** → drop this task. **Auto-block its transitive dependents** (their deps will never complete). Continue the independent branches. The final summary lists every dropped + blocked task with the reason.
+- **`stop_on_red: true`** (default) → halt the run. **Mark the task `blocked(red:<ladder-step>)` in `tracker.md`** and auto-mark its transitive dependents `blocked(dep:<TaskID>)`. Report the failing line and where in the ladder it stalled. No half-done work is committed. Then emit the **continue** handoff (`/sdd:implement <slug>`, no `/clear`) — never the review handoff: actionable tasks remain (the Completion rule in the spine). Apply «Halted-run hygiene» below.
+- **`stop_on_red: false`** → drop this task: its tracker status becomes `blocked(red:<ladder-step>)`, its transitive dependents `blocked(dep:<TaskID>)` (their deps will never complete). Continue the independent branches. The final summary lists every blocked task **as it appears in the tracker**.
+
+The pre-dispatch **BLOCK** guard (`require_integration: always`, Docker absent) is the same shape: the affected tasks are unrunnable, not failed. If the user will not provide the missing tool, mark them `blocked(missing:docker)`; otherwise leave them `todo`. Either way the run ends with the **continue** handoff, not the review handoff.
+
+## Halted-run hygiene
+
+A halt is a pause, not an abort. Before emitting the continue handoff:
+
+1. **Keep the feature branch and every green commit.** Do not delete, reset, or abandon the branch — the resume run continues on it (see [`inputs.md`](./inputs.md) §Repo state).
+2. **Remove parallel worktrees** under `.worktrees/` whose task reached a commit or was rolled back (they auto-clean if unchanged, per [`team-exec.md`](./team-exec.md)). Keep a worktree only when it holds uncommitted in-progress work — and say so in the summary.
+3. **Update `tracker.md` before the handoff** — the tracker, not the chat history, is what the resume run reads (spine step 5).
+4. The handoff's *Run next* **is** the resume command: `/sdd:implement <slug>` (no `/clear`).
 
 ## Never
 

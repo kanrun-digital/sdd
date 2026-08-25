@@ -53,5 +53,5 @@ The lead **serializes commits in dependency order** regardless of when the work 
 ## Don't over-orchestrate
 
 - **<4 tasks → no team.** The eligibility check already forbids it. If you reached this mode with a tiny DAG, downgrade to sequential. Coordination overhead exceeds the gain.
-- A red that survives escalation in one lane follows `stop_on_red`. The lead halts the whole team, or drops that task, auto-blocks its dependents, and lets other lanes finish ([`escalation.md`](./escalation.md)).
-- Tear the team down at the end. Remove worktrees. They auto-clean if unchanged.
+- A red that survives escalation in one lane follows `stop_on_red`. The lead halts the whole team, or drops that task, auto-blocks its dependents, and lets other lanes finish ([`escalation.md`](./escalation.md)). On a halt the lead writes the `blocked(<reason-ref>)` statuses to `tracker.md` and applies «Halted-run hygiene» ([`escalation.md`](./escalation.md)) before teardown.
+- Tear the team down at the end. Remove worktrees. They auto-clean if unchanged. (On a halt, the hygiene rules govern which worktrees survive.)

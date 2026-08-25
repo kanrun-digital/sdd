@@ -4,7 +4,7 @@ Every task runs `SELECT → RED → GREEN → REFACTOR → GATE → COMMIT`. The
 
 ## SELECT
 
-Pick the next task whose `deps` are all `done`. In sequential mode that is the topo order. In parallel modes the orchestrator hands it out. Read the task body + its `acs` from `spec.md §5` + the relevant `test-plan.md` rows. Before you write anything, know what observable outcome the test will assert.
+Pick the next task whose `deps` are all `done` **in the tracker** (resume-aware: a task already `done` is never re-selected; a task `blocked(<reason-ref>)` is never selected). In sequential mode that is the topo order. In parallel modes the orchestrator hands it out. Read the task body + its `acs` from `spec.md §5` + the relevant `test-plan.md` rows. Before you write anything, know what observable outcome the test will assert.
 
 ## RED — write the failing test first
 
@@ -66,11 +66,11 @@ In parallel modes the **lead serializes commits in dependency order** even thoug
 
 The per-task GATE proves each task green in isolation. It does **not** prove the tasks compose. Task T2's change can break T1's test when they touch different files. Example: T2 changed a shared helper's signature. T1's test imports it. T2's own GATE does not catch that. T2's test does not exercise T1's path.
 
-After **all** tasks are committed, run **one whole-feature gate** before emitting the handoff to `review`:
+When **no actionable tasks remain** (every task `done` or `blocked(<reason-ref>)` — the Completion rule in the spine), run **one whole-feature gate** before emitting the review handoff. A run that ends **with** actionable tasks remaining (halt / BLOCK / interruption) skips this gate and emits the *continue* handoff instead — the gate runs on the final resume that empties the actionable set:
 
 1. Run the **full suite end-to-end** (unit + integration + lint + vet) on the final HEAD of the feature branch. Do not run only the files the last task touched.
 2. If any test that was green at its task's GATE is now red, that is a cross-task regression. Fix it before handing off. Re-enter the TDD loop for the responsible task. Do **not** defer it to `review`. `review` is read-only (it does not run tests). A red suite at review means a loop-back to `implement` that could have been caught here for free.
-3. Record the whole-feature gate result in `tracker.md` (one line: `whole-feature gate: <unit/integration/lint/vet counts> at <commit>`).
+3. Record the whole-feature gate result in `tracker.md` (one line: `whole-feature gate: <unit/integration/lint/vet counts> at <commit> · blocked: <task ids with reason-refs, or "none">`).
 
 This is cheap insurance against the most common multi-task integration failure. It also keeps `review` focused on the diff's correctness, not on «why is this green task now red».
 
